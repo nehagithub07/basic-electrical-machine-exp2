@@ -1,7 +1,7 @@
 import { useState } from 'react'
 
-const MIN_RESISTANCE = 0
-const MAX_RESISTANCE = 20
+const MIN_RESISTANCE = 1
+const MAX_RESISTANCE = 10
 const RESISTANCE_STEP = 0.1
 
 const normalizeResistance = (value) => {

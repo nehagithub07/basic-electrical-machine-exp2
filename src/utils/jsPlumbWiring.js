@@ -51,6 +51,21 @@ export const VALID_CONNECTION_SEQUENCE = [
   '8-endpoint', '14-endpoint',
 ]
 
+const getTerminalPairKey = (firstId, secondId) => (
+  [firstId, secondId].sort().join('|')
+)
+
+const VALID_CONNECTION_PAIR_KEYS = new Set()
+
+for (let index = 0; index < VALID_CONNECTION_SEQUENCE.length - 1; index += 2) {
+  VALID_CONNECTION_PAIR_KEYS.add(
+    getTerminalPairKey(
+      VALID_CONNECTION_SEQUENCE[index],
+      VALID_CONNECTION_SEQUENCE[index + 1],
+    ),
+  )
+}
+
 export const DEFAULT_AUTO_CONNECTIONS = [
   ['1-endpoint', '9-endpoint'],
   ['2-endpoint', '10-endpoint'],
@@ -162,6 +177,31 @@ const getAllConnections = (instance) => {
   }
 
   return []
+}
+
+const getConnectionEndpointIds = (connection) => ({
+  sourceId: connection?.sourceId || connection?.source?.id,
+  targetId: connection?.targetId || connection?.target?.id,
+})
+
+export const isValidConnectionPair = (firstId, secondId) => (
+  Boolean(firstId && secondId && VALID_CONNECTION_PAIR_KEYS.has(getTerminalPairKey(firstId, secondId)))
+)
+
+export const getConnectionStatus = (instance) => {
+  const connections = getAllConnections(instance)
+  const validation = validateOldExperimentConnections(instance)
+  const invalidConnections = connections.filter((connection) => {
+    const { sourceId, targetId } = getConnectionEndpointIds(connection)
+
+    return !isValidConnectionPair(sourceId, targetId)
+  })
+
+  return {
+    ...validation,
+    hasInvalidConnection: invalidConnections.length > 0,
+    invalidConnectionCount: invalidConnections.length,
+  }
 }
 
 export const deleteConnectionsForTerminal = (instance, terminalId) => {

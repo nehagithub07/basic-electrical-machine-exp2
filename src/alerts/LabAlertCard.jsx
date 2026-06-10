@@ -58,13 +58,14 @@ const LabAlertCard = ({ alert, onDismiss }) => {
 
   useEffect(() => {
     dispatchLabAlertEvent('lab-alert:sound', {
+      audio: alert.audio ?? alert.audioSource,
       id,
       sound: alert.sound ?? type,
       stepNumber,
       title,
       type,
     })
-  }, [alert.sound, id, stepNumber, title, type])
+  }, [alert.audio, alert.audioSource, alert.sound, id, stepNumber, title, type])
 
   useEffect(() => {
     if (!hasProgressTimer) {

@@ -23,6 +23,10 @@ const TOP_RIGHT_LIMIT = 3
 const DEDUPE_WINDOW = 900
 const ALERT_TYPES = ['success', 'warning', 'error', 'info']
 
+const isConfiguredAudioSource = (audioSource) => (
+  typeof audioSource === 'string' && audioSource.trim() !== '' && audioSource.trim() !== '#'
+)
+
 const getPlacement = () => 'center'
 
 const initialAlertState = {
@@ -87,13 +91,54 @@ const alertReducer = (state, action) => {
 const LabAlertProvider = ({ children }) => {
   const nextIdRef = useRef(0)
   const activeDedupeKeysRef = useRef(new Set())
+  const alertAudioRef = useRef(null)
   const recentAlertsRef = useRef(new Map())
   const [alertState, dispatchAlert] = useReducer(alertReducer, initialAlertState)
   const alertStateRef = useRef(alertState)
 
+  const stopAlertAudio = useCallback(() => {
+    const currentAudio = alertAudioRef.current
+
+    if (!currentAudio) {
+      return
+    }
+
+    currentAudio.pause()
+    currentAudio.currentTime = 0
+    alertAudioRef.current = null
+  }, [])
+
   useEffect(() => {
     alertStateRef.current = alertState
   }, [alertState])
+
+  useEffect(() => {
+    const handleAlertSound = (event) => {
+      const audioSource = event.detail?.audio
+
+      if (!isConfiguredAudioSource(audioSource)) {
+        return
+      }
+
+      stopAlertAudio()
+
+      const audio = new Audio(audioSource)
+      alertAudioRef.current = audio
+
+      audio.play().catch(() => {
+        if (alertAudioRef.current === audio) {
+          alertAudioRef.current = null
+        }
+      })
+    }
+
+    window.addEventListener('lab-alert:sound', handleAlertSound)
+
+    return () => {
+      window.removeEventListener('lab-alert:sound', handleAlertSound)
+      stopAlertAudio()
+    }
+  }, [stopAlertAudio])
 
   const releaseDedupeKey = useCallback((alert) => {
     if (alert?.dedupeKey) {

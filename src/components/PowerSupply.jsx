@@ -62,7 +62,7 @@ const PowerSupply = ({ onTogglePower, powerOn, setVoltage, voltage }) => {
           disabled={!powerOn}
           id="voltage-slider"
           max="10"
-          min="0"
+          min="1"
           onChange={handleVoltageChange}
           step="0.1"
           type="range"

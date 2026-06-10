@@ -1,3 +1,5 @@
+export const ALERT_AUDIO_PLACEHOLDER = '#'
+
 export const EXPERIMENT_ALERTS = {
   connectionMode: {
     dedupeKey: 'step-1-connection-mode',
@@ -9,19 +11,31 @@ export const EXPERIMENT_ALERTS = {
     type: 'info',
   },
   circuitConnectionsCompleted: {
-    description: 'The default wiring path has been placed on the apparatus.',
+    audio: ALERT_AUDIO_PLACEHOLDER,
+    description: '',
     icon: '✅',
     stepNumber: 1,
-    target: '#circuit-panel',
-    title: 'Circuit Connections Completed Successfully',
+    target: '#check-button',
+    title: 'Autoconnect completed. Click on the check button to verify the connections.',
+    type: 'success',
+  },
+  allConnectionsCompleted: {
+    audio: ALERT_AUDIO_PLACEHOLDER,
+    description: '',
+    icon: '✅',
+    stepNumber: 1,
+    target: '#check-button',
+    title: 'All connections are completed. Click on the check button to verify the connections.',
     type: 'success',
   },
   incorrectNodeConnection: {
-    description: 'One or more wires are connected to the wrong node pair.',
+    audio: ALERT_AUDIO_PLACEHOLDER,
+    dedupeKey: 'wrong-connection',
+    description: '',
     icon: '❌',
     stepNumber: 1,
     target: '#circuit-panel',
-    title: 'Incorrect Node Connection Detected',
+    title: 'This connection is wrong',
     type: 'error',
   },
   checkingConnections: {
@@ -42,6 +56,7 @@ export const EXPERIMENT_ALERTS = {
     type: 'success',
   },
   connectionErrorFound: {
+    audio: ALERT_AUDIO_PLACEHOLDER,
     icon: '⚠️',
     stepNumber: 2,
     target: '#circuit-panel',
@@ -66,19 +81,30 @@ export const EXPERIMENT_ALERTS = {
     type: 'success',
   },
   powerOn: {
-    description: 'The supply is now feeding the verified circuit.',
+    audio: ALERT_AUDIO_PLACEHOLDER,
+    description: '',
     icon: '⚡',
     stepNumber: 4,
-    target: '#power-supply',
-    title: 'Power Supply Turned ON',
+    target: '#voltage-control',
+    title: 'Power supply has been turned ON. Now move the Voltage Controller knob.',
     type: 'success',
   },
+  powerOffDuringExperiment: {
+    audio: ALERT_AUDIO_PLACEHOLDER,
+    description: '',
+    icon: '⚠️',
+    stepNumber: 4,
+    target: '#power-toggle-button',
+    title: 'You turned off the power supply. Turn it back on to continue the simulation.',
+    type: 'warning',
+  },
   cannotStartPower: {
-    description: 'Run CHECK and correct the circuit wiring before powering the supply.',
+    audio: ALERT_AUDIO_PLACEHOLDER,
+    description: '',
     icon: '⚠️',
     stepNumber: 4,
     target: '#check-button',
-    title: 'Cannot Start Power - Complete Connections First',
+    title: 'Please complete the connections first to turn on the power supply',
     type: 'warning',
   },
   adjustVoltage: {

@@ -9,6 +9,8 @@ import {
   DEFAULT_AMMETER_CURRENT_KEYS,
   deleteConnectionsForTerminal,
   getAmmeterCurrentKeys,
+  getConnectionStatus,
+  isValidConnectionPair,
   lockJsPlumbCircuit,
   resolveJsPlumb,
   validateOldExperimentConnections,
@@ -23,6 +25,7 @@ const getJsPlumbZoom = (scale) => (
 const ConnectionLab = ({
   autoConnectRequest,
   checkRequest,
+  onConnectionChange,
   onCheckConnections,
   powerOn,
   r1,
@@ -37,8 +40,10 @@ const ConnectionLab = ({
 }) => {
   const containerRef = useRef(null)
   const instanceRef = useRef(null)
+  const onConnectionChangeRef = useRef(onConnectionChange)
   const onCheckConnectionsRef = useRef(onCheckConnections)
   const scaleRef = useRef(getJsPlumbZoom(scale))
+  const suppressConnectionAlertsRef = useRef(false)
 
   const [isLocked, setIsLocked] = useState(false)
   const [ammeterCurrentKeys, setAmmeterCurrentKeys] = useState(DEFAULT_AMMETER_CURRENT_KEYS)
@@ -46,6 +51,10 @@ const ConnectionLab = ({
   useEffect(() => {
     onCheckConnectionsRef.current = onCheckConnections
   }, [onCheckConnections])
+
+  useEffect(() => {
+    onConnectionChangeRef.current = onConnectionChange
+  }, [onConnectionChange])
 
   useEffect(() => {
     let cancelled = false
@@ -104,6 +113,27 @@ const ConnectionLab = ({
 
       addAllEndpoints(instance)
 
+      instance.bind?.('connection', (info) => {
+        if (suppressConnectionAlertsRef.current) {
+          return
+        }
+
+        const connection = info?.connection ?? info
+        const sourceId = connection?.sourceId || connection?.source?.id
+        const targetId = connection?.targetId || connection?.target?.id
+
+        onConnectionChangeRef.current?.({
+          ...getConnectionStatus(instance),
+          latestConnection: {
+            sourceId,
+            targetId,
+          },
+          latestConnectionIsWrong: Boolean(
+            sourceId && targetId && !isValidConnectionPair(sourceId, targetId),
+          ),
+        })
+      })
+
       instance.setSuspendDrawing(false, true)
 
       window.setTimeout(() => {
@@ -152,7 +182,13 @@ const ConnectionLab = ({
       return
     }
 
-    autoConnectDefaultCircuit(instanceRef.current)
+    suppressConnectionAlertsRef.current = true
+
+    try {
+      autoConnectDefaultCircuit(instanceRef.current)
+    } finally {
+      suppressConnectionAlertsRef.current = false
+    }
 
     window.setTimeout(() => {
       instanceRef.current?.repaintEverything()
@@ -196,6 +232,11 @@ const ConnectionLab = ({
     }
 
     deleteConnectionsForTerminal(instanceRef.current, terminalId)
+    onConnectionChangeRef.current?.({
+      ...getConnectionStatus(instanceRef.current),
+      latestConnection: null,
+      latestConnectionIsWrong: false,
+    })
     instanceRef.current.repaintEverything?.()
   }
 

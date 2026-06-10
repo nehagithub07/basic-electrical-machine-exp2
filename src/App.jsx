@@ -27,6 +27,8 @@ const MIN_GRAPH_READINGS = 6
 const MAX_OBSERVATIONS = 10
 const VOLTAGE_SAFETY_LIMIT = 8.5
 const VOLTAGE_SAFETY_RESET = 7.5
+const INITIAL_RESISTANCE = 1.0
+const INITIAL_VOLTAGE = 1.0
 
 const getObservationSignature = ({ i1, i2, i3, voltage }) => (
   [
@@ -51,10 +53,10 @@ const getScale = () => {
 const App = () => {
   const { clearAlerts, showStepAlert } = useLabAlerts()
   const [scale, setScale] = useState(getScale)
-  const [r1, setR1] = useState(0)
-  const [r2, setR2] = useState(0)
-  const [r3, setR3] = useState(0)
-  const [voltage, setVoltage] = useState(0)
+  const [r1, setR1] = useState(INITIAL_RESISTANCE)
+  const [r2, setR2] = useState(INITIAL_RESISTANCE)
+  const [r3, setR3] = useState(INITIAL_RESISTANCE)
+  const [voltage, setVoltage] = useState(INITIAL_VOLTAGE)
   const [powerOn, setPowerOn] = useState(false)
   const [observations, setObservations] = useState([])
   const [graphGenerated, setGraphGenerated] = useState(false)
@@ -66,6 +68,7 @@ const App = () => {
   const [resetRequest, setResetRequest] = useState(0)
   const [connectionsVerified, setConnectionsVerified] = useState(false)
   const [sessionStart, setSessionStart] = useState(() => Date.now())
+  const allConnectionsAlertShownRef = useRef(false)
   const voltageLimitWarningShownRef = useRef(false)
 
   useEffect(() => {
@@ -205,10 +208,10 @@ const App = () => {
   const resetSimulation = useCallback(() => {
     stopAiGuide()
     setPowerOn(false)
-    setVoltage(0)
-    setR1(0)
-    setR2(0)
-    setR3(0)
+    setVoltage(INITIAL_VOLTAGE)
+    setR1(INITIAL_RESISTANCE)
+    setR2(INITIAL_RESISTANCE)
+    setR3(INITIAL_RESISTANCE)
     setObservations([])
     setGraphGenerated(false)
     setReportGenerated(false)
@@ -217,6 +220,7 @@ const App = () => {
     setConnectionsVerified(false)
     setResetRequest((current) => current + 1)
     setSessionStart(Date.now())
+    allConnectionsAlertShownRef.current = false
     voltageLimitWarningShownRef.current = false
     setStatus('Simulation reset. Make the circuit connections again.')
     showStepAlert(EXPERIMENT_ALERTS.resetSuccess)
@@ -317,9 +321,35 @@ const App = () => {
 
   const scaledWidth = Math.ceil(BASE_WIDTH * scale)
   const scaledHeight = Math.ceil(CONTENT_HEIGHT * scale)
+  const handleConnectionChange = useCallback((result) => {
+    if (connectionsVerified) {
+      return
+    }
+
+    if (result.latestConnectionIsWrong) {
+      setStatus('This connection is wrong')
+      showStepAlert(EXPERIMENT_ALERTS.incorrectNodeConnection)
+      return
+    }
+
+    if (!result.isCorrect) {
+      allConnectionsAlertShownRef.current = false
+      return
+    }
+
+    if (allConnectionsAlertShownRef.current) {
+      return
+    }
+
+    allConnectionsAlertShownRef.current = true
+    setStatus('All connections are completed. Click on the check button to verify the connections.')
+    showStepAlert(EXPERIMENT_ALERTS.allConnectionsCompleted)
+  }, [connectionsVerified, showStepAlert])
+
   const handleCheckConnections = useCallback((result) => {
     if (result.isCorrect) {
       setConnectionsVerified(true)
+      allConnectionsAlertShownRef.current = true
 
       setStatus(
         'Right connections! Please choose resistance values and switch on the power supply.',
@@ -330,11 +360,13 @@ const App = () => {
     }
 
     setConnectionsVerified(false)
+    allConnectionsAlertShownRef.current = false
 
     if (result.totalConnections === 0) {
       setStatus('Please make the connections first.')
       showStepAlert(EXPERIMENT_ALERTS.connectionErrorFound, {
         description: 'No circuit wires were found. Drag node connections before checking.',
+        title: 'Please make the connections first.',
         type: 'warning',
       })
       return
@@ -343,7 +375,7 @@ const App = () => {
     setStatus(
       `Invalid connections. Correct matched points: ${result.matchedCount}; total wires: ${result.totalConnections}.`,
     )
-    showStepAlert(EXPERIMENT_ALERTS.connectionErrorFound, {
+    showStepAlert(EXPERIMENT_ALERTS.incorrectNodeConnection, {
       description: `Matched ${result.matchedCount} of 8 required wire pairs from ${result.totalConnections} total wires.`,
     })
   }, [showStepAlert])
@@ -360,9 +392,10 @@ const App = () => {
 
     if (powerOn) {
       setPowerOn(false)
-      setVoltage(0)
+      setVoltage(INITIAL_VOLTAGE)
       voltageLimitWarningShownRef.current = false
       setStatus('Power supply switched off.')
+      showStepAlert(EXPERIMENT_ALERTS.powerOffDuringExperiment)
       return
     }
 
@@ -373,9 +406,10 @@ const App = () => {
   const handleAutoConnect = () => {
     setAutoConnectRequest((current) => current + 1)
     setConnectionsVerified(false)
+    allConnectionsAlertShownRef.current = true
 
     setStatus(
-      'Default connections added using jsPlumb. Click CHECK to validate and lock the circuit.',
+      'Autoconnect completed. Click on the check button to verify the connections.',
     )
     showStepAlert(EXPERIMENT_ALERTS.circuitConnectionsCompleted)
   }
@@ -465,6 +499,7 @@ const App = () => {
                   key={`connection-lab-${resetRequest}`}
                   autoConnectRequest={autoConnectRequest}
                   checkRequest={checkRequest}
+                  onConnectionChange={handleConnectionChange}
                   onCheckConnections={handleCheckConnections}
                   powerOn={powerOn}
                   r1={r1}
