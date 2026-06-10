@@ -48,7 +48,7 @@ export const EXPERIMENT_ALERTS = {
     type: 'info',
   },
   connectionsVerified: {
-    description: 'You can now set resistance values and power the circuit.',
+    description: 'Move R1, R2, and R3 before turning on the power supply.',
     icon: '✅',
     stepNumber: 2,
     target: '#resistance-controls',
@@ -64,12 +64,13 @@ export const EXPERIMENT_ALERTS = {
     type: 'error',
   },
   adjustResistance: {
+    audio: ALERT_AUDIO_PLACEHOLDER,
     dedupeKey: 'step-3-adjust-resistance',
-    description: 'Use the three resistance sliders before starting the supply.',
+    description: 'Move R1, R2, and R3 before turning on the power supply.',
     icon: '🎛️',
     stepNumber: 3,
     target: '#resistance-controls',
-    title: 'Adjust Resistance Values Using Sliders',
+    title: 'Adjust all three resistance values first',
     type: 'info',
   },
   resistanceLocked: {
@@ -137,6 +138,7 @@ export const EXPERIMENT_ALERTS = {
     type: 'warning',
   },
   addingReading: {
+    audio: ALERT_AUDIO_PLACEHOLDER,
     description: 'The current values are being transferred to the table.',
     duration: 1800,
     icon: '📊',
@@ -146,6 +148,7 @@ export const EXPERIMENT_ALERTS = {
     type: 'info',
   },
   readingAdded: {
+    audio: ALERT_AUDIO_PLACEHOLDER,
     description: 'The observation row has been stored.',
     icon: '✅',
     stepNumber: 6,
@@ -177,11 +180,12 @@ export const EXPERIMENT_ALERTS = {
     type: 'warning',
   },
   sufficientData: {
-    description: 'The graph and report controls are ready to use.',
+    audio: ALERT_AUDIO_PLACEHOLDER,
+    description: '',
     icon: '✅',
     stepNumber: 7,
     target: '#plot-button',
-    title: 'Sufficient Data Collected for Graph',
+    title: 'Now you can plot the graph.',
     type: 'success',
   },
   comparingValues: {
@@ -219,11 +223,12 @@ export const EXPERIMENT_ALERTS = {
     type: 'info',
   },
   graphPlotted: {
-    description: 'The recorded observations are now plotted.',
+    audio: ALERT_AUDIO_PLACEHOLDER,
+    description: '',
     icon: '✅',
     stepNumber: 9,
-    target: '#graph-panel',
-    title: 'Graph Plotted Successfully',
+    target: '#generate-report-button',
+    title: 'Graph is plotted. Now you can generate the report.',
     type: 'success',
   },
   insufficientGraphReadings: {

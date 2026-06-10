@@ -83,6 +83,11 @@ const alertReducer = (state, action) => {
         ...state,
         queue: [...state.queue, action.alert],
       })
+    case 'replace':
+      return pumpAlertQueue({
+        ...initialAlertState,
+        queue: [action.alert],
+      })
     default:
       return state
   }
@@ -146,6 +151,14 @@ const LabAlertProvider = ({ children }) => {
     }
   }, [])
 
+  const releaseActiveAlerts = useCallback(() => {
+    const currentState = alertStateRef.current
+
+    currentState.queue.forEach(releaseDedupeKey)
+    currentState.topRightAlerts.forEach(releaseDedupeKey)
+    releaseDedupeKey(currentState.centerAlert)
+  }, [releaseDedupeKey])
+
   const normalizeAlert = useCallback((alert) => {
     const type = ALERT_TYPES.includes(alert.type) ? alert.type : 'info'
     const requiresConfirmation = Boolean(alert.requiresConfirmation)
@@ -176,6 +189,10 @@ const LabAlertProvider = ({ children }) => {
     const dedupeKey = nextAlert.dedupeKey
     const now = Date.now()
 
+    if (nextAlert.replaceExisting) {
+      releaseActiveAlerts()
+    }
+
     if (dedupeKey) {
       const lastShownAt = recentAlertsRef.current.get(dedupeKey)
       const dedupeWindow = nextAlert.dedupeWindow ?? DEDUPE_WINDOW
@@ -191,10 +208,13 @@ const LabAlertProvider = ({ children }) => {
       recentAlertsRef.current.set(dedupeKey, now)
     }
 
-    dispatchAlert({ alert: nextAlert, type: 'enqueue' })
+    dispatchAlert({
+      alert: nextAlert,
+      type: nextAlert.replaceExisting ? 'replace' : 'enqueue',
+    })
 
     return nextAlert.id
-  }, [normalizeAlert])
+  }, [normalizeAlert, releaseActiveAlerts])
 
   const showStepAlert = useCallback((preset, overrides = {}) => (
     showAlert({ ...preset, ...overrides })
@@ -225,13 +245,9 @@ const LabAlertProvider = ({ children }) => {
   }, [releaseDedupeKey])
 
   const clearAlerts = useCallback(() => {
-    const currentState = alertStateRef.current
-
-    currentState.queue.forEach(releaseDedupeKey)
-    currentState.topRightAlerts.forEach(releaseDedupeKey)
-    releaseDedupeKey(currentState.centerAlert)
+    releaseActiveAlerts()
     dispatchAlert({ type: 'clear' })
-  }, [releaseDedupeKey])
+  }, [releaseActiveAlerts])
 
   const { centerAlert, topRightAlerts } = alertState
 

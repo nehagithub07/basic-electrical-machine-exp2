@@ -30,6 +30,12 @@ const VOLTAGE_SAFETY_RESET = 7.5
 const INITIAL_RESISTANCE = 1.0
 const INITIAL_VOLTAGE = 1.0
 
+const getInitialResistanceAdjusted = () => ({
+  r1: false,
+  r2: false,
+  r3: false,
+})
+
 const getObservationSignature = ({ i1, i2, i3, voltage }) => (
   [
     Number(voltage).toFixed(1),
@@ -67,6 +73,7 @@ const App = () => {
   const [checkRequest, setCheckRequest] = useState(0)
   const [resetRequest, setResetRequest] = useState(0)
   const [connectionsVerified, setConnectionsVerified] = useState(false)
+  const [resistanceAdjusted, setResistanceAdjusted] = useState(getInitialResistanceAdjusted)
   const [sessionStart, setSessionStart] = useState(() => Date.now())
   const allConnectionsAlertShownRef = useRef(false)
   const voltageLimitWarningShownRef = useRef(false)
@@ -98,6 +105,7 @@ const App = () => {
   ))
   const readingCount = observations.length
   const canPlotGraph = readingCount >= MIN_GRAPH_READINGS
+  const allResistanceValuesAdjusted = resistanceAdjusted.r1 && resistanceAdjusted.r2 && resistanceAdjusted.r3
 
   const handleAiGuideStart = useCallback(() => {
     setStatus('AI Guide narration started.')
@@ -130,6 +138,43 @@ const App = () => {
 
     startAiGuide()
   }, [aiGuidePlaying, startAiGuide, stopAiGuide])
+
+  const markResistanceAdjusted = useCallback((resistanceKey) => {
+    setResistanceAdjusted((current) => {
+      if (current[resistanceKey]) {
+        return current
+      }
+
+      return {
+        ...current,
+        [resistanceKey]: true,
+      }
+    })
+  }, [])
+
+  const handleR1Change = useCallback((nextResistance) => {
+    setR1(nextResistance)
+
+    if (nextResistance !== r1) {
+      markResistanceAdjusted('r1')
+    }
+  }, [markResistanceAdjusted, r1])
+
+  const handleR2Change = useCallback((nextResistance) => {
+    setR2(nextResistance)
+
+    if (nextResistance !== r2) {
+      markResistanceAdjusted('r2')
+    }
+  }, [markResistanceAdjusted, r2])
+
+  const handleR3Change = useCallback((nextResistance) => {
+    setR3(nextResistance)
+
+    if (nextResistance !== r3) {
+      markResistanceAdjusted('r3')
+    }
+  }, [markResistanceAdjusted, r3])
 
   const recordObservation = () => {
     if (!connectionsVerified) {
@@ -199,9 +244,14 @@ const App = () => {
     setGraphGenerated(false)
     setReportGenerated(false)
     setStatus('Reading added to the observation table.')
+    showStepAlert(EXPERIMENT_ALERTS.readingAdded, {
+      description: `Reading ${nextObservationCount} has been added to the observation table.`,
+    })
 
     if (nextObservationCount === MIN_GRAPH_READINGS) {
-      showStepAlert(EXPERIMENT_ALERTS.sufficientData)
+      showStepAlert(EXPERIMENT_ALERTS.sufficientData, {
+        replaceExisting: true,
+      })
     }
   }
 
@@ -218,6 +268,7 @@ const App = () => {
     setAutoConnectRequest(0)
     setCheckRequest(0)
     setConnectionsVerified(false)
+    setResistanceAdjusted(getInitialResistanceAdjusted())
     setResetRequest((current) => current + 1)
     setSessionStart(Date.now())
     allConnectionsAlertShownRef.current = false
@@ -246,8 +297,10 @@ const App = () => {
 
     setGraphGenerated(true)
     setReportGenerated(false)
-    setStatus('Observation graph plotted from the table readings.')
-    showStepAlert(EXPERIMENT_ALERTS.graphPlotted)
+    setStatus('Graph is plotted. Now you can generate the report.')
+    showStepAlert(EXPERIMENT_ALERTS.graphPlotted, {
+      replaceExisting: true,
+    })
   }
 
   const handlePrint = () => {
@@ -349,10 +402,11 @@ const App = () => {
   const handleCheckConnections = useCallback((result) => {
     if (result.isCorrect) {
       setConnectionsVerified(true)
+      setResistanceAdjusted(getInitialResistanceAdjusted())
       allConnectionsAlertShownRef.current = true
 
       setStatus(
-        'Right connections! Please choose resistance values and switch on the power supply.',
+        'Right connections! Move R1, R2, and R3 before switching on the power supply.',
       )
       showStepAlert(EXPERIMENT_ALERTS.connectionsVerified)
 
@@ -360,6 +414,7 @@ const App = () => {
     }
 
     setConnectionsVerified(false)
+    setResistanceAdjusted(getInitialResistanceAdjusted())
     allConnectionsAlertShownRef.current = false
 
     if (result.totalConnections === 0) {
@@ -390,6 +445,14 @@ const App = () => {
       return
     }
 
+    if (!powerOn && !allResistanceValuesAdjusted) {
+      setStatus('Move R1, R2, and R3 before switching on the power supply.')
+      showStepAlert(EXPERIMENT_ALERTS.adjustResistance, {
+        type: 'warning',
+      })
+      return
+    }
+
     if (powerOn) {
       setPowerOn(false)
       setVoltage(INITIAL_VOLTAGE)
@@ -406,6 +469,7 @@ const App = () => {
   const handleAutoConnect = () => {
     setAutoConnectRequest((current) => current + 1)
     setConnectionsVerified(false)
+    setResistanceAdjusted(getInitialResistanceAdjusted())
     allConnectionsAlertShownRef.current = true
 
     setStatus(
@@ -488,9 +552,9 @@ const App = () => {
                   r1={r1}
                   r2={r2}
                   r3={r3}
-                  setR1={setR1}
-                  setR2={setR2}
-                  setR3={setR3}
+                  setR1={handleR1Change}
+                  setR2={handleR2Change}
+                  setR3={handleR3Change}
                 />
               </aside>
 
