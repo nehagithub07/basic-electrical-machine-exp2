@@ -73,7 +73,60 @@ const buttons = [
  
 ]
 
+const instructionSteps = [
+  {
+    number: 1,
+    text: 'Make connections by dragging nodes from apparatus to the circuit.',
+    substeps: [
+      'Connect power supply to the circuit (1-9, 2-10).',
+      'Connect ammeters (3-11, 4-12), (5-13, 6-14) and (7-15, 8-16), or connect any ammeter to any resistance in circuit.',
+      'Click on the label to delete all the connections for the corresponding nodes.',
+    ],
+  },
+  {
+    number: 2,
+    text: "Check your connections by clicking on the 'CHECK' button.",
+  },
+  {
+    number: 3,
+    text: 'Set the values of resistances R1, R2 and R3 by adjusting the sliders on left. These values will remain constant throughout the experiment.',
+  },
+  {
+    number: 4,
+    text: "Click the 'Power' button to turn on the power supply.",
+  },
+  {
+    number: 5,
+    text: 'Vary the voltage value by moving the voltage slider to the right side. The readings on the ammeter will change accordingly.',
+  },
+  {
+    number: 6,
+    text: "Click on the 'ADD' button to add the readings to the observation table.",
+  },
+  {
+    number: 7,
+    text: 'Repeat step 6 until 6 readings are recorded. A minimum of 6 readings is required to plot the graph.',
+  },
+  {
+    number: 8,
+    text: "Click on the 'PLOT' button to display the graph.",
+  },
+  {
+    number: 9,
+    text: "Click on the 'Generate Report' button below the graph to open the experiment report.",
+  },
+  {
+    number: 10,
+    text: 'Use the report page controls to print or download the generated report.',
+  },
+  {
+    number: 11,
+    text: "Click on 'RESET' button to refresh the page.",
+  },
+]
+
 const ActionButtons = ({
+  activeInstructionStep = 1,
   activeButtons = {},
   disabledButtons = {},
   onAdd,
@@ -151,24 +204,26 @@ const ActionButtons = ({
 
           <div className="action-instructions-panel__body">
             <ol className="action-instructions-panel__steps">
-              <li>
-                <strong>STEP 1:</strong> Make connections by dragging nodes from apparatus to the circuit.
-                <ol className="action-instructions-panel__substeps" type="a">
-                  <li>Connect power supply to the circuit (1-9, 2-10).</li>
-                  <li>Connect ammeters (3-11, 4-12), (5-13, 6-14) and (7-15, 8-16), or connect any ammeter to any resistance in circuit.</li>
-                  <li>Click on the label to delete all the connections for the corresponding nodes.</li>
-                </ol>
-              </li>
-              <li><strong>STEP 2:</strong> Check your connections by clicking on the 'CHECK' button.</li>
-              <li><strong>STEP 3:</strong> Set the values of resistances R1, R2 and R3 by adjusting the sliders on left. These values will remain constant throughout the experiment.</li>
-              <li><strong>STEP 4:</strong> Click the 'Power' button to turn on the power supply.</li>
-              <li><strong>STEP 5:</strong> Vary the voltage value by moving the voltage slider to the right side. The readings on the ammeter will change accordingly.</li>
-              <li><strong>STEP 6:</strong> Click on the 'ADD' button to add the readings to the observation table.</li>
-              <li><strong>STEP 7:</strong> Repeat step 6 until 6 readings are recorded. A minimum of 6 readings is required to plot the graph.</li>
-              <li><strong>STEP 8:</strong> Click on the 'PLOT' button to display the graph.</li>
-              <li><strong>STEP 9:</strong> Click on the 'Generate Report' button below the graph to open the experiment report.</li>
-              <li><strong>STEP 10:</strong> Use the report page controls to print or download the generated report.</li>
-              <li><strong>STEP 11:</strong> Click on 'RESET' button to refresh the page.</li>
+              {instructionSteps.map((step) => {
+                const isActive = step.number === activeInstructionStep
+
+                return (
+                  <li
+                    aria-current={isActive ? 'step' : undefined}
+                    className={`action-instructions-panel__step ${isActive ? 'action-instructions-panel__step--active' : ''}`}
+                    key={step.number}
+                  >
+                    <strong>STEP {step.number}:</strong> {step.text}
+                    {step.substeps ? (
+                      <ol className="action-instructions-panel__substeps" type="a">
+                        {step.substeps.map((substep) => (
+                          <li key={substep}>{substep}</li>
+                        ))}
+                      </ol>
+                    ) : null}
+                  </li>
+                )
+              })}
             </ol>
           </div>
         </div>

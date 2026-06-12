@@ -11,9 +11,11 @@ const EquipmentPanel = ({ onTogglePower, powerOn, readings, setVoltage, voltage 
       voltage={voltage}
     />
 
-    <Ammeter label="A1" value={readings.A1} />
-    <Ammeter label="A2" value={readings.A2} />
-    <Ammeter label="A3" value={readings.A3} />
+    <div className="ammeter-bank" id="ammeter-bank" aria-label="A1, A2, and A3 ammeters">
+      <Ammeter label="A1" value={readings.A1} />
+      <Ammeter label="A2" value={readings.A2} />
+      <Ammeter label="A3" value={readings.A3} />
+    </div>
   </section>
 )
 

@@ -1,5 +1,3 @@
-import { AnimatePresence, motion } from 'framer-motion'
-
 const SPOTLIGHT_PADDING = 12
 const round = (value) => Math.round(value)
 
@@ -67,6 +65,13 @@ const getDimPanels = (spotlightBox) => {
   ]
 }
 
+const getBoxStyle = (box) => ({
+  height: box.height,
+  left: box.left,
+  top: box.top,
+  width: box.width,
+})
+
 const Spotlight = ({ rect }) => {
   const spotlightBox = getSpotlightBox(rect)
   const dimPanels = getDimPanels(spotlightBox)
@@ -74,50 +79,21 @@ const Spotlight = ({ rect }) => {
   return (
     <>
       {dimPanels.map((panel) => (
-        <motion.div
+        <div
           aria-hidden="true"
           className="walkthrough-dim-panel"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, ...panel }}
-          exit={{ opacity: 0 }}
           key={panel.key}
-          transition={{ duration: 0.18, ease: 'easeOut' }}
+          style={getBoxStyle(panel)}
         />
       ))}
 
-      <AnimatePresence>
-        {spotlightBox ? (
-          <motion.div
-            aria-hidden="true"
-            className="walkthrough-spotlight-ring"
-            initial={{
-              opacity: 0,
-              scale: 0.98,
-              ...spotlightBox,
-            }}
-            animate={{
-              opacity: 1,
-              scale: 1,
-              ...spotlightBox,
-            }}
-            exit={{ opacity: 0, scale: 0.99 }}
-            transition={{ duration: 0.18, ease: 'easeOut' }}
-          >
-            <motion.span
-              className="walkthrough-spotlight-pulse"
-              animate={{
-                opacity: [0.72, 0.18, 0.72],
-                scale: [1, 1.08, 1],
-              }}
-              transition={{
-                duration: 4.8,
-                ease: 'easeInOut',
-                repeat: Infinity,
-              }}
-            />
-          </motion.div>
-        ) : null}
-      </AnimatePresence>
+      {spotlightBox ? (
+        <div
+          aria-hidden="true"
+          className="walkthrough-spotlight-ring"
+          style={getBoxStyle(spotlightBox)}
+        />
+      ) : null}
     </>
   )
 }

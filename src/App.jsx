@@ -72,8 +72,10 @@ const App = () => {
   const [autoConnectRequest, setAutoConnectRequest] = useState(0)
   const [checkRequest, setCheckRequest] = useState(0)
   const [resetRequest, setResetRequest] = useState(0)
+  const [connectionsReadyForCheck, setConnectionsReadyForCheck] = useState(false)
   const [connectionsVerified, setConnectionsVerified] = useState(false)
   const [resistanceAdjusted, setResistanceAdjusted] = useState(getInitialResistanceAdjusted)
+  const [voltageAdjusted, setVoltageAdjusted] = useState(false)
   const [sessionStart, setSessionStart] = useState(() => Date.now())
   const allConnectionsAlertShownRef = useRef(false)
   const voltageLimitWarningShownRef = useRef(false)
@@ -106,6 +108,54 @@ const App = () => {
   const readingCount = observations.length
   const canPlotGraph = readingCount >= MIN_GRAPH_READINGS
   const allResistanceValuesAdjusted = resistanceAdjusted.r1 && resistanceAdjusted.r2 && resistanceAdjusted.r3
+  const activeInstructionStep = useMemo(() => {
+    if (reportGenerated) {
+      return 10
+    }
+
+    if (graphGenerated) {
+      return 9
+    }
+
+    if (readingCount >= MIN_GRAPH_READINGS) {
+      return 8
+    }
+
+    if (!powerOn && allResistanceValuesAdjusted) {
+      return 4
+    }
+
+    if (powerOn && readingCount > 0) {
+      return 7
+    }
+
+    if (powerOn && voltageAdjusted) {
+      return 6
+    }
+
+    if (powerOn) {
+      return 5
+    }
+
+    if (connectionsVerified) {
+      return 3
+    }
+
+    if (connectionsReadyForCheck) {
+      return 2
+    }
+
+    return 1
+  }, [
+    allResistanceValuesAdjusted,
+    connectionsReadyForCheck,
+    connectionsVerified,
+    graphGenerated,
+    powerOn,
+    readingCount,
+    reportGenerated,
+    voltageAdjusted,
+  ])
 
   const handleAiGuideStart = useCallback(() => {
     setStatus('AI Guide narration started.')
@@ -267,8 +317,10 @@ const App = () => {
     setReportGenerated(false)
     setAutoConnectRequest(0)
     setCheckRequest(0)
+    setConnectionsReadyForCheck(false)
     setConnectionsVerified(false)
     setResistanceAdjusted(getInitialResistanceAdjusted())
+    setVoltageAdjusted(false)
     setResetRequest((current) => current + 1)
     setSessionStart(Date.now())
     allConnectionsAlertShownRef.current = false
@@ -380,15 +432,19 @@ const App = () => {
     }
 
     if (result.latestConnectionIsWrong) {
+      setConnectionsReadyForCheck(false)
       setStatus('This connection is wrong')
       showStepAlert(EXPERIMENT_ALERTS.incorrectNodeConnection)
       return
     }
 
     if (!result.isCorrect) {
+      setConnectionsReadyForCheck(false)
       allConnectionsAlertShownRef.current = false
       return
     }
+
+    setConnectionsReadyForCheck(true)
 
     if (allConnectionsAlertShownRef.current) {
       return
@@ -402,6 +458,7 @@ const App = () => {
   const handleCheckConnections = useCallback((result) => {
     if (result.isCorrect) {
       setConnectionsVerified(true)
+      setConnectionsReadyForCheck(true)
       setResistanceAdjusted(getInitialResistanceAdjusted())
       allConnectionsAlertShownRef.current = true
 
@@ -414,6 +471,7 @@ const App = () => {
     }
 
     setConnectionsVerified(false)
+    setConnectionsReadyForCheck(false)
     setResistanceAdjusted(getInitialResistanceAdjusted())
     allConnectionsAlertShownRef.current = false
 
@@ -456,6 +514,7 @@ const App = () => {
     if (powerOn) {
       setPowerOn(false)
       setVoltage(INITIAL_VOLTAGE)
+      setVoltageAdjusted(false)
       voltageLimitWarningShownRef.current = false
       setStatus('Power supply switched off.')
       showStepAlert(EXPERIMENT_ALERTS.powerOffDuringExperiment)
@@ -463,11 +522,13 @@ const App = () => {
     }
 
     setPowerOn(true)
+    setVoltageAdjusted(false)
     setStatus('Power supply switched on. Adjust voltage and add the reading.')
     showStepAlert(EXPERIMENT_ALERTS.powerOn)
   }
   const handleAutoConnect = () => {
     setAutoConnectRequest((current) => current + 1)
+    setConnectionsReadyForCheck(true)
     setConnectionsVerified(false)
     setResistanceAdjusted(getInitialResistanceAdjusted())
     allConnectionsAlertShownRef.current = true
@@ -480,6 +541,10 @@ const App = () => {
 
   const handleVoltageChange = useCallback((nextVoltage) => {
     setVoltage(nextVoltage)
+
+    if (powerOn && nextVoltage !== INITIAL_VOLTAGE) {
+      setVoltageAdjusted(true)
+    }
 
     if (!powerOn || nextVoltage <= 0) {
       if (nextVoltage < VOLTAGE_SAFETY_RESET) {
@@ -527,6 +592,7 @@ const App = () => {
             <section className="workspace-grid">
               <aside className="left-panel">
                 <ActionButtons
+                  activeInstructionStep={activeInstructionStep}
                   activeButtons={{
                     onAiGuide: aiGuidePlaying,
                   }}

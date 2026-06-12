@@ -148,7 +148,9 @@ const WalkthroughProvider = ({
     }
 
     window.addEventListener('resize', scheduleRefresh)
+    window.addEventListener('scroll', scheduleRefresh, true)
     window.visualViewport?.addEventListener('resize', scheduleRefresh)
+    window.visualViewport?.addEventListener('scroll', scheduleRefresh)
 
     return () => {
       if (animationFrame) {
@@ -156,9 +158,35 @@ const WalkthroughProvider = ({
       }
 
       window.removeEventListener('resize', scheduleRefresh)
+      window.removeEventListener('scroll', scheduleRefresh, true)
       window.visualViewport?.removeEventListener('resize', scheduleRefresh)
+      window.visualViewport?.removeEventListener('scroll', scheduleRefresh)
     }
   }, [isOpen, isPositioningTarget, readActiveTarget])
+
+  useEffect(() => {
+    if (!isOpen) {
+      return undefined
+    }
+
+    const listenerOptions = {
+      capture: true,
+      passive: false,
+    }
+    const preventBackgroundScroll = (event) => {
+      if (event.cancelable) {
+        event.preventDefault()
+      }
+    }
+
+    window.addEventListener('wheel', preventBackgroundScroll, listenerOptions)
+    window.addEventListener('touchmove', preventBackgroundScroll, listenerOptions)
+
+    return () => {
+      window.removeEventListener('wheel', preventBackgroundScroll, listenerOptions)
+      window.removeEventListener('touchmove', preventBackgroundScroll, listenerOptions)
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (!isOpen || !activeTargetSelector) {

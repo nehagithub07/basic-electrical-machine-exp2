@@ -32,33 +32,9 @@
     0 0 54px rgba(37, 99, 235, 0.38);
 }
 
-.walkthrough-spotlight-pulse {
-  position: absolute;
-  inset: -8px;
-  border: 2px solid rgba(125, 211, 252, 0.64);
-  border-radius: inherit;
-}
-
 .walkthrough-active-target {
-  animation: walkthrough-target-settle 520ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
   backface-visibility: hidden;
   filter: brightness(1.06) saturate(1.04);
-  transform-origin: center;
-  will-change: transform, filter;
-}
-
-@keyframes walkthrough-target-settle {
-  0% {
-    transform: perspective(900px) translate3d(0, 0, 0) scale(1);
-  }
-
-  60% {
-    transform: perspective(900px) translate3d(0, -3px, 0) rotateX(0.35deg) scale(1.01);
-  }
-
-  100% {
-    transform: perspective(900px) translate3d(0, -2px, 0) rotateX(0.2deg) scale(1.006);
-  }
 }
 
 .walkthrough-start-button {
@@ -329,10 +305,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .walkthrough-active-target {
-    animation: none;
-  }
-
   .walkthrough-popup__progress span {
     transition: none;
   }
