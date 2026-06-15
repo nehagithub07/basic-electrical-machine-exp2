@@ -127,16 +127,6 @@ export const EXPERIMENT_ALERTS = {
     title: 'Current Readings Updating in Real Time',
     type: 'info',
   },
-  voltageSafetyLimit: {
-    dedupeKey: 'step-5-voltage-safety-limit',
-    description: 'Reduce the setting if the readings become unstable.',
-    duration: 5200,
-    icon: '⚠️',
-    stepNumber: 5,
-    target: '#voltage-control',
-    title: 'Voltage Approaching Safety Limit',
-    type: 'warning',
-  },
   addingReading: {
     audio: ALERT_AUDIO_PLACEHOLDER,
     description: 'The current values are being transferred to the table.',

@@ -61,7 +61,7 @@ const CircuitDiagram = ({ className = '', r1, r2, r3 }) => (
           <span
             className={`terminal-number-label terminal-number-label--circuit terminal-number-label--endpoint-${label}`}
             data-terminal-id={id}
-            title={`Circuit terminal ${label} (${id})`}
+            title={`Circuit terminal ${label}`}
           >
             {label}
           </span>

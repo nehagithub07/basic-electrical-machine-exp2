@@ -10,8 +10,8 @@ const GRAPH_CHART = {
   width: 762,
 }
 
-const GRAPH_VOLTAGE_MAX = 10
-const GRAPH_X_TICKS = [0, 2, 4, 6, 8, 10]
+const GRAPH_VOLTAGE_MAX = 12
+const GRAPH_X_TICKS = [0, 2, 4, 6, 8, 10, 12]
 const GRAPH_Y_TICK_COUNT = 5
 const GRAPH_SERIES = [
   { className: 'i1', color: '#c83f35', key: 'i1', labelIndex: '1', labelOffset: -12 },
@@ -912,7 +912,7 @@ tr:nth-child(even) {
 
       <h3>Components and Key Parameters</h3>
       <ul class="two-column-list">
-        <li>DC power supply: 0-10 V</li>
+        <li>DC power supply: 0-12 V</li>
         <li>Ammeter A<sub>1</sub> for total current I<sub>1</sub></li>
         <li>Ammeter A<sub>2</sub> for branch current I<sub>2</sub></li>
         <li>Ammeter A<sub>3</sub> for branch current I<sub>3</sub></li>

@@ -21,12 +21,10 @@ const BASE_HEIGHT = 960
 const GRAPH_SECTION_GAP = 28
 const GRAPH_SECTION_HEIGHT = 430
 const CONTENT_HEIGHT = BASE_HEIGHT + GRAPH_SECTION_GAP + GRAPH_SECTION_HEIGHT
-const PANEL_MAX_SCALE = 0.9
+const PANEL_MAX_SCALE = 1
 const PANEL_VIEWPORT_MARGIN = 24
 const MIN_GRAPH_READINGS = 6
 const MAX_OBSERVATIONS = 10
-const VOLTAGE_SAFETY_LIMIT = 8.5
-const VOLTAGE_SAFETY_RESET = 7.5
 const INITIAL_RESISTANCE = 1.0
 const INITIAL_VOLTAGE = 1.0
 
@@ -78,7 +76,6 @@ const App = () => {
   const [voltageAdjusted, setVoltageAdjusted] = useState(false)
   const [sessionStart, setSessionStart] = useState(() => Date.now())
   const allConnectionsAlertShownRef = useRef(false)
-  const voltageLimitWarningShownRef = useRef(false)
 
   useEffect(() => {
     const handleResize = () => setScale(getScale())
@@ -324,7 +321,6 @@ const App = () => {
     setResetRequest((current) => current + 1)
     setSessionStart(Date.now())
     allConnectionsAlertShownRef.current = false
-    voltageLimitWarningShownRef.current = false
     setStatus('Simulation reset. Make the circuit connections again.')
     showStepAlert(EXPERIMENT_ALERTS.resetSuccess)
   }, [showStepAlert, stopAiGuide])
@@ -515,7 +511,6 @@ const App = () => {
       setPowerOn(false)
       setVoltage(INITIAL_VOLTAGE)
       setVoltageAdjusted(false)
-      voltageLimitWarningShownRef.current = false
       setStatus('Power supply switched off.')
       showStepAlert(EXPERIMENT_ALERTS.powerOffDuringExperiment)
       return
@@ -545,27 +540,7 @@ const App = () => {
     if (powerOn && nextVoltage !== INITIAL_VOLTAGE) {
       setVoltageAdjusted(true)
     }
-
-    if (!powerOn || nextVoltage <= 0) {
-      if (nextVoltage < VOLTAGE_SAFETY_RESET) {
-        voltageLimitWarningShownRef.current = false
-      }
-
-      return
-    }
-
-    if (nextVoltage >= VOLTAGE_SAFETY_LIMIT && !voltageLimitWarningShownRef.current) {
-      voltageLimitWarningShownRef.current = true
-      showStepAlert(EXPERIMENT_ALERTS.voltageSafetyLimit, {
-        description: `${nextVoltage.toFixed(1)} V is close to the 10 V supply limit.`,
-      })
-      return
-    }
-
-    if (nextVoltage < VOLTAGE_SAFETY_RESET) {
-      voltageLimitWarningShownRef.current = false
-    }
-  }, [powerOn, showStepAlert])
+  }, [powerOn])
 
   return (
     <div id="app-wrapper">

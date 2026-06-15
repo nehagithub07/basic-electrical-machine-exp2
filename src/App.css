@@ -22,9 +22,6 @@
   width: 1440px;
   height: 1418px;
   transform-origin: top left;
-  backface-visibility: hidden;
-  contain: layout paint style;
-  will-change: transform;
 }
 
 .simulation-shell {
@@ -693,13 +690,15 @@
 }
 
 .power-supply__image {
+  display: block;
   position: absolute;
-  top: -1px;
-  left: 1px;
+  top: 7px;
+  left: -10px;
   z-index: 1;
   width: 300px;
-  height: 230px;
-  object-fit: fill;
+  height: 220px;
+  max-width: none;
+  
   filter: none;
 }
 
@@ -730,8 +729,8 @@
 
 .power-supply__button {
   position: absolute;
-  top: 42px;
-  right: 42px;
+  top: 32px;
+  right: 18px;
   z-index: 4;
   width: 50px;
   height: 50px;
@@ -804,9 +803,8 @@
   height: 232px;
   flex: 0 0 204px;
   overflow: hidden;
-  --ammeter-image-scale: 1;
   --ammeter-image-top: 0;
-  --ammeter-needle-top: 111px;
+  --ammeter-needle-top: 101px;
   --ammeter-needle-left: 102px;
   --ammeter-needle-width: 47px;
   --ammeter-needle-height: 1px;
@@ -835,7 +833,7 @@
 }
 
 .ammeter--A1 {
-  --ammeter-needle-top: 111px;
+  --ammeter-needle-top: 101px;
   --ammeter-needle-left: 97px;
   --ammeter-needle-image-top: 3px;
   --ammeter-needle-image-left: -8px;
@@ -843,7 +841,7 @@
 }
 
 .ammeter--A2 {
-  --ammeter-needle-top: 110px;
+  --ammeter-needle-top: 100px;
   --ammeter-needle-left: 102px;
   --ammeter-needle-image-top: 3px;
   --ammeter-needle-image-left: -8px;
@@ -851,7 +849,7 @@
 }
 
 .ammeter--A3 {
-  --ammeter-needle-top: 114px;
+  --ammeter-needle-top: 104px;
   --ammeter-needle-left: 102px;
   --ammeter-needle-image-top: 3px;
   --ammeter-needle-image-left: -8px;
@@ -863,15 +861,16 @@
 }
 
 .ammeter__image {
+  display: block;
   position: absolute;
   top: var(--ammeter-image-top);
   left: 0;
   z-index: 1;
   width: 204px;
-  height: 224px;
-  object-fit: fill;
+  height: 230px;
+  max-width: none;
+  
   transform-origin: center top;
-  transform: scale(var(--ammeter-image-scale));
   filter: none;
 }
 

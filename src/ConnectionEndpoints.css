@@ -92,7 +92,7 @@
   --jtk-endpoint-hover-outline-width: 2.1;
   --jtk-endpoint-hover-stroke: #64748b;
   --jtk-endpoint-hover-stroke-width: 1.4;
-  --terminal-size: 26px;
+  --terminal-size: 29px;
   --terminal-neutral: #7c8da1;
   --terminal-neutral-rgb: 124, 141, 161;
   --terminal-accent: #64748b;
@@ -339,89 +339,89 @@
 */
 .connection-lab .jtk-endpoint--terminal-1,
 .connection-terminal--endpoint-1 {
-  --jtk-endpoint-offset-x: -6px;
-  --jtk-endpoint-offset-y: -12px;
+  --jtk-endpoint-offset-x: -19px;
+  --jtk-endpoint-offset-y: 9px;
 }
 
 .connection-terminal--endpoint-1 {
-  --terminal-base-top: 158px;
-  --terminal-base-left: 56px;
+  --terminal-base-top: 138px;
+  --terminal-base-left: 61px;
 }
 
 .connection-lab .jtk-endpoint--terminal-2,
 .connection-terminal--endpoint-2 {
-  --jtk-endpoint-offset-x: -6px;
-  --jtk-endpoint-offset-y: -12px;
+  --jtk-endpoint-offset-x: -19px;
+  --jtk-endpoint-offset-y: 9px;
 }
 
 .connection-terminal--endpoint-2 {
-  --terminal-base-top: 158px;
-  --terminal-base-left: 98px;
+  --terminal-base-top: 138px;
+  --terminal-base-left: 103px;
 }
 
 .connection-lab .jtk-endpoint--terminal-3,
 .connection-terminal--endpoint-3 {
-  --jtk-endpoint-offset-x: -8px;
-  --jtk-endpoint-offset-y: -11px;
+  --jtk-endpoint-offset-x: -10px;
+  --jtk-endpoint-offset-y: 8px;
 }
 
 .connection-terminal--endpoint-3 {
-  --terminal-base-top: 168px;
+  --terminal-base-top: 153px;
   --terminal-base-left: 66px;
 }
 
 .connection-lab .jtk-endpoint--terminal-4,
 .connection-terminal--endpoint-4 {
-  --jtk-endpoint-offset-x: -30px;
-  --jtk-endpoint-offset-y: -11.5px;
+  --jtk-endpoint-offset-x:-29px;
+  --jtk-endpoint-offset-y: 7px;
 }
 
 .connection-terminal--endpoint-4 {
-  --terminal-base-top: 168px;
+  --terminal-base-top: 153px;
   --terminal-base-left: 142px;
 }
 
 .connection-lab .jtk-endpoint--terminal-5,
 .connection-terminal--endpoint-5 {
   --jtk-endpoint-offset-x: -3px;
-  --jtk-endpoint-offset-y: -5px;
+  --jtk-endpoint-offset-y: 13px;
 }
 
 .connection-terminal--endpoint-5 {
-  --terminal-base-top: 166px;
+  --terminal-base-top: 151px;
   --terminal-base-left: 65px;
 }
 
 .connection-lab .jtk-endpoint--terminal-6,
 .connection-terminal--endpoint-6 {
   --jtk-endpoint-offset-x: -20px;
-  --jtk-endpoint-offset-y: -6px;
+  --jtk-endpoint-offset-y: 12px;
 }
 
 .connection-terminal--endpoint-6 {
-  --terminal-base-top: 167px;
+  --terminal-base-top: 152px;
   --terminal-base-left: 142px;
 }
 
 .connection-lab .jtk-endpoint--terminal-7,
 .connection-terminal--endpoint-7 {
   --jtk-endpoint-offset-x: -1px;
-  --jtk-endpoint-offset-y: -6px;
+  --jtk-endpoint-offset-y: 9.3px;
 }
 
 .connection-terminal--endpoint-7 {
-  --terminal-base-top: 169px;
+  --terminal-base-top: 154px;
   --terminal-base-left: 63px;
 }
 
 .connection-lab .jtk-endpoint--terminal-8,
 .connection-terminal--endpoint-8 {
-  --jtk-endpoint-offset-x: -21px;
-  --jtk-endpoint-offset-y: -5px;
+  --jtk-endpoint-offset-x: -22px;
+  --jtk-endpoint-offset-y: 10px;
 }
 
 .connection-terminal--endpoint-8 {
-  --terminal-base-top: 167px;
+  --terminal-base-top: 152px;
   --terminal-base-left: 142px;
 }
 
@@ -532,43 +532,43 @@
 
 /* Adjust each terminal number label here. */
 .terminal-number-label--endpoint-1 {
-  top: 175px;
-  left: 60px;
+  top: 176px;
+  left: 54px;
 }
 
 .terminal-number-label--endpoint-2 {
-  top: 175px;
-  left: 103px;
+  top: 176px;
+  left: 97px;
 }
 
 .terminal-number-label--endpoint-3 {
   top: 190px;
-  left: 70px;
+  left: 69px;
 }
 
 .terminal-number-label--endpoint-4 {
   top: 190px;
-  left: 123px;
+  left: 125px;
 }
 
 .terminal-number-label--endpoint-5 {
-  top: 190px;
-  left: 72px;
+  top: 193px;
+  left: 75px;
 }
 
 .terminal-number-label--endpoint-6 {
-  top: 190px;
-  left: 132px;
+  top: 193px;
+  left: 135px;
 }
 
 .terminal-number-label--endpoint-7 {
-  top: 195px;
-  left: 72px;
+  top: 192px;
+  left: 75px;
 }
 
 .terminal-number-label--endpoint-8 {
-  top: 195px;
-  left: 130px;
+  top: 192px;
+  left: 133px;
 }
 
 .terminal-number-label--endpoint-9 {

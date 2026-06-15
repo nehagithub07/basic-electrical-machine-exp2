@@ -1,5 +1,5 @@
 const MIN_GRAPH_READINGS = 6
-const VOLTAGE_MAX = 10
+const VOLTAGE_MAX = 12
 const CHART_VIEWBOX = {
   height: 220,
   width: 960,
@@ -10,7 +10,7 @@ const CHART = {
   top: 28,
   width: 784,
 }
-const X_TICKS = [0, 2, 4, 6, 8, 10]
+const X_TICKS = [0, 2, 4, 6, 8, 10, 12]
 const Y_TICK_COUNT = 5
 // Tune labelLeft and labelTop to manually adjust graph labels in SVG units.
 const SERIES = [
@@ -146,12 +146,6 @@ const getSeriesLabelPoints = (observations, maxCurrent) => {
   }))
 }
 
-const CurrentLabel = ({ index }) => (
-  <>
-    I<sub>{index}</sub>
-  </>
-)
-
 const SvgCurrentLabel = ({ index }) => (
   <>
     I<tspan className="graph-panel__series-label-sub" dx="1">{index}</tspan>
@@ -177,11 +171,11 @@ const GraphPanel = ({ className = '', id, observations = [], plotted = false }) 
           <h2>GRAPH</h2>
         </div>
 
-        <div className="graph-panel__legend" aria-label="Current lines">
+        {/* <div className="graph-panel__legend" aria-label="Current lines">
           <span><i className="graph-panel__dot graph-panel__dot--i1" /><CurrentLabel index="1" /></span>
           <span><i className="graph-panel__dot graph-panel__dot--i2" /><CurrentLabel index="2" /></span>
           <span><i className="graph-panel__dot graph-panel__dot--i3" /><CurrentLabel index="3" /></span>
-        </div>
+        </div> */}
       </div>
 
       <div className="graph-panel__body">
