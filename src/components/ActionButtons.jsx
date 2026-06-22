@@ -14,8 +14,8 @@ import {
 
 const buttons = [
   {
-    id: 'instruction-button',
-    label: 'INSTRUCTION',
+    id: 'instructions-button',
+    label: 'INSTRUCTIONS',
     tone: 'action-button--gold',
     Icon: ButtonIcon,
     opensInstructions: true,

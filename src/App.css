@@ -193,7 +193,7 @@
 }
 
 .section-card__line {
-  width: 84px;
+  width: 54px;
   height: 1px;
   background: rgba(96, 63, 38, 0.3);
 }
@@ -279,7 +279,7 @@
   height: 21px;
   flex: 0 0 auto;
 }
-
+ 
 .action-button span {
   display: block;
   width: 100%;
@@ -321,7 +321,7 @@
 }
 
 .action-button--gold {
-  font-size: 10px;
+  font-size: 9.5px;
   background: linear-gradient(180deg, #ffd661, #b97808);
 }
 
@@ -704,8 +704,8 @@
 
 .power-supply__display {
   position: absolute;
-  top: 50px;
-  left: 40px;
+  top: 60px;
+  left: 35px;
   z-index: 4;
   display: flex;
   width: 125px;
@@ -833,7 +833,7 @@
 }
 
 .ammeter--A1 {
-  --ammeter-needle-top: 101px;
+  --ammeter-needle-top: 114px;
   --ammeter-needle-left: 97px;
   --ammeter-needle-image-top: 3px;
   --ammeter-needle-image-left: -8px;
@@ -841,7 +841,7 @@
 }
 
 .ammeter--A2 {
-  --ammeter-needle-top: 100px;
+  --ammeter-needle-top: 114px;
   --ammeter-needle-left: 102px;
   --ammeter-needle-image-top: 3px;
   --ammeter-needle-image-left: -8px;
@@ -849,7 +849,7 @@
 }
 
 .ammeter--A3 {
-  --ammeter-needle-top: 104px;
+  --ammeter-needle-top: 116px;
   --ammeter-needle-left: 102px;
   --ammeter-needle-image-top: 3px;
   --ammeter-needle-image-left: -8px;
@@ -1195,11 +1195,18 @@
   opacity: 1;
 }
 
-.report-button {
+.report-controls {
   position: absolute;
   right: 36px;
   bottom: 17px;
   z-index: 4;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.report-button,
+.formula-button {
   display: inline-flex;
   min-width: 178px;
   height: 46px;
@@ -1224,17 +1231,40 @@
   white-space: nowrap;
 }
 
-.report-button svg {
+.formula-button {
+  min-width: 132px;
+  padding: 0 18px;
+  border-color: rgba(107, 69, 24, 0.48);
+  color: #4f321d;
+  background: linear-gradient(180deg, #ffe7a8, #efae3f);
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.58);
+}
+
+.formula-button[aria-expanded='true'] {
+  filter: brightness(1.04) saturate(1.05);
+}
+
+.report-button svg,
+.formula-button svg {
   width: 21px;
   height: 21px;
   flex: 0 0 auto;
 }
 
-.report-button:hover {
+.formula-button svg {
+  width: 28px;
+  height: 28px;
+  overflow: visible;
+  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.5)) drop-shadow(0 1px 1px rgba(87, 48, 18, 0.28));
+}
+
+.report-button:hover,
+.formula-button:hover {
   filter: brightness(1.07);
 }
 
-.report-button:active {
+.report-button:active,
+.formula-button:active {
   transform: translateY(2px);
 }
 
@@ -1249,6 +1279,98 @@
 .report-button:disabled:active {
   filter: grayscale(0.18) brightness(0.82);
   transform: none;
+}
+
+.formula-panel {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 12px);
+  width: 376px;
+  max-width: calc(100vw - 48px);
+  padding: 14px;
+  border: 2px solid rgba(89, 55, 30, 0.35);
+  border-radius: 8px;
+  color: #3b271a;
+  background: #fff8ea;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.75),
+    0 14px 24px rgba(50, 30, 17, 0.28);
+  text-align: left;
+}
+
+.formula-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.formula-panel__header h3 {
+  margin: 0;
+  color: #362318;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.formula-panel__list {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.formula-panel__item {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 9px 10px;
+  border: 1px solid rgba(106, 74, 43, 0.22);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.formula-panel__item dt {
+  display: inline-grid;
+  min-height: 30px;
+  place-items: center;
+  border-radius: 6px;
+  color: #fff;
+  background: #075a9a;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.formula-panel__item dd {
+  min-width: 0;
+  margin: 0;
+}
+
+.formula-panel__equation {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.formula-panel__description {
+  display: block;
+  color: #6f523b;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.formula-panel__note {
+  margin: 10px 0 0;
+  padding: 8px 10px;
+  border-radius: 7px;
+  color: #274f2c;
+  background: rgba(63, 143, 67, 0.12);
+  font-size: 12px;
+  font-weight: 900;
 }
 
 .graph-panel__line--i1 {
