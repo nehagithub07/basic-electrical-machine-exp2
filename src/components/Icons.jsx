@@ -78,6 +78,16 @@ export const FormulaIcon = () => (
   </svg>
 )
 
+export const EquationIcon = () => (
+  <svg aria-hidden="true" viewBox="0 0 32 32">
+    <rect fill="rgba(255, 255, 255, 0.5)" height="22" rx="4" stroke="currentColor" strokeWidth="2.2" width="22" x="5" y="5" />
+    <path d="M9.5 12h5M9.5 17h5M18 13h4.5M18 18h4.5" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="2.4" />
+    <path d="M10 24c2.1-2.7 2.4-6.8.8-10.4M8.7 18.2h4.7" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="2.2" />
+    <path d="M18.6 22.5 22.7 11" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="2.1" />
+    <circle cx="20" cy="22" fill="currentColor" r="1.2" />
+  </svg>
+)
+
 export const AutoConnectIcon = () => (
   <svg aria-hidden="true" viewBox="0 0 32 32">
     <path d="M8 10h6M18 22h6M14 10c5.5 0 4.5 12 10 12M18 22c-5.5 0-4.5-12-10-12" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.6" />

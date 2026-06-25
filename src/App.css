@@ -698,8 +698,17 @@
   width: 300px;
   height: 220px;
   max-width: none;
-  
+  object-fit: fill;
+  object-position: center;
+  pointer-events: none;
   filter: none;
+}
+
+.power-supply--on .power-supply__image {
+  top: 3px;
+  left: -12.5px;
+  width: 304.5px;
+  height: 227px;
 }
 
 .power-supply__display {
@@ -729,8 +738,8 @@
 
 .power-supply__button {
   position: absolute;
-  top: 32px;
-  right: 18px;
+  top: 43px;
+  right: 25px;
   z-index: 4;
   width: 50px;
   height: 50px;

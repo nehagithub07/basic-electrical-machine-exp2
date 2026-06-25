@@ -10,118 +10,202 @@
       "id": 1,
       "target": "#experiment-title-board",
       "title": {
-        "en": "Experiment Goal"
+        "en": "Aim"
       },
       "description": {
-        "en": "This board states the lab objective. The walkthrough follows the same order students use to verify Kirchhoff's Current Law."
+        "en": "The aim of the experiment is to verify KCL by applying Kirchhoff’s rules to an electrical circuit and determining the currents flowing through its respective branches."
       },
       "audio": "#",
       "placement": "bottom"
     },
     {
       "id": 2,
-      "target": "#action-buttons-panel",
+      "target": "#instructions-button",
       "title": {
-        "en": "Lab Actions"
+        "en": "Instructions Button"
       },
       "description": {
-        "en": "Use these controls to check wiring, record readings, plot the graph, reset the setup, print results, or auto-connect the circuit."
+        "en": "The Instructions provide step-by-step guidance on how to perform the simulation."
       },
       "audio": "#",
       "placement": "right"
     },
     {
       "id": 3,
-      "target": "#auto-connect-button",
+      "target": "#ai-guide-button",
       "title": {
-        "en": "Auto Connect"
+        "en": "AI Guide Button"
       },
       "description": {
-        "en": "For a guided run, add the default circuit wires first, then press CHECK to validate and lock the connections."
+        "en": "To use this feature, click on the “AI Guide” button. The AI guide will assist you in performing the simulation accurately at each step."
       },
       "audio": "#",
       "placement": "right"
     },
     {
       "id": 4,
-      "target": "#resistance-controls",
+      "target": "#check-button",
       "title": {
-        "en": "Resistance Controls"
+        "en": "Check Button"
       },
       "description": {
-        "en": "After the connections are verified, set R1, R2, and R3 with these sliders. The controls lock while the supply is on or readings exist."
+        "en": "The CHECK button verifies all the connections to ensure that they are correct. \n\nNote: If a wire is connected incorrectly, click the corresponding label number to remove the connection."
       },
       "audio": "#",
       "placement": "right"
     },
     {
       "id": 5,
-      "target": "#power-supply",
+      "target": "#auto-connect-button",
       "title": {
-        "en": "Power Supply"
+        "en": "Auto Connect Button"
       },
       "description": {
-        "en": "Switch the supply on after the circuit passes CHECK. The display shows the active voltage supplied to the experiment."
+        "en": "The AUTO CONNECT button makes all the connections automatically."
       },
       "audio": "#",
-      "placement": "left"
+      "placement": "right"
     },
     {
       "id": 6,
-      "target": "#voltage-control",
+      "target": "#add-reading-button",
       "title": {
-        "en": "Voltage Controller"
+        "en": "Add Button"
       },
       "description": {
-        "en": "Use this slider to adjust the input voltage. Record a new observation after each unique voltage setting."
+        "en": "The ADD button adds the readings to the observation table."
       },
       "audio": "#",
-      "placement": "left"
+      "placement": "right"
     },
     {
       "id": 7,
-      "target": "#ammeter-bank",
+      "target": "#plot-button",
       "title": {
-        "en": "Ammeter Readings"
+        "en": "Plot Button"
       },
       "description": {
-        "en": "A1 measures the main current. A2 and A3 show the branch currents used to confirm that I1 equals I2 plus I3."
+        "en": " The PLOT button helps visualise the readings through a graph."
       },
       "audio": "#",
-      "placement": "bottom"
+      "placement": "right"
     },
     {
       "id": 8,
-      "target": "#circuit-panel",
+      "target": "#reset-button",
       "title": {
-        "en": "Circuit Wiring Area"
+        "en": "Reset Button"
       },
       "description": {
-        "en": "Create or inspect terminal connections here. Before the circuit is locked, terminal labels can be used to remove a wire."
+        "en": "The RESET button refresh the simulation to its initial state for a fresh start."
       },
       "audio": "#",
-      "placement": "left"
+      "placement": "right"
     },
-    {
+      {
       "id": 9,
-      "target": "#observation-table-panel",
+      "target": "#print-button",
       "title": {
-        "en": "Observation Table"
+        "en": "Print Button"
       },
       "description": {
-        "en": "Each added reading appears in this table. Collect at least six readings before plotting the graph."
+        "en": " The PRINT button allows you to print the simulation."
       },
       "audio": "#",
       "placement": "right"
     },
     {
       "id": 10,
-      "target": "#graph-panel",
+      "target": "#resistance-controls",
       "title": {
-        "en": "Observation Graph"
+        "en": "Resistance Sliders"
       },
       "description": {
-        "en": "Once enough readings are available, PLOT displays current-versus-voltage traces for I1, I2, and I3."
+        "en": "Set the values of R1, R2, and R3 by moving the resistance sliders. These resistance values will remain constant throughout the experiment to ensure accurate verification of Kirchhoff’s Current Law."
+      },
+      "audio": "#",
+      "placement": "right"
+    },
+    {
+      "id": 11,
+      "target": "#power-supply",
+      "title": {
+        "en": "Regulated DC Power Supply"
+      },
+      "description": {
+        "en": "This section provides the required DC voltage to the circuit. The display shows the active voltage supplied to the circuit, and the slider can be used to set the desired voltage value."
+      },
+      "audio": "#",
+      "placement": "left"
+    },
+    {
+      "id": 12,
+      "target": "#ammeter-bank",
+      "title": {
+        "en": "DC Ammeters"
+      },
+      "description": {
+        "en": "DC Ammeters are used to measure the branch currents in the circuit. Record the current readings for each branch at different voltage values. The measured currents are used to compare the current entering and leaving the junction for KCL verification."
+      },
+      "audio": "#",
+      "placement": "bottom"
+    },
+    {
+      "id": 13,
+      "target": "#circuit-panel",
+      "title": {
+        "en": "Circuit Connections"
+      },
+      "description": {
+        "en": "This section displays the circuit and allows users to make the required connections by dragging and dropping wires between the connection points."
+      },
+      "audio": "#",
+      "placement": "left"
+    },
+    {
+      "id": 14,
+      "target": "#observation-table-panel",
+      "title": {
+        "en": "Observation Table"
+      },
+      "description": {
+        "en": "This table records the measured branch currents I1, I2, and I3 at different voltages. These readings will be used later to plot the graph."
+      },
+      "audio": "#",
+      "placement": "right"
+    },
+    {
+      "id": 15,
+      "target": "#formula-button",
+      "title": {
+        "en": "Equations"
+      },
+      "description": {
+        "en": " This section displays the equations used to determine the branch currents."
+      },
+      "audio": "#",
+      "placement": "top"
+    },
+    {
+      "id": 16,
+      "target": "#graph-panel",
+      "title": {
+        "en": "Graph"
+      },
+      "description": {
+        "en": "After recording the observations, this section generates the current–voltage graph from the measured readings for analysis. "
+      },
+      "audio": "#",
+      "placement": "top"
+    },
+    {
+      "id": 17,
+      "target": "#generate-report-button",
+      "title": {
+        "en": "Generate Report"
+      },
+      "description": {
+        "en": "The Report button generates a summarised report of the simulation. After completing the observation table and graph plotting, generate the report. The report will include the time taken to complete the simulation, key parameters, recorded readings, graph plot and conclusion."
       },
       "audio": "#",
       "placement": "top"

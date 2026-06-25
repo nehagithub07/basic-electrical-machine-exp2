@@ -8,7 +8,7 @@ const PowerSupply = ({ onTogglePower, powerOn, setVoltage, voltage }) => {
   }
 
   return (
-    <article className="power-supply" id="power-supply">
+    <article className={`power-supply${powerOn ? ' power-supply--on' : ''}`} id="power-supply">
       <img
         alt={powerOn ? 'Power supply switched on' : 'Power supply switched off'}
         className="power-supply__image"

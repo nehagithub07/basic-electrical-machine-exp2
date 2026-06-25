@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FormulaIcon, PdfIcon } from './Icons.jsx'
+import { EquationIcon, PdfIcon } from './Icons.jsx'
 
 const formulas = [
   {
@@ -96,8 +96,8 @@ const ReportControls = ({
         aria-label={formulasOpen ? 'Hide experiment formulas' : 'Show experiment formulas'}
         onClick={() => setFormulasOpen((current) => !current)}
       >
-        <FormulaIcon />
-        <span>Formulas</span>
+        <EquationIcon />
+        <span>Equations</span>
       </button>
 
       <button
