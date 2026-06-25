@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import { EquationIcon, PdfIcon } from './Icons.jsx'
+import { FormulaIcon, PdfIcon } from './Icons.jsx'
+import { useWalkthrough } from '../walkthrough/useWalkthrough.js'
 
 const formulas = [
   {
@@ -48,7 +49,9 @@ const ReportControls = ({
   reportGenerated,
 }) => {
   const [formulasOpen, setFormulasOpen] = useState(false)
+  const { isOpen: walkthroughOpen } = useWalkthrough()
   const readingsReady = readingCount >= minReadings
+  const reportButtonDisabled = !walkthroughOpen && !readingsReady
   const buttonTitle = reportGenerated
     ? 'Report generated. Click to regenerate the report.'
     : readingsReady && !graphGenerated
@@ -96,7 +99,7 @@ const ReportControls = ({
         aria-label={formulasOpen ? 'Hide experiment formulas' : 'Show experiment formulas'}
         onClick={() => setFormulasOpen((current) => !current)}
       >
-        <EquationIcon />
+        <FormulaIcon />
         <span>Equations</span>
       </button>
 
@@ -104,7 +107,7 @@ const ReportControls = ({
         id="generate-report-button"
         type="button"
         className="report-button"
-        disabled={!readingsReady}
+        disabled={reportButtonDisabled}
         title={buttonTitle}
         aria-label="Generate Report"
         data-report-generated={reportGenerated ? 'true' : 'false'}

@@ -55,25 +55,26 @@ export const PdfIcon = () => (
 
 export const FormulaIcon = () => (
   <svg aria-hidden="true" viewBox="0 0 32 32">
-    <defs>
-      <linearGradient id="formula-page-gradient" x1="8" x2="24" y1="5" y2="28" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#fffaf0" />
-        <stop offset="0.58" stopColor="#ffe8b5" />
-        <stop offset="1" stopColor="#f0b85a" />
-      </linearGradient>
-      <linearGradient id="formula-fold-gradient" x1="20" x2="25" y1="5" y2="10" gradientUnits="userSpaceOnUse">
-        <stop stopColor="#ffffff" />
-        <stop offset="1" stopColor="#e7ba65" />
-      </linearGradient>
-    </defs>
-    <path d="M8 27.5c2.6 1.2 13.3 1.2 16 0" fill="none" opacity="0.24" stroke="#22150d" strokeLinecap="round" strokeWidth="2.7" />
-    <path d="M7.2 5h13.6L25 9.2v17.1c0 1-.8 1.8-1.8 1.8h-16c-1 0-1.8-.8-1.8-1.8V6.8c0-1 .8-1.8 1.8-1.8Z" fill="url(#formula-page-gradient)" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.85" />
-    <path d="M20.8 5v3.7c0 .7.5 1.2 1.2 1.2H25Z" fill="url(#formula-fold-gradient)" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.45" />
-    <path d="M10 12h6.6M10 24h12.3" fill="none" opacity="0.48" stroke="#8d642d" strokeLinecap="round" strokeWidth="1.35" />
-    <path d="M10.4 22c2.5-3.8 2.9-8.7 1.2-11M9.4 15.4h5.8" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.85" />
-    <path d="M17 14h5.8M17 18h5.8M18.2 12.4l3.4 7.1M21.6 12.4l-3.4 7.1" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.55" />
-    <text fill="currentColor" fontFamily="Arial, Helvetica, sans-serif" fontSize="4.6" fontWeight="900" x="16.9" y="24">
-      I1
+    <text
+      fill="#050505"
+      fontFamily="Arial Black, Arial, Helvetica, sans-serif"
+      fontSize="31"
+      fontStyle="italic"
+      fontWeight="900"
+      x="2"
+      y="27"
+    >
+      f
+    </text>
+    <text
+      fill="#050505"
+      fontFamily="Arial Black, Arial, Helvetica, sans-serif"
+      fontSize="24"
+      fontWeight="900"
+      x="16.2"
+      y="26"
+    >
+      x
     </text>
   </svg>
 )

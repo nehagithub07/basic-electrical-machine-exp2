@@ -842,7 +842,7 @@
 }
 
 .ammeter--A1 {
-  --ammeter-needle-top: 114px;
+  --ammeter-needle-top: 120px;
   --ammeter-needle-left: 97px;
   --ammeter-needle-image-top: 3px;
   --ammeter-needle-image-left: -8px;
@@ -850,7 +850,7 @@
 }
 
 .ammeter--A2 {
-  --ammeter-needle-top: 114px;
+  --ammeter-needle-top: 120px;
   --ammeter-needle-left: 102px;
   --ammeter-needle-image-top: 3px;
   --ammeter-needle-image-left: -8px;
@@ -858,7 +858,7 @@
 }
 
 .ammeter--A3 {
-  --ammeter-needle-top: 116px;
+  --ammeter-needle-top: 120px;
   --ammeter-needle-left: 102px;
   --ammeter-needle-image-top: 3px;
   --ammeter-needle-image-left: -8px;
@@ -1261,8 +1261,8 @@
 }
 
 .formula-button svg {
-  width: 28px;
-  height: 28px;
+  width: 31px;
+  height: 31px;
   overflow: visible;
   filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.5)) drop-shadow(0 1px 1px rgba(87, 48, 18, 0.28));
 }

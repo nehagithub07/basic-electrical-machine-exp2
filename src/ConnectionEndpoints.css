@@ -362,7 +362,7 @@
 .connection-lab .jtk-endpoint--terminal-3,
 .connection-terminal--endpoint-3 {
   --jtk-endpoint-offset-x: -10px;
-  --jtk-endpoint-offset-y: 8px;
+  --jtk-endpoint-offset-y: 20px;
 }
 
 .connection-terminal--endpoint-3 {
@@ -372,8 +372,8 @@
 
 .connection-lab .jtk-endpoint--terminal-4,
 .connection-terminal--endpoint-4 {
-  --jtk-endpoint-offset-x:-29px;
-  --jtk-endpoint-offset-y: 7px;
+  --jtk-endpoint-offset-x:-20px;
+  --jtk-endpoint-offset-y: 20px;
 }
 
 .connection-terminal--endpoint-4 {
@@ -383,45 +383,45 @@
 
 .connection-lab .jtk-endpoint--terminal-5,
 .connection-terminal--endpoint-5 {
-  --jtk-endpoint-offset-x: -3px;
-  --jtk-endpoint-offset-y: 13px;
+  --jtk-endpoint-offset-x: -6px;
+  --jtk-endpoint-offset-y: 22.9px;
 }
 
 .connection-terminal--endpoint-5 {
-  --terminal-base-top: 151px;
+  --terminal-base-top: 150px;
   --terminal-base-left: 65px;
 }
 
 .connection-lab .jtk-endpoint--terminal-6,
 .connection-terminal--endpoint-6 {
   --jtk-endpoint-offset-x: -20px;
-  --jtk-endpoint-offset-y: 12px;
+  --jtk-endpoint-offset-y: 22.9px;
 }
 
 .connection-terminal--endpoint-6 {
-  --terminal-base-top: 152px;
+  --terminal-base-top: 150px;
   --terminal-base-left: 142px;
 }
 
 .connection-lab .jtk-endpoint--terminal-7,
 .connection-terminal--endpoint-7 {
-  --jtk-endpoint-offset-x: -1px;
-  --jtk-endpoint-offset-y: 9.3px;
+  --jtk-endpoint-offset-x: -3px;
+  --jtk-endpoint-offset-y: 20px;
 }
 
 .connection-terminal--endpoint-7 {
-  --terminal-base-top: 154px;
+  --terminal-base-top: 153px;
   --terminal-base-left: 63px;
 }
 
 .connection-lab .jtk-endpoint--terminal-8,
 .connection-terminal--endpoint-8 {
   --jtk-endpoint-offset-x: -22px;
-  --jtk-endpoint-offset-y: 10px;
+  --jtk-endpoint-offset-y: 20px;
 }
 
 .connection-terminal--endpoint-8 {
-  --terminal-base-top: 152px;
+  --terminal-base-top: 153px;
   --terminal-base-left: 142px;
 }
 
@@ -542,32 +542,32 @@
 }
 
 .terminal-number-label--endpoint-3 {
-  top: 190px;
+  top: 203px;
   left: 69px;
 }
 
 .terminal-number-label--endpoint-4 {
-  top: 190px;
-  left: 125px;
+  top: 203px;
+  left: 135px;
 }
 
 .terminal-number-label--endpoint-5 {
-  top: 193px;
-  left: 75px;
+    top: 203px;
+  left: 72px;
 }
 
 .terminal-number-label--endpoint-6 {
-  top: 193px;
+  top: 203px;
   left: 135px;
 }
 
 .terminal-number-label--endpoint-7 {
-  top: 192px;
-  left: 75px;
+  top: 203px;
+  left: 72px;
 }
 
 .terminal-number-label--endpoint-8 {
-  top: 192px;
+  top: 203px;
   left: 133px;
 }
 
