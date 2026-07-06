@@ -56,7 +56,7 @@ export const PdfIcon = () => (
 export const FormulaIcon = () => (
   <svg aria-hidden="true" viewBox="0 0 32 32">
     <text
-      fill="#050505"
+      fill="currentColor"
       fontFamily="Arial Black, Arial, Helvetica, sans-serif"
       fontSize="31"
       fontStyle="italic"
@@ -67,7 +67,7 @@ export const FormulaIcon = () => (
       f
     </text>
     <text
-      fill="#050505"
+      fill="currentColor"
       fontFamily="Arial Black, Arial, Helvetica, sans-serif"
       fontSize="24"
       fontWeight="900"

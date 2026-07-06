@@ -1,14 +1,28 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 
+import { addExclusiveAudioListener, dispatchExclusiveAudioStart } from '../../utils/audioCoordinator.js'
 import { useFocusTrap } from '../hooks/useFocusTrap.js'
 
 const EDGE_GAP = 16
 const TARGET_GAP = 18
+const WALKTHROUGH_AUDIO_SOURCE_ID = 'walkthrough'
 const DEFAULT_POPUP_SIZE = {
   height: 280,
   width: 360,
 }
+
+const PlayIcon = () => (
+  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+    <path d="M8 5v14l11-7z" />
+  </svg>
+)
+
+const PauseIcon = () => (
+  <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24">
+    <path d="M7 5h4v14H7zM13 5h4v14h-4z" />
+  </svg>
+)
 
 const isValidAudioSource = (audio) => Boolean(audio && audio !== '#')
 
@@ -94,9 +108,11 @@ const WalkthroughPopup = ({
   canGoNext,
   canGoPrevious,
   currentStep,
+  isReportStep,
   onClose,
   onNext,
   onPrevious,
+  onSkip,
   targetRect,
   totalSteps,
 }) => {
@@ -110,8 +126,22 @@ const WalkthroughPopup = ({
   const progressPercent = (currentStep / totalSteps) * 100
   const primaryActionLabel = canGoNext ? 'Next' : 'Finish'
   const handlePrimaryAction = canGoNext ? onNext : onClose
+  const secondaryActionLabel = isReportStep ? 'Exit' : 'Skip'
+  const handleSecondaryAction = isReportStep ? onClose : onSkip
 
   useFocusTrap(popupRef, true)
+
+  const stopAudio = useCallback(() => {
+    const audio = audioRef.current
+
+    if (!audio) {
+      return
+    }
+
+    audio.pause()
+    audio.currentTime = 0
+    setIsPlaying(false)
+  }, [])
 
   useLayoutEffect(() => {
     if (!popupRef.current) {
@@ -142,6 +172,7 @@ const WalkthroughPopup = ({
     audio.addEventListener('ended', handleEnded)
 
     if (autoPlayAudio) {
+      dispatchExclusiveAudioStart(WALKTHROUGH_AUDIO_SOURCE_ID)
       audio.play()
         .then(() => setIsPlaying(true))
         .catch(() => setIsPlaying(false))
@@ -154,6 +185,10 @@ const WalkthroughPopup = ({
       audio.removeEventListener('ended', handleEnded)
     }
   }, [activeStep.id, audioSource, autoPlayAudio])
+
+  useEffect(() => (
+    addExclusiveAudioListener(WALKTHROUGH_AUDIO_SOURCE_ID, stopAudio)
+  ), [stopAudio])
 
   const popupPosition = useMemo(
     () => getPopupPosition(targetRect, popupSize, activeStep.placement),
@@ -173,6 +208,7 @@ const WalkthroughPopup = ({
       return
     }
 
+    dispatchExclusiveAudioStart(WALKTHROUGH_AUDIO_SOURCE_ID)
     audio.play()
       .then(() => setIsPlaying(true))
       .catch(() => setIsPlaying(false))
@@ -205,15 +241,6 @@ const WalkthroughPopup = ({
           <p className="walkthrough-popup__eyebrow">Guided Walkthrough</p>
           <h2 id={titleId}>{activeStep.title}</h2>
         </div>
-
-        <button
-          aria-label="Exit walkthrough"
-          className="walkthrough-popup__icon-button"
-          onClick={onClose}
-          type="button"
-        >
-          <span aria-hidden="true">&times;</span>
-        </button>
       </div>
 
       <p className="walkthrough-popup__description" id={descriptionId}>
@@ -235,9 +262,10 @@ const WalkthroughPopup = ({
           className="walkthrough-popup__audio"
           disabled={!audioSource}
           onClick={toggleAudio}
+          title={audioSource ? (isPlaying ? 'Pause audio narration' : 'Play audio narration') : 'Audio narration unavailable'}
           type="button"
         >
-          <span aria-hidden="true">{isPlaying ? 'Pause' : 'Audio'}</span>
+          {isPlaying ? <PauseIcon /> : <PlayIcon />}
         </button>
       </div>
 
@@ -251,11 +279,12 @@ const WalkthroughPopup = ({
           Previous
         </button>
         <button
+          aria-label={isReportStep ? 'Exit walkthrough' : 'Skip to Generate Report'}
           className="walkthrough-popup__button walkthrough-popup__button--secondary"
-          onClick={onClose}
+          onClick={handleSecondaryAction}
           type="button"
         >
-          Exit
+          {secondaryActionLabel}
         </button>
         <button
           className="walkthrough-popup__button walkthrough-popup__button--primary"

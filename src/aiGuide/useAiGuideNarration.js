@@ -2,6 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import defaultAiGuideConfig from './aiGuideConfig.json'
 import { isConfiguredAudioSource, loadAiGuideConfig } from './aiGuideConfigLoader.js'
+import { addExclusiveAudioListener, dispatchExclusiveAudioStart } from '../utils/audioCoordinator.js'
+
+const AI_GUIDE_AUDIO_SOURCE_ID = 'ai-guide'
 
 const canUseSpeechSynthesis = () => (
   typeof window !== 'undefined'
@@ -29,6 +32,7 @@ export const useAiGuideNarration = ({
     [config, locale],
   )
   const [isPlaying, setIsPlaying] = useState(false)
+  const isActiveRef = useRef(false)
   const currentPlaybackRef = useRef(null)
   const runIdRef = useRef(0)
 
@@ -44,6 +48,7 @@ export const useAiGuideNarration = ({
   }, [])
 
   const stop = useCallback(() => {
+    isActiveRef.current = false
     runIdRef.current += 1
     stopCurrentPlayback()
     setIsPlaying(false)
@@ -55,6 +60,7 @@ export const useAiGuideNarration = ({
       return
     }
 
+    dispatchExclusiveAudioStart(AI_GUIDE_AUDIO_SOURCE_ID)
     window.speechSynthesis.cancel()
 
     const utterance = new SpeechSynthesisUtterance(text)
@@ -131,6 +137,8 @@ export const useAiGuideNarration = ({
     audio.addEventListener('ended', handleEnded)
     audio.addEventListener('error', handleError)
 
+    dispatchExclusiveAudioStart(AI_GUIDE_AUDIO_SOURCE_ID)
+
     currentPlaybackRef.current = {
       audio,
       stop: () => {
@@ -160,47 +168,93 @@ export const useAiGuideNarration = ({
     await speakText(step.text)
   }, [playAudio, speakText])
 
-  const start = useCallback(async () => {
-    stop()
+  const playStepById = useCallback(async (stepId) => {
+    if (guideConfig.steps.length === 0) {
+      onError?.(new Error('AI Guide has no configured steps.'))
+      return
+    }
+
+    if (!isActiveRef.current) {
+      return
+    }
+
+    const step = guideConfig.steps.find((entry) => entry.id === String(stepId))
+
+    if (!step) {
+      return
+    }
 
     const runId = runIdRef.current + 1
     runIdRef.current = runId
+    stopCurrentPlayback()
+
+    try {
+      await playStep(step)
+      return runIdRef.current === runId
+    } catch (error) {
+      if (runIdRef.current === runId) {
+        onError?.(error)
+      }
+
+      return false
+    }
+  }, [guideConfig.steps, onError, playStep, stopCurrentPlayback])
+
+  const playStepsById = useCallback(async (stepIds) => {
+    if (!Array.isArray(stepIds) || !isActiveRef.current) {
+      return
+    }
+
+    for (const stepId of stepIds) {
+      if (!isActiveRef.current) {
+        return
+      }
+
+      const completed = await playStepById(stepId)
+
+      if (!completed) {
+        return
+      }
+    }
+  }, [playStepById])
+
+  const start = useCallback(() => {
+    stopCurrentPlayback()
 
     if (guideConfig.steps.length === 0) {
+      isActiveRef.current = false
       setIsPlaying(false)
       onError?.(new Error('AI Guide has no configured steps.'))
       return
     }
 
+    isActiveRef.current = true
     setIsPlaying(true)
     onStart?.(guideConfig)
+    playStepById(1)
+  }, [guideConfig, onError, onStart, playStepById, stopCurrentPlayback])
 
-    try {
-      for (const step of guideConfig.steps) {
-        if (runIdRef.current !== runId) {
-          return
-        }
+  const finish = useCallback(() => {
+    isActiveRef.current = false
+    runIdRef.current += 1
+    stopCurrentPlayback()
+    setIsPlaying(false)
+    onFinish?.(guideConfig)
+  }, [guideConfig, onFinish, stopCurrentPlayback])
 
-        await playStep(step)
-      }
-
-      if (runIdRef.current === runId) {
-        setIsPlaying(false)
-        onFinish?.(guideConfig)
-      }
-    } catch (error) {
-      if (runIdRef.current === runId) {
-        setIsPlaying(false)
-        onError?.(error)
-      }
-    }
-  }, [guideConfig, onError, onFinish, onStart, playStep, stop])
+  useEffect(() => addExclusiveAudioListener(AI_GUIDE_AUDIO_SOURCE_ID, () => {
+    runIdRef.current += 1
+    stopCurrentPlayback()
+  }), [stopCurrentPlayback])
 
   useEffect(() => stop, [stop])
 
   return {
     config: guideConfig,
+    finish,
     isPlaying,
+    playStepById,
+    playStepsById,
     start,
     stop,
   }

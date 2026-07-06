@@ -14,8 +14,10 @@ const WalkthroughOverlay = () => {
     currentStep,
     isOpen,
     isPositioningTarget,
+    isReportStep,
     next,
     previous,
+    skipToReport,
     targetRect,
     totalSteps,
   } = useWalkthrough()
@@ -41,10 +43,12 @@ const WalkthroughOverlay = () => {
                 canGoNext={canGoNext}
                 canGoPrevious={canGoPrevious}
                 currentStep={currentStep}
+                isReportStep={isReportStep}
                 key={activeStep.id}
                 onClose={close}
                 onNext={next}
                 onPrevious={previous}
+                onSkip={skipToReport}
                 targetRect={targetRect}
                 totalSteps={totalSteps}
               />

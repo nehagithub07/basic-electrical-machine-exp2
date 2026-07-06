@@ -5,58 +5,168 @@
   "steps": [
     {
       "id": 1,
-      "text": "STEP 1: Make connections by dragging nodes from apparatus to the circuit. Connect power supply to the circuit, 1 to 9 and 2 to 10. Connect ammeters, 3 to 11 and 4 to 12, 5 to 13 and 6 to 14, and 7 to 15 and 8 to 16, or connect any ammeter to any resistance in circuit. Click on the label to delete all the connections for the corresponding nodes.",
-      "audio": "#"
+      "text": "Hello! I am your AI Guide. I will guide you through each step of the experiment. Please follow the instructions carefully and perform the actions as directed. Before we begin, let us familiarize ourselves with the simulation interface. To start, click on the start walkthrough",
+      "audio": "./audios/AI Guide click.wav"
     },
     {
       "id": 2,
-      "text": "STEP 2: Check your connections by clicking on the CHECK button.",
-      "audio": "#"
+      "text": "The interface walkthrough is now complete. You are now ready to perform the experiment. You may either click the Auto Connect button to make the circuit connections automatically or connect the circuit manually by following the highlighted terminals. Let's begin with the first connection.",
+      "audio": "./audios/The interface walkthrough is now complete.wav"
     },
     {
       "id": 3,
-      "text": "STEP 3: Set the values of resistances R1, R2 and R3 by adjusting the sliders on left. These values will remain constant throughout the experiment.",
-      "audio": "#"
+      "text": "Connect the DC power supply to the circuit by clicking and drag the wire from terminal 1 and drop it on terminal 9",
+      "audio": "./audios/Correct Connections.wav"
     },
     {
       "id": 4,
-      "text": "STEP 4: Click the Power button to turn on the power supply.",
-      "audio": "#"
+      "text": "Let's move on to the next connection. Connect terminal 2 to terminal 10.",
+      "audio": "./audios/Let's move on to the next connection.wav"
     },
     {
       "id": 5,
-      "text": "STEP 5: Vary the voltage value by moving the voltage slider to the right side. The readings on the ammeter will change accordingly.",
-      "audio": "#"
+      "text": "Now, connect terminal 3 of the ammeter to terminal 11.",
+      "audio": "./audios/Now, connect terminal 3 of the ammeter to terminal 11.wav"
     },
     {
       "id": 6,
-      "text": "STEP 6: Click on the ADD button to add the readings to the observation table.",
-      "audio": "#"
+      "text": "Connect terminal 4 to terminal 12.",
+      "audio": "./audios/Connect terminal 4 to terminal 12.wav"
     },
     {
       "id": 7,
-      "text": "STEP 7: Repeat step 6 until 6 readings are recorded. A minimum of 6 readings is required to plot the graph.",
-      "audio": "#"
+      "text": "Connect terminal 5 to terminal 13.",
+      "audio": "./audios/Connect terminal 5 to terminal 13.wav"
     },
     {
       "id": 8,
-      "text": "STEP 8: Click on the PLOT button to display the graph.",
-      "audio": "#"
+      "text": "Connect terminal 6 to terminal 14.",
+      "audio": "./audios/Connect terminal 6 to terminal 14..wav"
     },
     {
       "id": 9,
-      "text": "STEP 9: Click on the Generate Report button below the graph to open the experiment report.",
-      "audio": "#"
+      "text": "Connect terminal 7 to terminal 15.",
+      "audio": "./audios/Connect terminal 7 to terminal 15.wav"
     },
     {
       "id": 10,
-      "text": "STEP 10: Use the report page controls to print or download the generated report.",
-      "audio": "#"
+      "text": "Connect terminal 8 to terminal 16.",
+      "audio": "./audios/Connect terminal 8 to terminal 16.wav"
     },
     {
       "id": 11,
-      "text": "STEP 11: Click on RESET button to refresh the page.",
-      "audio": "#"
+      "text": "All connections are completed. Click on the Check button to verify the connections.",
+      "audio": "./audios/Guide all complete conn.wav"
+    },
+    {
+      "id": 12,
+      "text": "This connection is wrong.",
+      "audio": "./audios/Wrong connection.wav"
+    },
+    {
+      "id": 13,
+      "text": "Some connections are wrong.",
+      "audio": "./audios/Multiple wrong connections.wav"
+    },
+    {
+      "id": 14,
+      "text": "Please make the required connections as per the given instructions.",
+      "audio": "./audios/1st time check button click.wav"
+    },
+    {
+      "id": 15,
+      "text": "Autoconnect completed. Click on the check button to verify the connections.",
+      "audio": "./audios/Autoconnect.wav"
+    },
+    {
+      "id": 16,
+      "text": "Please add at least six readings to plot the graph.",
+      "audio": "./audios/InsufficientReadings.wav"
+    },
+    {
+      "id": 17,
+      "text": "Please add at least six readings to plot the graph.",
+      "audio": "./audios/InsufficientReadings.wav"
+    },
+    {
+      "id": 18,
+      "text": " Please complete or check the connections first to turn on the power supply.",
+      "audio": "./audios/1st time Power Supply click.wav"
+    },
+    {
+      "id": 19,
+      "text": "Connections Verified successfully. Now set the required resistance value by moving the resistance sliders.",
+      "audio": "./audios/For correct connections, check click.wav"
+    },
+    {
+      "id": 20,
+      "text": "Please set R1, R2 and R3 by moving the resistance sliders before turning ON the power supply.",
+      "audio": "./audios/After correct connections, ps click.wav"
+    },
+    {
+      "id": 21,
+      "text": "The resistance values for R₁, R₂, and R₃ have been set. Click on the Power to turn ON the power supply.",
+      "audio": "./audios/After resistance is set.wav"
+    },
+    {
+      "id": 22,
+      "text": "Power supply has been turned ON. Now, set the voltage by moving the voltage slider.",
+      "audio": "./audios/powerSupplyTurnOn.wav"
+    },
+    {
+      "id": 23,
+      "text": "The readings are displayed on the ammeters. Now, click on the add button to add the readings to the observation table.",
+      "audio": "./audios/Voltage is set.wav"
+    },
+    {
+      "id": 24,
+      "text": "Readings added successfully. To record the second reading, change the voltage and click the Add button again.",
+      "audio": "./audios/1st readings added.wav"
+    },
+    {
+      "id": 25,
+      "text": "Duplicate Readings: This reading is already added to the table. Change the voltage value and take the next reading.",
+      "audio": "./audios/For Duplicate Readings, Add click.wav"
+    },
+    {
+      "id": 26,
+      "text": "Second reading added successfully. Change the voltage value and click the Add button again to record the next reading. Repeat these steps until at least six readings are recorded.",
+      "audio": "./audios/2nd readings added.wav"
+    },
+    {
+      "id": 27,
+      "text": "You have added six readings. Now you can plot the graph by clicking on the graph button or add more readings to the table.",
+      "audio": "./audios/After 6 readings, Graph click.wav"
+    },
+    {
+      "id": 28,
+      "text": "All ten readings have been recorded. Now plot the graph and then click on the generate report button to generate your report.",
+      "audio": "./audios/After 10 readings have been done.wav"
+    },
+    {
+      "id": 29,
+      "text": "You can add a maximum of ten readings to the table. Now, click the Graph button.",
+      "audio": "./audios/For max. readings, add button click.wav"
+    },
+    {
+      "id": 30,
+      "text": "The graph of current vs voltage has been plotted successfully. Your simulation is now complete. You may view the report by clicking on the generate report button, then use print to print the page or reset to start the simulation again.",
+      "audio": "./audios/Graph 2.wav"
+    },
+    {
+      "id": 31,
+      "text": "The simulation has been reset. You can start again.",
+      "audio": "./audios/Reset.wav"
+    },
+    {
+      "id": 32,
+      "text": "Opening the print dialog.",
+      "audio": "./audios/Print.wav"
+    },
+    {
+      "id": 33,
+      "text": "Report Generated: Your report has been generated successfully. Click OK to view your report.",
+      "audio": "./audios/Generate Report button click.wav"
     }
   ]
 }

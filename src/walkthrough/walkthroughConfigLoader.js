@@ -1,5 +1,11 @@
 const FALLBACK_LOCALE = 'en'
 
+const walkthroughAudioModules = import.meta.glob('./walkthrough-audios/*', {
+  eager: true,
+  import: 'default',
+  query: '?url',
+})
+
 const getLocalizedValue = (value, locale, fallbackLocale) => {
   if (typeof value === 'string') {
     return value
@@ -16,6 +22,20 @@ const getLocalizedValue = (value, locale, fallbackLocale) => {
     ?? Object.values(value).find((entry) => typeof entry === 'string')
     ?? ''
   )
+}
+
+const resolveWalkthroughAudio = (audio) => {
+  if (!audio || audio === '#') {
+    return audio ?? '#'
+  }
+
+  if (typeof audio !== 'string') {
+    return '#'
+  }
+
+  const normalizedAudio = audio.replaceAll('\\', '/')
+
+  return walkthroughAudioModules[normalizedAudio] ?? audio
 }
 
 export const loadWalkthroughConfig = (config, locale = FALLBACK_LOCALE) => {
@@ -35,6 +55,7 @@ export const loadWalkthroughConfig = (config, locale = FALLBACK_LOCALE) => {
       .filter((step) => step?.target)
       .map((step, index) => ({
         ...step,
+        audio: resolveWalkthroughAudio(step.audio),
         description: getLocalizedValue(step.description, resolvedLocale, defaultLocale),
         id: String(step.id ?? index + 1),
         placement: step.placement ?? 'bottom',

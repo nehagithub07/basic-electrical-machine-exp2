@@ -50,6 +50,14 @@ const WalkthroughProvider = ({
   const currentStep = currentStepIndex + 1
   const canGoPrevious = currentStepIndex > 0
   const canGoNext = currentStepIndex < totalSteps - 1
+  const reportStepIndex = useMemo(() => {
+    const generateReportIndex = walkthroughConfig.steps.findIndex(
+      (step) => step.target === '#generate-report-button',
+    )
+
+    return generateReportIndex >= 0 ? generateReportIndex : Math.max(totalSteps - 1, 0)
+  }, [totalSteps, walkthroughConfig.steps])
+  const isReportStep = Boolean(activeStep && currentStepIndex === reportStepIndex)
   const autoPlayAudioForStep = Boolean(
     activeStep?.autoplayAudio
     ?? walkthroughConfig.audio?.autoplay
@@ -98,6 +106,14 @@ const WalkthroughProvider = ({
   const previous = useCallback(() => {
     moveToStep(currentStepIndex - 1)
   }, [currentStepIndex, moveToStep])
+
+  const skipToReport = useCallback(() => {
+    if (totalSteps === 0) {
+      return
+    }
+
+    moveToStep(reportStepIndex)
+  }, [moveToStep, reportStepIndex, totalSteps])
 
   const goToStep = useCallback((stepIndex) => {
     moveToStep(stepIndex)
@@ -248,9 +264,11 @@ const WalkthroughProvider = ({
     goToStep,
     isOpen,
     isPositioningTarget,
+    isReportStep,
     locale: walkthroughConfig.locale,
     next,
     previous,
+    skipToReport,
     start,
     targetRect,
     totalSteps,
@@ -265,8 +283,10 @@ const WalkthroughProvider = ({
     goToStep,
     isOpen,
     isPositioningTarget,
+    isReportStep,
     next,
     previous,
+    skipToReport,
     start,
     targetRect,
     totalSteps,

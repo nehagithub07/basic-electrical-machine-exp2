@@ -1,5 +1,11 @@
 const FALLBACK_LOCALE = 'en'
 
+const aiGuideAudioModules = import.meta.glob('../audios/*', {
+  eager: true,
+  import: 'default',
+  query: '?url',
+})
+
 const getLocalizedValue = (value, locale, fallbackLocale) => {
   if (typeof value === 'string') {
     return value
@@ -20,6 +26,20 @@ const getLocalizedValue = (value, locale, fallbackLocale) => {
 
 export const isConfiguredAudioSource = (audio) => Boolean(audio && audio !== '#')
 
+const resolveAiGuideAudio = (audio) => {
+  if (!audio || audio === '#') {
+    return audio ?? '#'
+  }
+
+  if (typeof audio !== 'string') {
+    return '#'
+  }
+
+  const fileName = audio.replaceAll('\\', '/').split('/').at(-1)
+
+  return aiGuideAudioModules[`../audios/${fileName}`] ?? audio
+}
+
 export const loadAiGuideConfig = (config, locale = FALLBACK_LOCALE) => {
   const defaultLocale = config?.defaultLocale ?? FALLBACK_LOCALE
   const resolvedLocale = locale || defaultLocale
@@ -35,7 +55,7 @@ export const loadAiGuideConfig = (config, locale = FALLBACK_LOCALE) => {
     steps: rawSteps
       .map((step, index) => ({
         ...step,
-        audio: step?.audio ?? '#',
+        audio: resolveAiGuideAudio(step?.audio),
         id: String(step?.id ?? index + 1),
         text: getLocalizedValue(step?.text, resolvedLocale, defaultLocale),
       }))

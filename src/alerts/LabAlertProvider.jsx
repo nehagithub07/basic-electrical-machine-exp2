@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 import { LabAlertContext } from './LabAlertContext.js'
 import LabAlertCard from './LabAlertCard.jsx'
 import LabAlertSpotlight from './LabAlertSpotlight.jsx'
+import { addExclusiveAudioListener, dispatchExclusiveAudioStart } from '../utils/audioCoordinator.js'
 import './labAlerts.css'
 
 const DEFAULT_DURATIONS = {
@@ -22,10 +23,19 @@ const DEFAULT_ICONS = {
 const TOP_RIGHT_LIMIT = 3
 const DEDUPE_WINDOW = 900
 const ALERT_TYPES = ['success', 'warning', 'error', 'info']
+const ALERT_AUDIO_SOURCE_ID = 'lab-alert'
 
 const isConfiguredAudioSource = (audioSource) => (
   typeof audioSource === 'string' && audioSource.trim() !== '' && audioSource.trim() !== '#'
 )
+
+const dispatchLabAlertEvent = (eventName, detail) => {
+  if (typeof window === 'undefined') {
+    return
+  }
+
+  window.dispatchEvent(new CustomEvent(eventName, { detail }))
+}
 
 const getPlacement = () => 'center'
 
@@ -101,16 +111,16 @@ const LabAlertProvider = ({ children }) => {
   const [alertState, dispatchAlert] = useReducer(alertReducer, initialAlertState)
   const alertStateRef = useRef(alertState)
 
-  const stopAlertAudio = useCallback(() => {
-    const currentAudio = alertAudioRef.current
+  const stopAlertAudio = useCallback((reason = 'stopped') => {
+    const currentPlayback = alertAudioRef.current
 
-    if (!currentAudio) {
+    if (!currentPlayback) {
       return
     }
 
-    currentAudio.pause()
-    currentAudio.currentTime = 0
-    alertAudioRef.current = null
+    currentPlayback.audio.pause()
+    currentPlayback.audio.currentTime = 0
+    currentPlayback.finish(reason)
   }, [])
 
   useEffect(() => {
@@ -120,27 +130,82 @@ const LabAlertProvider = ({ children }) => {
   useEffect(() => {
     const handleAlertSound = (event) => {
       const audioSource = event.detail?.audio
+      const alertId = event.detail?.id
 
       if (!isConfiguredAudioSource(audioSource)) {
         return
       }
 
+      dispatchExclusiveAudioStart(ALERT_AUDIO_SOURCE_ID)
       stopAlertAudio()
 
       const audio = new Audio(audioSource)
-      alertAudioRef.current = audio
+      const playback = {
+        audio,
+        finish: null,
+        id: alertId,
+      }
+      let settled = false
 
-      audio.play().catch(() => {
-        if (alertAudioRef.current === audio) {
+      const finishPlayback = (reason) => {
+        if (settled) {
+          return
+        }
+
+        settled = true
+        audio.removeEventListener('ended', handleEnded)
+        audio.removeEventListener('error', handleError)
+
+        if (alertAudioRef.current === playback) {
           alertAudioRef.current = null
         }
+
+        dispatchLabAlertEvent('lab-alert:sound-ended', {
+          id: alertId,
+          reason,
+        })
+      }
+
+      const handleEnded = () => finishPlayback('ended')
+      const handleError = () => finishPlayback('error')
+
+      playback.finish = finishPlayback
+      alertAudioRef.current = playback
+
+      audio.addEventListener('ended', handleEnded)
+      audio.addEventListener('error', handleError)
+
+      audio.play().catch(() => {
+        finishPlayback('error')
       })
     }
 
+    const handleAlertSoundStop = (event) => {
+      const alertId = event.detail?.id
+      const currentPlayback = alertAudioRef.current
+
+      if (!currentPlayback) {
+        return
+      }
+
+      if (alertId && currentPlayback.id !== alertId) {
+        return
+      }
+
+      stopAlertAudio(event.detail?.reason ?? 'dismissed')
+    }
+
     window.addEventListener('lab-alert:sound', handleAlertSound)
+    window.addEventListener('lab-alert:sound-stop', handleAlertSoundStop)
+    const removeExclusiveAudioListener = addExclusiveAudioListener(
+      ALERT_AUDIO_SOURCE_ID,
+      () => stopAlertAudio('interrupted'),
+    )
 
     return () => {
       window.removeEventListener('lab-alert:sound', handleAlertSound)
+      window.removeEventListener('lab-alert:sound-stop', handleAlertSoundStop)
+      removeExclusiveAudioListener()
       stopAlertAudio()
     }
   }, [stopAlertAudio])

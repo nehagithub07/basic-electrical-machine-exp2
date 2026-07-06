@@ -8,7 +8,8 @@ import GraphPanel from './components/GraphPanel.jsx'
 import HeaderBoard from './components/HeaderBoard.jsx'
 import ReportControls from './components/ReportControls.jsx'
 import WalkthroughStartButton from './walkthrough/components/WalkthroughStartButton.jsx'
-import { EXPERIMENT_ALERTS } from './alerts/experimentStepAlerts.js'
+import { useWalkthrough } from './walkthrough/useWalkthrough.js'
+import { ALERT_AUDIO, EXPERIMENT_ALERTS } from './alerts/experimentStepAlerts.js'
 import { useLabAlerts } from './alerts/useLabAlerts.js'
 import { useAiGuideNarration } from './aiGuide/useAiGuideNarration.js'
 // import StatusBar from './components/StatusBar.jsx'
@@ -27,6 +28,34 @@ const MIN_GRAPH_READINGS = 6
 const MAX_OBSERVATIONS = 10
 const INITIAL_RESISTANCE = 1.0
 const INITIAL_VOLTAGE = 1.0
+
+const getTerminalPairKey = (connection) => {
+  if (!connection?.sourceId || !connection?.targetId) {
+    return null
+  }
+
+  return [connection.sourceId, connection.targetId].sort().join('|')
+}
+
+const NEXT_CONNECTION_AUDIO_BY_PAIR = {
+  '1-endpoint|9-endpoint': ALERT_AUDIO.connect2To10,
+  '10-endpoint|2-endpoint': ALERT_AUDIO.connect3To11,
+  '11-endpoint|3-endpoint': ALERT_AUDIO.connect4To12,
+  '12-endpoint|4-endpoint': ALERT_AUDIO.connect5To13,
+  '13-endpoint|5-endpoint': ALERT_AUDIO.connect6To14,
+  '14-endpoint|6-endpoint': ALERT_AUDIO.connect7To15,
+  '15-endpoint|7-endpoint': ALERT_AUDIO.connect8To16,
+}
+
+const playLabAlertAudio = (audio) => {
+  if (typeof window === 'undefined' || !audio || audio === '#') {
+    return
+  }
+
+  window.dispatchEvent(new CustomEvent('lab-alert:sound', {
+    detail: { audio },
+  }))
+}
 
 const getInitialResistanceAdjusted = () => ({
   r1: false,
@@ -56,6 +85,7 @@ const getScale = () => {
 
 const App = () => {
   const { clearAlerts, showStepAlert } = useLabAlerts()
+  const { isOpen: walkthroughOpen } = useWalkthrough()
   const [scale, setScale] = useState(getScale)
   const [r1, setR1] = useState(INITIAL_RESISTANCE)
   const [r2, setR2] = useState(INITIAL_RESISTANCE)
@@ -76,6 +106,11 @@ const App = () => {
   const [voltageAdjusted, setVoltageAdjusted] = useState(false)
   const [sessionStart, setSessionStart] = useState(() => Date.now())
   const allConnectionsAlertShownRef = useRef(false)
+  const lastConnectionInstructionAudioKeyRef = useRef(null)
+  const resistanceValuesAlertShownRef = useRef(false)
+  const interfaceIntroPlayedRef = useRef(false)
+  const voltageSetAudioPlayedRef = useRef(false)
+  const walkthroughWasOpenRef = useRef(false)
 
   useEffect(() => {
     const handleResize = () => setScale(getScale())
@@ -154,6 +189,19 @@ const App = () => {
     voltageAdjusted,
   ])
 
+  useEffect(() => {
+    if (!connectionsVerified || !allResistanceValuesAdjusted || powerOn) {
+      return
+    }
+
+    if (resistanceValuesAlertShownRef.current) {
+      return
+    }
+
+    resistanceValuesAlertShownRef.current = true
+    showStepAlert(EXPERIMENT_ALERTS.resistanceValuesSelected)
+  }, [allResistanceValuesAdjusted, connectionsVerified, powerOn, showStepAlert])
+
   const handleAiGuideStart = useCallback(() => {
     setStatus('AI Guide narration started.')
   }, [])
@@ -168,6 +216,7 @@ const App = () => {
 
   const {
     isPlaying: aiGuidePlaying,
+    playStepsById: playAiGuideSteps,
     start: startAiGuide,
     stop: stopAiGuide,
   } = useAiGuideNarration({
@@ -179,12 +228,34 @@ const App = () => {
   const handleAiGuide = useCallback(() => {
     if (aiGuidePlaying) {
       stopAiGuide()
+      interfaceIntroPlayedRef.current = false
+      walkthroughWasOpenRef.current = false
       setStatus('AI Guide narration stopped.')
       return
     }
 
+    interfaceIntroPlayedRef.current = false
+    walkthroughWasOpenRef.current = false
     startAiGuide()
   }, [aiGuidePlaying, startAiGuide, stopAiGuide])
+
+  useEffect(() => {
+    if (walkthroughOpen) {
+      walkthroughWasOpenRef.current = true
+      return
+    }
+
+    if (
+      !aiGuidePlaying
+      || !walkthroughWasOpenRef.current
+      || interfaceIntroPlayedRef.current
+    ) {
+      return
+    }
+
+    interfaceIntroPlayedRef.current = true
+    playAiGuideSteps([2, 3])
+  }, [aiGuidePlaying, playAiGuideSteps, walkthroughOpen])
 
   const markResistanceAdjusted = useCallback((resistanceKey) => {
     setResistanceAdjusted((current) => {
@@ -258,19 +329,13 @@ const App = () => {
 
     if (readingCount >= MAX_OBSERVATIONS) {
       setStatus('Ten readings are already recorded. Plot the graph or reset for a new run.')
-      showStepAlert(EXPERIMENT_ALERTS.minimumReadingsRequired, {
-        description: 'The observation table already contains the maximum 10 readings.',
-        title: 'Observation Table Is Full',
-      })
+      showStepAlert(EXPERIMENT_ALERTS.maxReadingsReached)
       return
     }
 
     if (hasDuplicateReading) {
       setStatus('Duplicate reading cannot be added to the observation table.')
-      showStepAlert(EXPERIMENT_ALERTS.readingAlreadyExists, {
-        description: 'This reading already exists in the observation table. Change the voltage before adding another reading.',
-        title: 'Duplicate Reading Not Allowed',
-      })
+      showStepAlert(EXPERIMENT_ALERTS.readingAlreadyExists)
       return
     }
 
@@ -291,12 +356,26 @@ const App = () => {
     setGraphGenerated(false)
     setReportGenerated(false)
     setStatus('Reading added to the observation table.')
-    showStepAlert(EXPERIMENT_ALERTS.readingAdded, {
-      description: `Reading ${nextObservationCount} has been added to the observation table.`,
-    })
+
+    if (nextObservationCount === 1) {
+      showStepAlert(EXPERIMENT_ALERTS.readingAdded)
+      return
+    }
+
+    if (nextObservationCount === 2) {
+      playLabAlertAudio(ALERT_AUDIO.secondReadingAdded)
+      return
+    }
 
     if (nextObservationCount === MIN_GRAPH_READINGS) {
       showStepAlert(EXPERIMENT_ALERTS.sufficientData, {
+        replaceExisting: true,
+      })
+      return
+    }
+
+    if (nextObservationCount === MAX_OBSERVATIONS) {
+      showStepAlert(EXPERIMENT_ALERTS.tenReadingsRecorded, {
         replaceExisting: true,
       })
     }
@@ -321,6 +400,11 @@ const App = () => {
     setResetRequest((current) => current + 1)
     setSessionStart(Date.now())
     allConnectionsAlertShownRef.current = false
+    interfaceIntroPlayedRef.current = false
+    lastConnectionInstructionAudioKeyRef.current = null
+    resistanceValuesAlertShownRef.current = false
+    voltageSetAudioPlayedRef.current = false
+    walkthroughWasOpenRef.current = false
     setStatus('Simulation reset. Make the circuit connections again.')
     showStepAlert(EXPERIMENT_ALERTS.resetSuccess)
   }, [showStepAlert, stopAiGuide])
@@ -337,9 +421,7 @@ const App = () => {
       setGraphGenerated(false)
       setReportGenerated(false)
       setStatus(`Add ${remainingReadings} more reading(s) before plotting the graph.`)
-      showStepAlert(EXPERIMENT_ALERTS.insufficientGraphReadings, {
-        description: `Add ${remainingReadings} more reading(s) before plotting.`,
-      })
+      showStepAlert(EXPERIMENT_ALERTS.insufficientGraphReadings)
       return
     }
 
@@ -371,6 +453,7 @@ const App = () => {
       return
     }
 
+    playLabAlertAudio(ALERT_AUDIO.print)
     window.print()
   }
 
@@ -399,24 +482,26 @@ const App = () => {
       return
     }
 
-    const generated = generateKclReport({
-      observations,
-      resistances: { r1, r2, r3 },
-      sessionStart,
-    })
-
-    if (!generated) {
-      setStatus('Unable to open the report window.')
-      window.alert('Unable to open the report window. Please allow pop-ups and try again.')
-      return
-    }
-
-    setReportGenerated(true)
-    setStatus('Experiment report generated from the plotted graph and current observations.')
+    setStatus('Report Generated: Your report has been generated successfully. Click OK to view your report.')
     showStepAlert(EXPERIMENT_ALERTS.printLayoutGenerated, {
-      description: 'The KCL report was generated from the plotted graph and current observations.',
-      target: '#generate-report-button',
-      title: 'Report Generated Successfully',
+      onConfirm: () => {
+        const generated = generateKclReport({
+          observations,
+          resistances: { r1, r2, r3 },
+          sessionStart,
+        })
+
+        if (!generated) {
+          setStatus('Unable to open the report window.')
+          window.alert('Unable to open the report window. Please allow pop-ups and try again.')
+          return
+        }
+
+        setReportGenerated(true)
+        setStatus('Experiment report generated from the plotted graph and current observations.')
+      },
+      replaceExisting: true,
+      requiresConfirmation: true,
     })
   }
 
@@ -432,6 +517,19 @@ const App = () => {
       setStatus('This connection is wrong')
       showStepAlert(EXPERIMENT_ALERTS.incorrectNodeConnection)
       return
+    }
+
+    const latestConnectionPairKey = getTerminalPairKey(result.latestConnection)
+    const nextConnectionAudio = latestConnectionPairKey
+      ? NEXT_CONNECTION_AUDIO_BY_PAIR[latestConnectionPairKey]
+      : null
+
+    if (
+      nextConnectionAudio
+      && lastConnectionInstructionAudioKeyRef.current !== latestConnectionPairKey
+    ) {
+      lastConnectionInstructionAudioKeyRef.current = latestConnectionPairKey
+      playLabAlertAudio(nextConnectionAudio)
     }
 
     if (!result.isCorrect) {
@@ -457,6 +555,7 @@ const App = () => {
       setConnectionsReadyForCheck(true)
       setResistanceAdjusted(getInitialResistanceAdjusted())
       allConnectionsAlertShownRef.current = true
+      resistanceValuesAlertShownRef.current = false
 
       setStatus(
         'Right connections! Move R1, R2, and R3 before switching on the power supply.',
@@ -473,20 +572,14 @@ const App = () => {
 
     if (result.totalConnections === 0) {
       setStatus('Please make the connections first.')
-      showStepAlert(EXPERIMENT_ALERTS.connectionErrorFound, {
-        description: 'No circuit wires were found. Drag node connections before checking.',
-        title: 'Please make the connections first.',
-        type: 'warning',
-      })
+      showStepAlert(EXPERIMENT_ALERTS.requiredConnectionsFirst)
       return
     }
 
     setStatus(
       `Invalid connections. Correct matched points: ${result.matchedCount}; total wires: ${result.totalConnections}.`,
     )
-    showStepAlert(EXPERIMENT_ALERTS.incorrectNodeConnection, {
-      description: `Matched ${result.matchedCount} of 8 required wire pairs from ${result.totalConnections} total wires.`,
-    })
+    showStepAlert(EXPERIMENT_ALERTS.multipleWrongConnections)
   }, [showStepAlert])
 
   const handleCheck = () => {
@@ -511,6 +604,7 @@ const App = () => {
       setPowerOn(false)
       setVoltage(INITIAL_VOLTAGE)
       setVoltageAdjusted(false)
+      voltageSetAudioPlayedRef.current = false
       setStatus('Power supply switched off.')
       showStepAlert(EXPERIMENT_ALERTS.powerOffDuringExperiment)
       return
@@ -518,6 +612,7 @@ const App = () => {
 
     setPowerOn(true)
     setVoltageAdjusted(false)
+    voltageSetAudioPlayedRef.current = false
     setStatus('Power supply switched on. Adjust voltage and add the reading.')
     showStepAlert(EXPERIMENT_ALERTS.powerOn)
   }
@@ -527,6 +622,9 @@ const App = () => {
     setConnectionsVerified(false)
     setResistanceAdjusted(getInitialResistanceAdjusted())
     allConnectionsAlertShownRef.current = true
+    lastConnectionInstructionAudioKeyRef.current = null
+    resistanceValuesAlertShownRef.current = false
+    voltageSetAudioPlayedRef.current = false
 
     setStatus(
       'Autoconnect completed. Click on the check button to verify the connections.',
@@ -539,6 +637,11 @@ const App = () => {
 
     if (powerOn && nextVoltage !== INITIAL_VOLTAGE) {
       setVoltageAdjusted(true)
+
+      if (!voltageSetAudioPlayedRef.current) {
+        voltageSetAudioPlayedRef.current = true
+        playLabAlertAudio(ALERT_AUDIO.voltageSet)
+      }
     }
   }, [powerOn])
 
@@ -572,7 +675,7 @@ const App = () => {
                     onAiGuide: aiGuidePlaying,
                   }}
                   disabledButtons={{
-                    onAdd: false,
+                    onAdd: !powerOn || !voltageAdjusted,
                     onAutoConnect: connectionsVerified || powerOn,
                     onCheck: connectionsVerified,
                     onPlot: false,

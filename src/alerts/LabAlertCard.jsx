@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 const EXIT_DURATION = 180
+const AUDIO_COMPLETE_HOLD_DURATION = 10000
+
+const isConfiguredAudioSource = (audioSource) => (
+  typeof audioSource === 'string' && audioSource.trim() !== '' && audioSource.trim() !== '#'
+)
 
 const dispatchLabAlertEvent = (eventName, detail) => {
   if (typeof window === 'undefined') {
@@ -33,7 +38,12 @@ const LabAlertCard = ({ alert, onDismiss }) => {
     tutorialMode,
     type,
   } = alert
+  const audioSource = alert.audio ?? alert.audioSource
+  const waitsForAudio = !requiresConfirmation && isConfiguredAudioSource(audioSource)
+  const [audioPlaybackComplete, setAudioPlaybackComplete] = useState(!waitsForAudio)
   const hasProgressTimer = !requiresConfirmation && Number.isFinite(duration) && duration > 0
+  const timerDuration = waitsForAudio ? AUDIO_COMPLETE_HOLD_DURATION : duration
+  const showProgressTimer = hasProgressTimer && (!waitsForAudio || audioPlaybackComplete)
   const titleId = `lab-alert-title-${id}`
   const descriptionId = `lab-alert-description-${id}`
   const role = type === 'error' || type === 'warning' ? 'alert' : 'status'
@@ -44,6 +54,11 @@ const LabAlertCard = ({ alert, onDismiss }) => {
     if (isClosing) {
       return
     }
+
+    dispatchLabAlertEvent('lab-alert:sound-stop', {
+      id,
+      reason,
+    })
 
     setIsClosing(true)
 
@@ -57,37 +72,58 @@ const LabAlertCard = ({ alert, onDismiss }) => {
   }, [alert, id, isClosing, onDismiss])
 
   useEffect(() => {
+    if (!waitsForAudio) {
+      return undefined
+    }
+
+    const handleSoundEnded = (event) => {
+      if (event.detail?.id === id) {
+        setAudioPlaybackComplete(true)
+      }
+    }
+
+    window.addEventListener('lab-alert:sound-ended', handleSoundEnded)
+
+    return () => window.removeEventListener('lab-alert:sound-ended', handleSoundEnded)
+  }, [id, waitsForAudio])
+
+  useEffect(() => {
     dispatchLabAlertEvent('lab-alert:sound', {
-      audio: alert.audio ?? alert.audioSource,
+      audio: audioSource,
       id,
       sound: alert.sound ?? type,
       stepNumber,
       title,
       type,
     })
-  }, [alert.audio, alert.audioSource, alert.sound, id, stepNumber, title, type])
+  }, [alert.sound, audioSource, id, stepNumber, title, type])
 
   useEffect(() => {
-    if (!hasProgressTimer) {
+    if (!hasProgressTimer || (waitsForAudio && !audioPlaybackComplete)) {
       return undefined
     }
 
     const timer = window.setTimeout(() => {
       dismiss('timeout')
-    }, duration)
+    }, timerDuration)
 
     return () => window.clearTimeout(timer)
-  }, [dismiss, duration, hasProgressTimer])
+  }, [audioPlaybackComplete, dismiss, hasProgressTimer, timerDuration, waitsForAudio])
 
   useEffect(() => () => {
+    dispatchLabAlertEvent('lab-alert:sound-stop', {
+      id,
+      reason: 'unmount',
+    })
+
     if (dismissTimerRef.current) {
       window.clearTimeout(dismissTimerRef.current)
     }
-  }, [])
+  }, [id])
 
   const handleConfirm = () => {
-    onConfirm?.(alert)
     dismiss('confirm', false)
+    onConfirm?.(alert)
   }
 
   const handleOk = () => {
@@ -112,7 +148,7 @@ const LabAlertCard = ({ alert, onDismiss }) => {
       className={`lab-alert-card lab-alert-card--${type} ${isClosing ? 'lab-alert-card--closing' : ''}`}
       data-placement={placement}
       role={role}
-      style={{ '--alert-duration': `${duration ?? 0}ms` }}
+      style={{ '--alert-duration': `${timerDuration ?? 0}ms` }}
     >
       <div className="lab-alert-card__glow" aria-hidden="true" />
 
@@ -181,7 +217,7 @@ const LabAlertCard = ({ alert, onDismiss }) => {
         </button>
       </div>
 
-      {hasProgressTimer ? (
+      {showProgressTimer ? (
         <div className="lab-alert-card__timer" aria-hidden="true">
           <span />
         </div>

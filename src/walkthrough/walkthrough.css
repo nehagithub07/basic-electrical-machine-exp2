@@ -176,21 +176,6 @@
   line-height: 1.15;
 }
 
-.walkthrough-popup__icon-button {
-  display: grid;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 auto;
-  place-items: center;
-  border: 1px solid rgba(148, 163, 184, 0.45);
-  border-radius: 8px;
-  color: #334155;
-  background: #fff;
-  cursor: pointer;
-  font-size: 24px;
-  line-height: 1;
-}
-
 .walkthrough-popup__description {
   margin: 14px 0 15px;
   color: #334155;
@@ -226,8 +211,11 @@
 }
 
 .walkthrough-popup__audio {
+  display: inline-grid;
+  width: 36px;
   min-height: 32px;
-  padding: 6px 10px;
+  place-items: center;
+  padding: 6px;
   border: 1px solid rgba(20, 184, 166, 0.32);
   border-radius: 8px;
   color: #0f766e;
@@ -235,6 +223,12 @@
   cursor: pointer;
   font-size: 12px;
   font-weight: 900;
+}
+
+.walkthrough-popup__audio svg {
+  width: 18px;
+  height: 18px;
+  fill: currentColor;
 }
 
 .walkthrough-popup__audio:disabled {
