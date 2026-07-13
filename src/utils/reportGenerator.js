@@ -34,6 +34,18 @@ const toNumber = (value) => {
 
 const formatNumber = (value, fractionDigits = 3) => toNumber(value).toFixed(fractionDigits)
 
+const formatResistance = (value) => formatNumber(value, 1)
+
+const calculateTotalResistance = ({ r1, r2, r3 }) => {
+  const parallelDenominator = r2 + r3
+
+  if (parallelDenominator === 0) {
+    return 0
+  }
+
+  return r1 + ((r2 * r3) / parallelDenominator)
+}
+
 const formatCurrentTick = (value) => {
   if (value === 0) {
     return '0'
@@ -287,18 +299,18 @@ const createReportHtml = ({
   const reportDate = new Date()
   const sessionEnd = reportDate.getTime()
   const reportDateText = reportDate.toLocaleDateString(undefined, {
-    day: '2-digit',
-    month: 'short',
+    day: 'numeric',
+    month: 'long',
     year: 'numeric',
   })
   const startTimeText = new Date(sessionStart).toLocaleTimeString()
   const endTimeText = reportDate.toLocaleTimeString()
   const durationText = getSessionDurationText(sessionStart, sessionEnd)
   const firstObservation = observations[0] ?? {}
-  const r1 = toNumber(firstObservation.r1 ?? resistances?.r1)
-  const r2 = toNumber(firstObservation.r2 ?? resistances?.r2)
-  const r3 = toNumber(firstObservation.r3 ?? resistances?.r3)
-  const totalResistance = toNumber(firstObservation.totalResistance)
+  const r1 = toNumber(resistances?.r1 ?? firstObservation.r1)
+  const r2 = toNumber(resistances?.r2 ?? firstObservation.r2)
+  const r3 = toNumber(resistances?.r3 ?? firstObservation.r3)
+  const totalResistance = toNumber(firstObservation.totalResistance ?? calculateTotalResistance({ r1, r2, r3 }))
   const { averageError, maxError } = getKclStats(observations)
   const observationRows = createObservationRows(observations)
   const graphSvg = createReportGraphSvg(observations)
@@ -881,14 +893,14 @@ tr:nth-child(even) {
       <img src="${escapeHtml(virtualLabsLogoSrc)}" class="report-logo report-logo--virtual-labs" alt="Virtual Labs logo">
       <div class="report-title-block">
         <h1>Virtual Labs Simulation Report</h1>
-        <p class="report-subtitle">Basic Electrical Science Lab</p>
+       
       </div>
       <img src="${escapeHtml(iitLogoSrc)}" class="report-logo report-logo--iit" alt="Indian Institute of Technology Roorkee logo">
     </div>
 
     <div class="section report-overview">
       <div class="report-overview-top">
-        <p class="badge">Basic Electrical Science Lab</p>
+        <p class="badge">AI Enhanced Basic Electrical Science Lab</p>
         <p class="report-stamp">Generated on ${escapeHtml(reportDateText)}</p>
       </div>
       <p class="report-experiment-label">Experiment Title</p>
@@ -903,32 +915,22 @@ tr:nth-child(even) {
     <div class="section">
       <h2>Summary</h2>
       <h3>Aim</h3>
-      <p style="text-align: justify;">To verify Kirchhoff's Current Law by measuring the total current entering a junction and the branch currents leaving the junction in a resistive DC network.</p>
-
-      <h3>Theory</h3>
-      <p style="text-align: justify;">Kirchhoff's Current Law states that the algebraic sum of currents at a node is zero. For this experiment, the current through R<sub>1</sub> is the incoming current I<sub>1</sub>, and it divides into branch currents I<sub>2</sub> and I<sub>3</sub>. The verification condition is I<sub>1</sub> = I<sub>2</sub> + I<sub>3</sub>.</p>
-
+      <p style="text-align: justify;">To verify Kirchhoff’s Current Law by measuring the total current entering and leaving a junction in a resistive DC circuit.</p>
       <h3>Simulation Summary</h3>
       <p style="text-align: justify;">The circuit was connected, and the connections were verified successfully. The resistance values were selected, and the DC supply voltage was varied to measure the branch currents at different voltage values. The ammeter readings were recorded, and the current–voltage graph was plotted using the measured readings.</p>
 
       <h3>Components and Key Parameters</h3>
       <ul class="two-column-list">
-        <li>DC power supply: 0-12 V</li>
-        <li>DC Ammeter A<sub>1</sub> for total current I<sub>1</sub></li>
-        <li>DC Ammeter A<sub>2</sub> for branch current I<sub>2</sub></li>
-        <li>DC Ammeter A<sub>3</sub> for branch current I<sub>3</sub></li>
-        <li>R<sub>1</sub>: ${formatNumber(r1, 0)} &Omega;</li>
-        <li>R<sub>2</sub>: ${formatNumber(r2, 0)} &Omega;</li>
-        <li>R<sub>3</sub>: ${formatNumber(r3, 0)} &Omega;</li>
+        <li>DC power supply: 10 V</li>
+        <li>DC Ammeter A<sub>1</sub> for total current I<sub>1</sub>: 0 - 10 V</li>
+        <li>DC Ammeter A<sub>2</sub> for branch current I<sub>2</sub>: 0 - 10 V</li>
+        <li>DC Ammeter A<sub>3</sub> for branch current I<sub>3</sub>: 0 - 10 V</li>
+        <li>R<sub>1</sub>: ${formatResistance(r1)} &Omega;</li>
+        <li>R<sub>2</sub>: ${formatResistance(r2)} &Omega;</li>
+        <li>R<sub>3</sub>: ${formatResistance(r3)} &Omega;</li>
         <li>Connecting leads</li>
       </ul>
 
-      <h3>Calculation Formulae</h3>
-      <ul>
-        <li>Total resistance: R = R<sub>1</sub> + (R<sub>2</sub> x R<sub>3</sub>) / (R<sub>2</sub> + R<sub>3</sub>)</li>
-        <li>Total current: I<sub>1</sub> = V / R</li>
-        <li>KCL check at the junction: I<sub>1</sub> = I<sub>2</sub> + I<sub>3</sub></li>
-      </ul>
     </div>
   </div>
 
@@ -954,20 +956,7 @@ tr:nth-child(even) {
           </div>
         </div>
 
-        <div class="results-card">
-          <h3>KCL Verification Summary</h3>
-          <div class="table-shell">
-            <table class="compact-table">
-              <tbody>
-                <tr><th>Readings Plotted</th><td>${observations.length}</td></tr>
-                <tr><th>Configured Resistance</th><td>R<sub>1</sub> = ${formatNumber(r1, 0)} &Omega;, R<sub>2</sub> = ${formatNumber(r2, 0)} &Omega;, R<sub>3</sub> = ${formatNumber(r3, 0)} &Omega;</td></tr>
-                <tr><th>Calculated Total Resistance</th><td>${formatNumber(totalResistance)} &Omega;</td></tr>
-                <tr><th>Maximum KCL Error</th><td>${formatNumber(maxError, 4)} A</td></tr>
-                <tr><th>Average KCL Error</th><td>${formatNumber(averageError, 4)} A</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+        
       </div>
     </div>
   </div>
@@ -983,7 +972,7 @@ tr:nth-child(even) {
 
         <div class="results-card">
           <h3>Conclusion</h3>
-          <p style="text-align: justify;">For every recorded voltage level, the total current I<sub>1</sub> is equal to the sum of branch currents I<sub>2</sub> and I<sub>3</sub> within simulation precision. Hence Kirchhoff's Current Law is verified for the given resistive network.</p>
+          <p style="text-align: justify;">For each recorded voltage value, the total current I<sub>1</sub>  was found to be equal to the sum of branch currents I<sub>2</sub> and I<sub>3</sub>. Hence, Kirchhoff’s Current Law was verified for the given resistive DC circuit.</p>
         </div>
       </div>
     </div>

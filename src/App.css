@@ -51,27 +51,6 @@
     linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 36%, rgba(59, 28, 10, 0.2));
 }
 
-.ai-guide-active-target {
-  outline: 4px solid rgba(45, 212, 191, 0.92) !important;
-  outline-offset: 5px;
-  filter: brightness(1.08) saturate(1.12);
-  box-shadow:
-    0 0 0 7px rgba(255, 255, 255, 0.82),
-    0 0 0 13px rgba(45, 212, 191, 0.22),
-    0 0 30px rgba(45, 212, 191, 0.84) !important;
-  animation: ai-guide-target-pulse 1150ms ease-in-out infinite;
-}
-
-@keyframes ai-guide-target-pulse {
-  50% {
-    outline-color: rgba(255, 244, 191, 0.98);
-    box-shadow:
-      0 0 0 7px rgba(255, 255, 255, 0.9),
-      0 0 0 16px rgba(45, 212, 191, 0.34),
-      0 0 38px rgba(45, 212, 191, 0.96);
-  }
-}
-
 .workspace-grid {
   position: absolute;
   top: 108px;

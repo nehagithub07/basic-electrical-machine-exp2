@@ -71,42 +71,6 @@ const AI_GUIDE_CONNECTION_STEP_BY_PAIR = {
   '16-endpoint|8-endpoint': 10,
 }
 
-const AI_GUIDE_TARGET_SELECTORS_BY_STEP_ID = {
-  1: ['#walkthrough-start-button'],
-  2: ['#auto-connect-button', '#circuit-panel'],
-  3: ['#circuit-panel'],
-  4: ['#circuit-panel'],
-  5: ['#circuit-panel'],
-  6: ['#circuit-panel'],
-  7: ['#circuit-panel'],
-  8: ['#circuit-panel'],
-  9: ['#circuit-panel'],
-  10: ['#circuit-panel'],
-  11: ['#check-button'],
-  12: ['#circuit-panel'],
-  13: ['#circuit-panel'],
-  14: ['#circuit-panel'],
-  15: ['#check-button'],
-  16: ['#observation-table-panel'],
-  17: ['#observation-table-panel'],
-  18: ['#check-button', '#power-toggle-button'],
-  19: ['#resistance-controls'],
-  20: ['#resistance-controls', '#power-toggle-button'],
-  21: ['#power-toggle-button'],
-  22: ['#voltage-control'],
-  23: ['#ammeter-bank', '#add-reading-button'],
-  24: ['#voltage-control', '#add-reading-button'],
-  25: ['#voltage-control'],
-  26: ['#voltage-control', '#add-reading-button'],
-  27: ['#plot-button'],
-  28: ['#plot-button', '#generate-report-button'],
-  29: ['#plot-button'],
-  30: ['#generate-report-button', '#print-button', '#reset-button'],
-  31: ['#circuit-panel'],
-  32: ['#print-button'],
-  33: ['#generate-report-button'],
-}
-
 const getTerminalNumber = (terminalId) => terminalId?.replace('-endpoint', '') ?? ''
 
 const getTerminalPairKeyFromIds = (terminalIds) => (
@@ -133,10 +97,6 @@ const isAiGuideConnectionStep = (stepId) => {
   return numericStepId >= 3 && numericStepId <= 10
 }
 
-const getAiGuideTargetSelectors = (stepId) => (
-  AI_GUIDE_TARGET_SELECTORS_BY_STEP_ID[Number(stepId)] ?? []
-)
-
 const getConnectionPromptText = (terminalIds) => {
   if (!Array.isArray(terminalIds) || terminalIds.length !== 2) {
     return 'Follow the highlighted terminals to complete the next connection.'
@@ -145,6 +105,47 @@ const getConnectionPromptText = (terminalIds) => {
   const [sourceId, targetId] = terminalIds
 
   return `Connect terminal ${getTerminalNumber(sourceId)} to terminal ${getTerminalNumber(targetId)}.`
+}
+
+const getActiveInstructionStep = ({
+  allResistanceValuesAdjusted,
+  connectionsReadyForCheck,
+  connectionsVerified,
+  graphGenerated,
+  powerOn,
+  readingCount,
+  reportGenerated,
+  voltageAdjusted,
+}) => {
+  if (!connectionsReadyForCheck && !connectionsVerified) {
+    return 1
+  }
+
+  if (!connectionsVerified) {
+    return 2
+  }
+
+  if (!allResistanceValuesAdjusted) {
+    return 3
+  }
+
+  if (!powerOn) {
+    return 4
+  }
+
+  if (readingCount >= MIN_GRAPH_READINGS) {
+    if (!graphGenerated) {
+      return 8
+    }
+
+    return reportGenerated ? 10 : 9
+  }
+
+  if (readingCount > 0) {
+    return 7
+  }
+
+  return voltageAdjusted ? 6 : 5
 }
 
 const playLabAlertAudio = (audio) => {
@@ -240,67 +241,28 @@ const App = () => {
   const readingCount = observations.length
   const canPlotGraph = readingCount >= MIN_GRAPH_READINGS
   const allResistanceValuesAdjusted = resistanceAdjusted.r1 && resistanceAdjusted.r2 && resistanceAdjusted.r3
-  const activeInstructionStep = useMemo(() => {
-    if (reportGenerated) {
-      return 10
-    }
-
-    if (graphGenerated) {
-      return 9
-    }
-
-    if (readingCount >= MIN_GRAPH_READINGS) {
-      return 8
-    }
-
-    if (!powerOn && allResistanceValuesAdjusted) {
-      return 4
-    }
-
-    if (powerOn && readingCount > 0) {
-      return 7
-    }
-
-    if (powerOn && voltageAdjusted) {
-      return 6
-    }
-
-    if (powerOn) {
-      return 5
-    }
-
-    if (connectionsVerified) {
-      return 3
-    }
-
-    if (connectionsReadyForCheck) {
-      return 2
-    }
-
-    return 1
-  }, [
-    allResistanceValuesAdjusted,
-    connectionsReadyForCheck,
-    connectionsVerified,
-    graphGenerated,
-    powerOn,
-    readingCount,
-    reportGenerated,
-    voltageAdjusted,
-  ])
-
-  useEffect(() => {
-    if (!connectionsVerified || !allResistanceValuesAdjusted || powerOn) {
-      return
-    }
-
-    if (resistanceValuesAlertShownRef.current) {
-      return
-    }
-
-    resistanceValuesAlertShownRef.current = true
-    showStepAlert(EXPERIMENT_ALERTS.resistanceValuesSelected)
-  }, [allResistanceValuesAdjusted, connectionsVerified, powerOn, showStepAlert])
+  const activeInstructionStep = useMemo(
+    () => getActiveInstructionStep({
+      allResistanceValuesAdjusted,
+      connectionsReadyForCheck,
+      connectionsVerified,
+      graphGenerated,
+      powerOn,
+      readingCount,
+      reportGenerated,
+      voltageAdjusted,
+    }),
+    [
+      allResistanceValuesAdjusted,
+      connectionsReadyForCheck,
+      connectionsVerified,
+      graphGenerated,
+      powerOn,
+      readingCount,
+      reportGenerated,
+      voltageAdjusted,
+    ],
+  )
 
   const handleAiGuideStart = useCallback(() => {
     setStatus('AI Guide narration started.')
@@ -351,19 +313,23 @@ const App = () => {
   }, [playAiGuideAudio, playAiGuideSteps, playAiGuideText])
 
   useEffect(() => {
-    const highlightedElements = getAiGuideTargetSelectors(activeAiGuideStepId)
-      .flatMap((selector) => Array.from(document.querySelectorAll(selector)))
+    if (!connectionsVerified || !allResistanceValuesAdjusted || powerOn) {
+      return
+    }
 
-    highlightedElements.forEach((element) => {
-      element.classList.add('ai-guide-active-target')
+    if (resistanceValuesAlertShownRef.current) {
+      return
+    }
+
+    resistanceValuesAlertShownRef.current = true
+    showStepAlert(EXPERIMENT_ALERTS.resistanceValuesSelected, {
+      audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.resistanceValuesSelected.audio,
     })
 
-    return () => {
-      highlightedElements.forEach((element) => {
-        element.classList.remove('ai-guide-active-target')
-      })
+    if (aiGuidePlaying) {
+      playAiGuideSteps([21])
     }
-  }, [activeAiGuideStepId])
+  }, [aiGuidePlaying, allResistanceValuesAdjusted, connectionsVerified, playAiGuideSteps, powerOn, showStepAlert])
 
   const handleAiGuide = useCallback(() => {
     if (aiGuidePlaying) {
@@ -438,21 +404,33 @@ const App = () => {
     if (!connectionsVerified) {
       setStatus('Check the circuit connections before adding readings.')
       showStepAlert(EXPERIMENT_ALERTS.connectionErrorFound, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.connectionErrorFound.audio,
         description: 'Verify the wiring before storing current readings.',
         stepNumber: 6,
         target: '#check-button',
         type: 'warning',
       })
+
+      if (aiGuidePlaying) {
+        playAiGuideSteps([18])
+      }
+
       return
     }
 
     if (!powerOn) {
       setStatus('Switch on the power supply before adding readings.')
       showStepAlert(EXPERIMENT_ALERTS.cannotStartPower, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.cannotStartPower.audio,
         description: 'Switch on the verified power supply before adding readings.',
         stepNumber: 6,
         target: '#power-toggle-button',
       })
+
+      if (aiGuidePlaying) {
+        playAiGuideSteps([21])
+      }
+
       return
     }
 
@@ -464,18 +442,37 @@ const App = () => {
         target: '#voltage-control',
         type: 'warning',
       })
+
+      if (aiGuidePlaying) {
+        playAiGuideSteps([22])
+      }
+
       return
     }
 
     if (readingCount >= MAX_OBSERVATIONS) {
       setStatus('Ten readings are already recorded. Plot the graph or reset for a new run.')
-      showStepAlert(EXPERIMENT_ALERTS.maxReadingsReached)
+      showStepAlert(EXPERIMENT_ALERTS.maxReadingsReached, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.maxReadingsReached.audio,
+      })
+
+      if (aiGuidePlaying) {
+        playAiGuideSteps([29])
+      }
+
       return
     }
 
     if (hasDuplicateReading) {
       setStatus('Duplicate reading cannot be added to the observation table.')
-      showStepAlert(EXPERIMENT_ALERTS.readingAlreadyExists)
+      showStepAlert(EXPERIMENT_ALERTS.readingAlreadyExists, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.readingAlreadyExists.audio,
+      })
+
+      if (aiGuidePlaying) {
+        playAiGuideSteps([25])
+      }
+
       return
     }
 
@@ -498,31 +495,57 @@ const App = () => {
     setStatus('Reading added to the observation table.')
 
     if (nextObservationCount === 1) {
-      showStepAlert(EXPERIMENT_ALERTS.readingAdded)
+      showStepAlert(EXPERIMENT_ALERTS.readingAdded, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.readingAdded.audio,
+      })
+
+      if (aiGuidePlaying) {
+        playAiGuideSteps([24])
+      }
+
       return
     }
 
     if (nextObservationCount === 2) {
-      playLabAlertAudio(ALERT_AUDIO.secondReadingAdded)
+      if (aiGuidePlaying) {
+        playAiGuideSteps([26])
+      } else {
+        playLabAlertAudio(ALERT_AUDIO.secondReadingAdded)
+      }
+
       return
     }
 
     if (nextObservationCount === MIN_GRAPH_READINGS) {
       showStepAlert(EXPERIMENT_ALERTS.sufficientData, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.sufficientData.audio,
         replaceExisting: true,
       })
+
+      if (aiGuidePlaying) {
+        playAiGuideSteps([27])
+      }
+
       return
     }
 
     if (nextObservationCount === MAX_OBSERVATIONS) {
       showStepAlert(EXPERIMENT_ALERTS.tenReadingsRecorded, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.tenReadingsRecorded.audio,
         replaceExisting: true,
       })
+
+      if (aiGuidePlaying) {
+        playAiGuideSteps([28])
+      }
     }
   }
 
-  const resetSimulation = useCallback(() => {
-    stopAiGuide()
+  const resetSimulation = useCallback(({ guideActive = false, stopGuide = true } = {}) => {
+    if (stopGuide) {
+      stopAiGuide()
+    }
+
     setPowerOn(false)
     setVoltage(INITIAL_VOLTAGE)
     setR1(INITIAL_RESISTANCE)
@@ -546,12 +569,21 @@ const App = () => {
     voltageSetAudioPlayedRef.current = false
     walkthroughWasOpenRef.current = false
     setStatus('Simulation reset. Make the circuit connections again.')
-    showStepAlert(EXPERIMENT_ALERTS.resetSuccess)
+    showStepAlert(EXPERIMENT_ALERTS.resetSuccess, {
+      audio: guideActive ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.resetSuccess.audio,
+    })
   }, [showStepAlert, stopAiGuide])
 
   const handleReset = () => {
     clearAlerts()
-    resetSimulation()
+    resetSimulation({
+      guideActive: aiGuidePlaying,
+      stopGuide: !aiGuidePlaying,
+    })
+
+    if (aiGuidePlaying) {
+      playAiGuideSteps([31])
+    }
   }
 
   const handlePlot = () => {
@@ -561,7 +593,14 @@ const App = () => {
       setGraphGenerated(false)
       setReportGenerated(false)
       setStatus(`Add ${remainingReadings} more reading(s) before plotting the graph.`)
-      showStepAlert(EXPERIMENT_ALERTS.insufficientGraphReadings)
+      showStepAlert(EXPERIMENT_ALERTS.insufficientGraphReadings, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.insufficientGraphReadings.audio,
+      })
+
+      if (aiGuidePlaying) {
+        playAiGuideSteps([16])
+      }
+
       return
     }
 
@@ -569,31 +608,51 @@ const App = () => {
     setReportGenerated(false)
     setStatus('Graph is plotted. Now you can generate the report.')
     showStepAlert(EXPERIMENT_ALERTS.graphPlotted, {
+      audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.graphPlotted.audio,
       replaceExisting: true,
     })
+
+    if (aiGuidePlaying) {
+      playAiGuideSteps([30])
+    }
   }
 
   const handlePrint = () => {
     if (!canPlotGraph) {
       showStepAlert(EXPERIMENT_ALERTS.minimumReadingsRequired, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.minimumReadingsRequired.audio,
         description: 'Collect at least 6 readings before preparing the print layout.',
       })
+
+      if (aiGuidePlaying) {
+        playAiGuideSteps([16])
+      }
+
       return
     }
 
     if (!graphGenerated) {
       setStatus('Please generate the graph first.')
       showStepAlert(EXPERIMENT_ALERTS.insufficientGraphReadings, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.insufficientGraphReadings.audio,
         description: 'Please generate the graph first.',
         target: '#plot-button',
         title: 'Generate Graph First',
         type: 'warning',
       })
+      if (aiGuidePlaying) {
+        playAiGuideSteps([29])
+      }
       window.alert('Please generate the graph first.')
       return
     }
 
-    playLabAlertAudio(ALERT_AUDIO.print)
+    if (aiGuidePlaying) {
+      playAiGuideSteps([32])
+    } else {
+      playLabAlertAudio(ALERT_AUDIO.print)
+    }
+
     window.print()
   }
 
@@ -603,27 +662,38 @@ const App = () => {
 
       setStatus(`Add ${remainingReadings} more reading(s) before generating the report.`)
       showStepAlert(EXPERIMENT_ALERTS.minimumReadingsRequired, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.minimumReadingsRequired.audio,
         description: `Add ${remainingReadings} more reading(s), then plot the graph before generating a report.`,
         target: '#generate-report-button',
         title: 'Report Requires 6 Readings',
       })
+
+      if (aiGuidePlaying) {
+        playAiGuideSteps([17])
+      }
+
       return
     }
 
     if (!graphGenerated) {
       setStatus('Please generate the graph first.')
       showStepAlert(EXPERIMENT_ALERTS.insufficientGraphReadings, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.insufficientGraphReadings.audio,
         description: 'Please generate the graph first.',
         target: '#plot-button',
         title: 'Generate Graph First',
         type: 'warning',
       })
+      if (aiGuidePlaying) {
+        playAiGuideSteps([29])
+      }
       window.alert('Please generate the graph first.')
       return
     }
 
     setStatus('Report Generated: Your report has been generated successfully. Click OK to view your report.')
     showStepAlert(EXPERIMENT_ALERTS.printLayoutGenerated, {
+      audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.printLayoutGenerated.audio,
       onConfirm: () => {
         const generated = generateKclReport({
           observations,
@@ -643,6 +713,10 @@ const App = () => {
       replaceExisting: true,
       requiresConfirmation: true,
     })
+
+    if (aiGuidePlaying) {
+      playAiGuideSteps([33])
+    }
   }
 
   const scaledWidth = Math.ceil(BASE_WIDTH * scale)
@@ -730,7 +804,13 @@ const App = () => {
       setStatus(
         'Right connections! Move R1, R2, and R3 before switching on the power supply.',
       )
-      showStepAlert(EXPERIMENT_ALERTS.connectionsVerified)
+      showStepAlert(EXPERIMENT_ALERTS.connectionsVerified, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.connectionsVerified.audio,
+      })
+
+      if (aiGuidePlaying) {
+        playAiGuideSteps([19])
+      }
 
       return
     }
@@ -800,15 +880,28 @@ const App = () => {
   const handleTogglePower = () => {
     if (!powerOn && !connectionsVerified) {
       setStatus('Check the circuit connections before switching on the power supply.')
-      showStepAlert(EXPERIMENT_ALERTS.cannotStartPower)
+      showStepAlert(EXPERIMENT_ALERTS.cannotStartPower, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.cannotStartPower.audio,
+      })
+
+      if (aiGuidePlaying) {
+        playAiGuideSteps([18])
+      }
+
       return
     }
 
     if (!powerOn && !allResistanceValuesAdjusted) {
       setStatus('Move R1, R2, and R3 before switching on the power supply.')
       showStepAlert(EXPERIMENT_ALERTS.adjustResistance, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.adjustResistance.audio,
         type: 'warning',
       })
+
+      if (aiGuidePlaying) {
+        playAiGuideSteps([20])
+      }
+
       return
     }
 
@@ -826,7 +919,13 @@ const App = () => {
     setVoltageAdjusted(false)
     voltageSetAudioPlayedRef.current = false
     setStatus('Power supply switched on. Adjust voltage and add the reading.')
-    showStepAlert(EXPERIMENT_ALERTS.powerOn)
+    showStepAlert(EXPERIMENT_ALERTS.powerOn, {
+      audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.powerOn.audio,
+    })
+
+    if (aiGuidePlaying) {
+      playAiGuideSteps([22])
+    }
   }
   const handleAutoConnect = () => {
     setAutoConnectRequest((current) => current + 1)
@@ -841,7 +940,13 @@ const App = () => {
     setStatus(
       'Autoconnect completed. Click on the check button to verify the connections.',
     )
-    showStepAlert(EXPERIMENT_ALERTS.circuitConnectionsCompleted)
+    showStepAlert(EXPERIMENT_ALERTS.circuitConnectionsCompleted, {
+      audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.circuitConnectionsCompleted.audio,
+    })
+
+    if (aiGuidePlaying) {
+      playAiGuideSteps([15])
+    }
   }
 
   const handleVoltageChange = useCallback((nextVoltage) => {
@@ -852,10 +957,15 @@ const App = () => {
 
       if (!voltageSetAudioPlayedRef.current) {
         voltageSetAudioPlayedRef.current = true
-        playLabAlertAudio(ALERT_AUDIO.voltageSet)
+
+        if (aiGuidePlaying) {
+          playAiGuideSteps([23])
+        } else {
+          playLabAlertAudio(ALERT_AUDIO.voltageSet)
+        }
       }
     }
-  }, [powerOn])
+  }, [aiGuidePlaying, playAiGuideSteps, powerOn])
 
   return (
     <div id="app-wrapper">
@@ -875,10 +985,7 @@ const App = () => {
         >
           <main className="simulation-shell" id="walkthrough-demo-experiment">
             <HeaderBoard />
-            <WalkthroughStartButton
-              highlighted={Number(activeAiGuideStepId) === 1}
-              variant="side-tab"
-            />
+            <WalkthroughStartButton variant="side-tab" />
             {/* <StatusBar status={status} /> */}
             <span className="sr-only" role="status" aria-live="polite">{status}</span>
 

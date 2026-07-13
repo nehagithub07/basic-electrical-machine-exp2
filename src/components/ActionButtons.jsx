@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import SectionCard from './SectionCard.jsx'
 import {
   AddIcon,
@@ -138,6 +138,7 @@ const ActionButtons = ({
   onAutoConnect,
 }) => {
   const [instructionsOpen, setInstructionsOpen] = useState(false)
+  const activeInstructionRef = useRef(null)
   const handlers = {
     onAdd,
     onCheck,
@@ -147,6 +148,17 @@ const ActionButtons = ({
     onAutoConnect,
     onAiGuide,
   }
+
+  useEffect(() => {
+    if (!instructionsOpen || !activeInstructionRef.current) {
+      return
+    }
+
+    activeInstructionRef.current.scrollIntoView({
+      block: 'nearest',
+      behavior: 'smooth',
+    })
+  }, [activeInstructionStep, instructionsOpen])
 
   return (
     <SectionCard className="action-buttons-card h-[176px]" icon="buttons" id="action-buttons-panel" title="ACTION BUTTONS">
@@ -212,6 +224,7 @@ const ActionButtons = ({
                     aria-current={isActive ? 'step' : undefined}
                     className={`action-instructions-panel__step ${isActive ? 'action-instructions-panel__step--active' : ''}`}
                     key={step.number}
+                    ref={isActive ? activeInstructionRef : null}
                   >
                     <strong>STEP {step.number}:</strong> {step.text}
                     {step.substeps ? (
