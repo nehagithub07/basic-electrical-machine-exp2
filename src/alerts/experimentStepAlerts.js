@@ -6,16 +6,25 @@ const alertAudioModules = import.meta.glob('../audios/*', {
   query: '?url',
 })
 
-const getAlertAudio = (fileName) => (
-  alertAudioModules[`../audios/${fileName}`] ?? ALERT_AUDIO_PLACEHOLDER
-)
+const getAlertAudio = (...fileNames) => {
+  for (const fileName of fileNames) {
+    const audio = alertAudioModules[`../audios/${fileName}`]
+
+    if (audio) {
+      return audio
+    }
+  }
+
+  return ALERT_AUDIO_PLACEHOLDER
+}
 
 export const ALERT_AUDIO = {
   aiGuideClick: getAlertAudio('AI Guide click.wav'),
   allConnectionsCompleted: getAlertAudio('Guide all complete conn.wav'),
   autoConnect: getAlertAudio('Autoconnect.wav'),
-  connect2To10: getAlertAudio('Connect terminal 2 to terminal 10.wav'),
-  connect3To11: getAlertAudio('Now, connect terminal 3 of the ammeter to terminal 11.wav'),
+  connect1To9: getAlertAudio('Connect terminal 1 to terminal 9.wav', 'Correct Connections.wav'),
+  connect2To10: getAlertAudio('Connect terminal 2 to terminal 10.wav', "Let's move on to the next connection.wav"),
+  connect3To11: getAlertAudio('Connect terminal 3 to terminal 11.wav', 'Now, connect terminal 3 of the ammeter to terminal 11.wav'),
   connect4To12: getAlertAudio('Connect terminal 4 to terminal 12.wav'),
   connect5To13: getAlertAudio('Connect terminal 5 to terminal 13.wav'),
   connect6To14: getAlertAudio('Connect terminal 6 to terminal 14..wav'),
@@ -74,11 +83,11 @@ export const EXPERIMENT_ALERTS = {
   incorrectNodeConnection: {
     audio: ALERT_AUDIO.wrongConnection,
     dedupeKey: 'wrong-connection',
-    description: '',
+    description: 'Remove the wrong wire and follow the highlighted terminals.',
     icon: '❌',
     stepNumber: 1,
     target: '#circuit-panel',
-    title: 'This connection is wrong',
+    title: 'This connection is wrong.',
     type: 'error',
   },
   checkingConnections: {
@@ -115,6 +124,24 @@ export const EXPERIMENT_ALERTS = {
     target: '#circuit-panel',
     title: 'Please make the required connections as per the given instructions.',
     type: 'warning',
+  },
+  missingConnections: {
+    audio: ALERT_AUDIO.firstCheckClick,
+    description: 'Some required connections are missing. Follow the highlighted terminals to complete the circuit.',
+    icon: '!',
+    stepNumber: 2,
+    target: '#circuit-panel',
+    title: 'Missing Connections',
+    type: 'warning',
+  },
+  wrongConnectionsFound: {
+    audio: ALERT_AUDIO.multipleWrongConnections,
+    description: 'Remove the wrong wire and follow the highlighted terminals.',
+    icon: '!',
+    stepNumber: 2,
+    target: '#circuit-panel',
+    title: 'Wrong Connection Found',
+    type: 'error',
   },
   multipleWrongConnections: {
     audio: ALERT_AUDIO.multipleWrongConnections,
@@ -362,11 +389,11 @@ export const EXPERIMENT_ALERTS = {
   },
   resetSuccess: {
     audio: ALERT_AUDIO.reset,
-    description: 'You can start again.',
+    description: '',
     icon: '✅',
     stepNumber: 11,
     target: '#circuit-panel',
-    title: 'The simulation has been reset.',
+    title: 'The simulation has been reset. You can start again.',
     type: 'success',
   },
 }

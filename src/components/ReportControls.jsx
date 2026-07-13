@@ -68,7 +68,7 @@ const ReportControls = ({
           aria-labelledby="formula-panel-title"
         >
           <div className="formula-panel__header">
-            <h3 id="formula-panel-title">Experiment Equations</h3>
+            <h3 id="formula-panel-title">Equations</h3>
           </div>
 
           <dl className="formula-panel__list">
@@ -96,7 +96,7 @@ const ReportControls = ({
         title={formulasOpen ? 'Hide experiment formulas.' : 'Show experiment formulas.'}
         aria-controls="experiment-formula-panel"
         aria-expanded={formulasOpen}
-        aria-label={formulasOpen ? 'Hide experiment formulas' : 'Show experiment formulas'}
+      
         onClick={() => setFormulasOpen((current) => !current)}
       >
         <FormulaIcon />

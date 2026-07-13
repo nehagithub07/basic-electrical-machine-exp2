@@ -126,6 +126,7 @@ const WalkthroughPopup = ({
   const progressPercent = (currentStep / totalSteps) * 100
   const primaryActionLabel = canGoNext ? 'Next' : 'Finish'
   const handlePrimaryAction = canGoNext ? onNext : onClose
+  const showSecondaryAction = canGoNext
   const secondaryActionLabel = isReportStep ? 'Exit' : 'Skip'
   const handleSecondaryAction = isReportStep ? onClose : onSkip
 
@@ -278,14 +279,16 @@ const WalkthroughPopup = ({
         >
           Previous
         </button>
-        <button
-          aria-label={isReportStep ? 'Exit walkthrough' : 'Skip to Generate Report'}
-          className="walkthrough-popup__button walkthrough-popup__button--secondary"
-          onClick={handleSecondaryAction}
-          type="button"
-        >
-          {secondaryActionLabel}
-        </button>
+        {showSecondaryAction && (
+          <button
+            aria-label={isReportStep ? 'Exit walkthrough' : 'Skip to Generate Report'}
+            className="walkthrough-popup__button walkthrough-popup__button--secondary"
+            onClick={handleSecondaryAction}
+            type="button"
+          >
+            {secondaryActionLabel}
+          </button>
+        )}
         <button
           className="walkthrough-popup__button walkthrough-popup__button--primary"
           data-autofocus

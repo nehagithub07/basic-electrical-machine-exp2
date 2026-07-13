@@ -80,7 +80,7 @@ const instructionSteps = [
     substeps: [
       'Connect power supply to the circuit (1-9, 2-10).',
       'Connect ammeters (3-11, 4-12), (5-13, 6-14) and (7-15, 8-16), or connect any ammeter to any resistance in circuit.',
-      'Click on the label to delete all the connections for the corresponding nodes.',
+      'Click on the label to delete all the connections for the corresponding terminals.',
     ],
   },
   {
@@ -89,7 +89,7 @@ const instructionSteps = [
   },
   {
     number: 3,
-    text: 'Set the values of resistances R1, R2 and R3 by adjusting the sliders on left. These values will remain constant throughout the experiment.',
+    text: 'Set the values of resistances R1, R2 and R3 by moving the sliders on right. These values will remain constant throughout the experiment.',
   },
   {
     number: 4,
@@ -105,15 +105,15 @@ const instructionSteps = [
   },
   {
     number: 7,
-    text: 'Repeat step 6 until 6 readings are recorded. A minimum of 6 readings is required to plot the graph.',
+    text: 'Repeat Steps 5 and 6 until six readings are recorded. At least 6 readings are required to plot the graph.',
   },
   {
     number: 8,
-    text: "Click on the 'PLOT' button to display the graph.",
+    text: "Click on the 'PLOT' button to plot the graph.",
   },
   {
     number: 9,
-    text: "Click on the 'Generate Report' button below the graph to open the experiment report.",
+    text: 'Click the "Generate Report" button to generate the simulation report, which will be displayed below the graph.',
   },
   {
     number: 10,
@@ -121,7 +121,7 @@ const instructionSteps = [
   },
   {
     number: 11,
-    text: "Click on 'RESET' button to refresh the page.",
+    text: "Click on 'RESET' button to refresh the simulation.",
   },
 ]
 

@@ -2,6 +2,7 @@ import a1Img from '../assets/A1.png'
 import a2Img from '../assets/A2.png'
 import a3Img from '../assets/A3.png'
 import needleImg from '../assets/needle.png'
+import { getTerminalConnectedClass, getTerminalHighlightClass, getTerminalNumberHighlightClass } from '../utils/terminalHighlight.js'
 
 const METER_MAX_CURRENT = 10
 const DIAL_START_ANGLE = 180
@@ -19,8 +20,10 @@ const terminalNumbers = {
   A3: { positive: 7, negative: 8 },
 }
 
-const Ammeter = ({ label, value = 0 }) => {
+const Ammeter = ({ connectedTerminalIds = [], highlightedTerminalIds = [], label, value = 0 }) => {
   const terminals = terminalNumbers[label]
+  const positiveTerminalId = `${terminals.positive}-endpoint`
+  const negativeTerminalId = `${terminals.negative}-endpoint`
   const current = Number.isFinite(value) ? value : 0
   const ratio = Math.min(Math.max(current / METER_MAX_CURRENT, 0), 1)
   const angle = DIAL_START_ANGLE + ratio * DIAL_SWEEP_ANGLE
@@ -34,31 +37,31 @@ const Ammeter = ({ label, value = 0 }) => {
       />
 
       <span
-        id={`${terminals.positive}-endpoint`}
-        className={`connection-terminal connection-terminal--meter connection-terminal--meter-plus connection-terminal--endpoint-${terminals.positive}`}
+        id={positiveTerminalId}
+        className={`connection-terminal connection-terminal--meter connection-terminal--meter-plus connection-terminal--endpoint-${terminals.positive}${getTerminalConnectedClass(connectedTerminalIds, positiveTerminalId)}${getTerminalHighlightClass(highlightedTerminalIds, positiveTerminalId)}`}
         data-polarity="plus"
         aria-label={`${label} positive terminal ${terminals.positive}`}
-        title={`${label} positive (${terminals.positive}-endpoint)`}
+        title={`${label} positive`}
       />
       <span
-        className={`terminal-number-label terminal-number-label--meter-plus terminal-number-label--endpoint-${terminals.positive}`}
-        data-terminal-id={`${terminals.positive}-endpoint`}
-        title={`${label} positive (${terminals.positive}-endpoint)`}
+        className={`terminal-number-label terminal-number-label--meter-plus terminal-number-label--endpoint-${terminals.positive}${getTerminalNumberHighlightClass(highlightedTerminalIds, positiveTerminalId)}`}
+        data-terminal-id={positiveTerminalId}
+        title={`${label} positive`}
       >
         {terminals.positive}
       </span>
 
       <span
-        id={`${terminals.negative}-endpoint`}
-        className={`connection-terminal connection-terminal--meter connection-terminal--meter-minus connection-terminal--endpoint-${terminals.negative}`}
+        id={negativeTerminalId}
+        className={`connection-terminal connection-terminal--meter connection-terminal--meter-minus connection-terminal--endpoint-${terminals.negative}${getTerminalConnectedClass(connectedTerminalIds, negativeTerminalId)}${getTerminalHighlightClass(highlightedTerminalIds, negativeTerminalId)}`}
         data-polarity="minus"
         aria-label={`${label} negative terminal ${terminals.negative}`}
-        title={`${label} negative (${terminals.negative}-endpoint)`}
+        title={`${label} negative`}
       />
       <span
-        className={`terminal-number-label terminal-number-label--meter-minus terminal-number-label--endpoint-${terminals.negative}`}
-        data-terminal-id={`${terminals.negative}-endpoint`}
-        title={`${label} negative (${terminals.negative}-endpoint)`}
+        className={`terminal-number-label terminal-number-label--meter-minus terminal-number-label--endpoint-${terminals.negative}${getTerminalNumberHighlightClass(highlightedTerminalIds, negativeTerminalId)}`}
+        data-terminal-id={negativeTerminalId}
+        title={`${label} negative`}
       >
         {terminals.negative}
       </span>

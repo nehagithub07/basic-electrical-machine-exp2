@@ -169,7 +169,7 @@
         "en": "Observation Table"
       },
       "description": {
-        "en": "This table records the measured branch currents I1, I2, and I3 at different voltages. These readings will be used later to plot the graph."
+        "en": "This table records the measured branch currents I₁, I₂, and I₃ at different voltages. These readings will be used later to plot the graph."
       },
       "audio": "./walkthrough-audios/Observation table.wav",
       "placement": "right"

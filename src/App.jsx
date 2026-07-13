@@ -9,7 +9,7 @@ import HeaderBoard from './components/HeaderBoard.jsx'
 import ReportControls from './components/ReportControls.jsx'
 import WalkthroughStartButton from './walkthrough/components/WalkthroughStartButton.jsx'
 import { useWalkthrough } from './walkthrough/useWalkthrough.js'
-import { ALERT_AUDIO, EXPERIMENT_ALERTS } from './alerts/experimentStepAlerts.js'
+import { ALERT_AUDIO, ALERT_AUDIO_PLACEHOLDER, EXPERIMENT_ALERTS } from './alerts/experimentStepAlerts.js'
 import { useLabAlerts } from './alerts/useLabAlerts.js'
 import { useAiGuideNarration } from './aiGuide/useAiGuideNarration.js'
 // import StatusBar from './components/StatusBar.jsx'
@@ -21,7 +21,9 @@ const BASE_WIDTH = 1440
 const BASE_HEIGHT = 960
 const GRAPH_SECTION_GAP = 28
 const GRAPH_SECTION_HEIGHT = 430
-const CONTENT_HEIGHT = BASE_HEIGHT + GRAPH_SECTION_GAP + GRAPH_SECTION_HEIGHT
+const FOOTER_SECTION_GAP = 16
+const FOOTER_HEIGHT = 48
+const CONTENT_HEIGHT = BASE_HEIGHT + GRAPH_SECTION_GAP + GRAPH_SECTION_HEIGHT + FOOTER_SECTION_GAP + FOOTER_HEIGHT
 const PANEL_MAX_SCALE = 1
 const PANEL_VIEWPORT_MARGIN = 24
 const MIN_GRAPH_READINGS = 6
@@ -45,6 +47,104 @@ const NEXT_CONNECTION_AUDIO_BY_PAIR = {
   '13-endpoint|5-endpoint': ALERT_AUDIO.connect6To14,
   '14-endpoint|6-endpoint': ALERT_AUDIO.connect7To15,
   '15-endpoint|7-endpoint': ALERT_AUDIO.connect8To16,
+}
+
+const CONNECTION_PROMPT_AUDIO_BY_PAIR = {
+  '1-endpoint|9-endpoint': ALERT_AUDIO.connect1To9,
+  '10-endpoint|2-endpoint': ALERT_AUDIO.connect2To10,
+  '11-endpoint|3-endpoint': ALERT_AUDIO.connect3To11,
+  '12-endpoint|4-endpoint': ALERT_AUDIO.connect4To12,
+  '13-endpoint|5-endpoint': ALERT_AUDIO.connect5To13,
+  '14-endpoint|6-endpoint': ALERT_AUDIO.connect6To14,
+  '15-endpoint|7-endpoint': ALERT_AUDIO.connect7To15,
+  '16-endpoint|8-endpoint': ALERT_AUDIO.connect8To16,
+}
+
+const AI_GUIDE_CONNECTION_STEP_BY_PAIR = {
+  '1-endpoint|9-endpoint': 3,
+  '10-endpoint|2-endpoint': 4,
+  '11-endpoint|3-endpoint': 5,
+  '12-endpoint|4-endpoint': 6,
+  '13-endpoint|5-endpoint': 7,
+  '14-endpoint|6-endpoint': 8,
+  '15-endpoint|7-endpoint': 9,
+  '16-endpoint|8-endpoint': 10,
+}
+
+const AI_GUIDE_TARGET_SELECTORS_BY_STEP_ID = {
+  1: ['#walkthrough-start-button'],
+  2: ['#auto-connect-button', '#circuit-panel'],
+  3: ['#circuit-panel'],
+  4: ['#circuit-panel'],
+  5: ['#circuit-panel'],
+  6: ['#circuit-panel'],
+  7: ['#circuit-panel'],
+  8: ['#circuit-panel'],
+  9: ['#circuit-panel'],
+  10: ['#circuit-panel'],
+  11: ['#check-button'],
+  12: ['#circuit-panel'],
+  13: ['#circuit-panel'],
+  14: ['#circuit-panel'],
+  15: ['#check-button'],
+  16: ['#observation-table-panel'],
+  17: ['#observation-table-panel'],
+  18: ['#check-button', '#power-toggle-button'],
+  19: ['#resistance-controls'],
+  20: ['#resistance-controls', '#power-toggle-button'],
+  21: ['#power-toggle-button'],
+  22: ['#voltage-control'],
+  23: ['#ammeter-bank', '#add-reading-button'],
+  24: ['#voltage-control', '#add-reading-button'],
+  25: ['#voltage-control'],
+  26: ['#voltage-control', '#add-reading-button'],
+  27: ['#plot-button'],
+  28: ['#plot-button', '#generate-report-button'],
+  29: ['#plot-button'],
+  30: ['#generate-report-button', '#print-button', '#reset-button'],
+  31: ['#circuit-panel'],
+  32: ['#print-button'],
+  33: ['#generate-report-button'],
+}
+
+const getTerminalNumber = (terminalId) => terminalId?.replace('-endpoint', '') ?? ''
+
+const getTerminalPairKeyFromIds = (terminalIds) => (
+  Array.isArray(terminalIds) && terminalIds.length === 2
+    ? [...terminalIds].sort().join('|')
+    : null
+)
+
+const getAiGuideConnectionStepId = (terminalIds) => {
+  const pairKey = getTerminalPairKeyFromIds(terminalIds)
+
+  return pairKey ? AI_GUIDE_CONNECTION_STEP_BY_PAIR[pairKey] : null
+}
+
+const getConnectionPromptAudio = (terminalIds) => {
+  const pairKey = getTerminalPairKeyFromIds(terminalIds)
+
+  return pairKey ? CONNECTION_PROMPT_AUDIO_BY_PAIR[pairKey] : null
+}
+
+const isAiGuideConnectionStep = (stepId) => {
+  const numericStepId = Number(stepId)
+
+  return numericStepId >= 3 && numericStepId <= 10
+}
+
+const getAiGuideTargetSelectors = (stepId) => (
+  AI_GUIDE_TARGET_SELECTORS_BY_STEP_ID[Number(stepId)] ?? []
+)
+
+const getConnectionPromptText = (terminalIds) => {
+  if (!Array.isArray(terminalIds) || terminalIds.length !== 2) {
+    return 'Follow the highlighted terminals to complete the next connection.'
+  }
+
+  const [sourceId, targetId] = terminalIds
+
+  return `Connect terminal ${getTerminalNumber(sourceId)} to terminal ${getTerminalNumber(targetId)}.`
 }
 
 const playLabAlertAudio = (audio) => {
@@ -215,7 +315,10 @@ const App = () => {
   }, [])
 
   const {
+    activeStepId: activeAiGuideStepId,
     isPlaying: aiGuidePlaying,
+    playAudioSource: playAiGuideAudio,
+    playText: playAiGuideText,
     playStepsById: playAiGuideSteps,
     start: startAiGuide,
     stop: stopAiGuide,
@@ -224,6 +327,43 @@ const App = () => {
     onFinish: handleAiGuideFinish,
     onStart: handleAiGuideStart,
   })
+
+  const playWrongConnectionCorrection = useCallback(async (terminalIds) => {
+    const correctionAudio = getConnectionPromptAudio(terminalIds)
+    const correctionText = getConnectionPromptText(terminalIds)
+
+    await playAiGuideSteps([12])
+
+    if (correctionAudio && correctionAudio !== ALERT_AUDIO_PLACEHOLDER) {
+      await playAiGuideAudio(
+        correctionAudio,
+        {
+          activeStepId: getAiGuideConnectionStepId(terminalIds),
+          fallbackText: correctionText,
+        },
+      )
+      return
+    }
+
+    await playAiGuideText(correctionText, {
+      activeStepId: getAiGuideConnectionStepId(terminalIds),
+    })
+  }, [playAiGuideAudio, playAiGuideSteps, playAiGuideText])
+
+  useEffect(() => {
+    const highlightedElements = getAiGuideTargetSelectors(activeAiGuideStepId)
+      .flatMap((selector) => Array.from(document.querySelectorAll(selector)))
+
+    highlightedElements.forEach((element) => {
+      element.classList.add('ai-guide-active-target')
+    })
+
+    return () => {
+      highlightedElements.forEach((element) => {
+        element.classList.remove('ai-guide-active-target')
+      })
+    }
+  }, [activeAiGuideStepId])
 
   const handleAiGuide = useCallback(() => {
     if (aiGuidePlaying) {
@@ -513,9 +653,26 @@ const App = () => {
     }
 
     if (result.latestConnectionIsWrong) {
+      const correctionLine = getConnectionPromptText(result.nextRequiredConnection)
+      const correctionAudio = getConnectionPromptAudio(result.nextRequiredConnection)
+      const hasCorrectionAudio = correctionAudio && correctionAudio !== ALERT_AUDIO_PLACEHOLDER
+
       setConnectionsReadyForCheck(false)
       setStatus('This connection is wrong')
-      showStepAlert(EXPERIMENT_ALERTS.incorrectNodeConnection)
+      showStepAlert(EXPERIMENT_ALERTS.incorrectNodeConnection, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.incorrectNodeConnection.audio,
+        audioSpeech: aiGuidePlaying || hasCorrectionAudio ? null : correctionLine,
+        dedupeKey: null,
+        description: correctionLine,
+        followUpAudio: !aiGuidePlaying && hasCorrectionAudio ? correctionAudio : ALERT_AUDIO_PLACEHOLDER,
+        replaceExisting: true,
+        title: 'This connection is wrong.',
+      })
+
+      if (aiGuidePlaying) {
+        playWrongConnectionCorrection(result.nextRequiredConnection)
+      }
+
       return
     }
 
@@ -523,13 +680,19 @@ const App = () => {
     const nextConnectionAudio = latestConnectionPairKey
       ? NEXT_CONNECTION_AUDIO_BY_PAIR[latestConnectionPairKey]
       : null
+    const nextGuideStepId = getAiGuideConnectionStepId(result.nextRequiredConnection)
 
     if (
       nextConnectionAudio
       && lastConnectionInstructionAudioKeyRef.current !== latestConnectionPairKey
     ) {
       lastConnectionInstructionAudioKeyRef.current = latestConnectionPairKey
-      playLabAlertAudio(nextConnectionAudio)
+
+      if (aiGuidePlaying && nextGuideStepId) {
+        playAiGuideSteps([nextGuideStepId])
+      } else {
+        playLabAlertAudio(nextConnectionAudio)
+      }
     }
 
     if (!result.isCorrect) {
@@ -546,8 +709,15 @@ const App = () => {
 
     allConnectionsAlertShownRef.current = true
     setStatus('All connections are completed. Click on the check button to verify the connections.')
-    showStepAlert(EXPERIMENT_ALERTS.allConnectionsCompleted)
-  }, [connectionsVerified, showStepAlert])
+    showStepAlert(EXPERIMENT_ALERTS.allConnectionsCompleted, {
+      audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.allConnectionsCompleted.audio,
+      replaceExisting: true,
+    })
+
+    if (aiGuidePlaying) {
+      playAiGuideSteps([11])
+    }
+  }, [aiGuidePlaying, connectionsVerified, playAiGuideSteps, playWrongConnectionCorrection, showStepAlert])
 
   const handleCheckConnections = useCallback((result) => {
     if (result.isCorrect) {
@@ -571,16 +741,58 @@ const App = () => {
     allConnectionsAlertShownRef.current = false
 
     if (result.totalConnections === 0) {
-      setStatus('Please make the connections first.')
-      showStepAlert(EXPERIMENT_ALERTS.requiredConnectionsFirst)
+      const correctionStepId = getAiGuideConnectionStepId(result.nextRequiredConnection)
+
+      setStatus('Missing connections. Please make the required connections first.')
+      showStepAlert(EXPERIMENT_ALERTS.missingConnections, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.missingConnections.audio,
+        description: `No wires are connected yet. ${getConnectionPromptText(result.nextRequiredConnection)}`,
+        replaceExisting: true,
+      })
+
+      if (aiGuidePlaying) {
+        playAiGuideSteps([14, correctionStepId].filter(Boolean))
+      }
+
+      return
+    }
+
+    const correctionStepId = getAiGuideConnectionStepId(result.nextRequiredConnection)
+    const connectionPrompt = getConnectionPromptText(result.nextRequiredConnection)
+    const connectionPromptAudio = getConnectionPromptAudio(result.nextRequiredConnection)
+    const hasConnectionPromptAudio = connectionPromptAudio && connectionPromptAudio !== ALERT_AUDIO_PLACEHOLDER
+
+    if (result.hasInvalidConnection) {
+      setStatus('This connection is wrong. Follow the suggested terminal connection.')
+      showStepAlert(EXPERIMENT_ALERTS.incorrectNodeConnection, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.incorrectNodeConnection.audio,
+        audioSpeech: aiGuidePlaying || hasConnectionPromptAudio ? null : connectionPrompt,
+        description: connectionPrompt,
+        followUpAudio: !aiGuidePlaying && hasConnectionPromptAudio ? connectionPromptAudio : ALERT_AUDIO_PLACEHOLDER,
+        replaceExisting: true,
+        title: 'This connection is wrong.',
+      })
+
+      if (aiGuidePlaying) {
+        playWrongConnectionCorrection(result.nextRequiredConnection)
+      }
+
       return
     }
 
     setStatus(
-      `Invalid connections. Correct matched points: ${result.matchedCount}; total wires: ${result.totalConnections}.`,
+      `Missing connections. Correct matched points: ${result.matchedCount}; total wires: ${result.totalConnections}.`,
     )
-    showStepAlert(EXPERIMENT_ALERTS.multipleWrongConnections)
-  }, [showStepAlert])
+    showStepAlert(EXPERIMENT_ALERTS.missingConnections, {
+      audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.missingConnections.audio,
+      description: `Some required wires are still missing. ${connectionPrompt}`,
+      replaceExisting: true,
+    })
+
+    if (aiGuidePlaying) {
+      playAiGuideSteps([14, correctionStepId].filter(Boolean))
+    }
+  }, [aiGuidePlaying, playAiGuideSteps, playWrongConnectionCorrection, showStepAlert])
 
   const handleCheck = () => {
     setCheckRequest((current) => current + 1)
@@ -663,7 +875,10 @@ const App = () => {
         >
           <main className="simulation-shell" id="walkthrough-demo-experiment">
             <HeaderBoard />
-            <WalkthroughStartButton variant="side-tab" />
+            <WalkthroughStartButton
+              highlighted={Number(activeAiGuideStepId) === 1}
+              variant="side-tab"
+            />
             {/* <StatusBar status={status} /> */}
             <span className="sr-only" role="status" aria-live="polite">{status}</span>
 
@@ -704,6 +919,8 @@ const App = () => {
 
               <section className="right-panel">
                 <ConnectionLab
+                  aiGuideActive={aiGuidePlaying}
+                  guideEndpointHighlightActive={isAiGuideConnectionStep(activeAiGuideStepId)}
                   key={`connection-lab-${resetRequest}`}
                   autoConnectRequest={autoConnectRequest}
                   checkRequest={checkRequest}
@@ -739,6 +956,10 @@ const App = () => {
             observations={observations}
             plotted={graphGenerated}
           />
+
+          <footer className="app-footer" aria-label="Copyright">
+            &copy; 2026 Virtual Labs IIT Roorkee
+          </footer>
         </div>
       </div>
     </div>

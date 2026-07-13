@@ -128,8 +128,29 @@
   filter: brightness(1.07);
 }
 
+.walkthrough-start-button--guide-highlight {
+  border-color: rgba(255, 244, 191, 0.98);
+  filter: brightness(1.12) saturate(1.14);
+  box-shadow:
+    0 0 0 4px rgba(255, 255, 255, 0.86),
+    0 0 0 10px rgba(20, 184, 166, 0.2),
+    0 0 26px rgba(45, 212, 191, 0.78),
+    0 4px 12px rgba(56, 29, 11, 0.46);
+  animation: walkthrough-start-guide-pulse 1100ms ease-in-out infinite;
+}
+
 .walkthrough-start-button--side-tab:active {
   transform: translateY(2px);
+}
+
+@keyframes walkthrough-start-guide-pulse {
+  50% {
+    box-shadow:
+      0 0 0 4px rgba(255, 255, 255, 0.95),
+      0 0 0 13px rgba(20, 184, 166, 0.34),
+      0 0 34px rgba(45, 212, 191, 0.92),
+      0 4px 12px rgba(56, 29, 11, 0.46);
+  }
 }
 
 .walkthrough-popup {
@@ -182,6 +203,7 @@
   font-size: 14px;
   font-weight: 600;
   line-height: 1.55;
+  text-align: justify;
 }
 
 .walkthrough-popup__progress {

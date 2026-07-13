@@ -371,6 +371,7 @@ p {
 }
 li {
   margin-bottom: 4px;
+  text-align: justify;
 }
 .section {
   background: linear-gradient(180deg, #f9fbfe 0%, #f4f7fb 100%);

@@ -29,6 +29,20 @@ const isConfiguredAudioSource = (audioSource) => (
   typeof audioSource === 'string' && audioSource.trim() !== '' && audioSource.trim() !== '#'
 )
 
+const hasSpeechText = (speechText) => (
+  typeof speechText === 'string' && speechText.trim() !== ''
+)
+
+const canUseSpeechSynthesis = () => (
+  typeof window !== 'undefined'
+  && typeof window.speechSynthesis !== 'undefined'
+  && typeof window.SpeechSynthesisUtterance !== 'undefined'
+)
+
+const getSpeechLang = () => (
+  typeof navigator !== 'undefined' && navigator.language ? navigator.language : 'en-US'
+)
+
 const dispatchLabAlertEvent = (eventName, detail) => {
   if (typeof window === 'undefined') {
     return
@@ -118,9 +132,7 @@ const LabAlertProvider = ({ children }) => {
       return
     }
 
-    currentPlayback.audio.pause()
-    currentPlayback.audio.currentTime = 0
-    currentPlayback.finish(reason)
+    currentPlayback.stop(reason)
   }, [])
 
   useEffect(() => {
@@ -131,19 +143,28 @@ const LabAlertProvider = ({ children }) => {
     const handleAlertSound = (event) => {
       const audioSource = event.detail?.audio
       const alertId = event.detail?.id
+      const followUpAudio = event.detail?.followUpAudio
+      const speechText = event.detail?.speech
 
-      if (!isConfiguredAudioSource(audioSource)) {
+      if (
+        !isConfiguredAudioSource(audioSource)
+        && !isConfiguredAudioSource(followUpAudio)
+        && !hasSpeechText(speechText)
+      ) {
         return
       }
 
       dispatchExclusiveAudioStart(ALERT_AUDIO_SOURCE_ID)
       stopAlertAudio()
 
-      const audio = new Audio(audioSource)
       const playback = {
-        audio,
+        audio: null,
         finish: null,
         id: alertId,
+        segmentStop: null,
+        stop: null,
+        stopped: false,
+        utterance: null,
       }
       let settled = false
 
@@ -153,8 +174,9 @@ const LabAlertProvider = ({ children }) => {
         }
 
         settled = true
-        audio.removeEventListener('ended', handleEnded)
-        audio.removeEventListener('error', handleError)
+        playback.segmentStop = null
+        playback.audio = null
+        playback.utterance = null
 
         if (alertAudioRef.current === playback) {
           alertAudioRef.current = null
@@ -166,18 +188,162 @@ const LabAlertProvider = ({ children }) => {
         })
       }
 
-      const handleEnded = () => finishPlayback('ended')
-      const handleError = () => finishPlayback('error')
+      const playAudioSource = (source) => new Promise((resolve, reject) => {
+        if (!isConfiguredAudioSource(source) || playback.stopped) {
+          resolve()
+          return
+        }
+
+        const audio = new Audio(source)
+        let segmentSettled = false
+
+        function cleanup() {
+          audio.removeEventListener('ended', handleEnded)
+          audio.removeEventListener('error', handleError)
+        }
+
+        function settleSegment(callback) {
+          if (segmentSettled) {
+            return
+          }
+
+          segmentSettled = true
+          cleanup()
+
+          if (playback.audio === audio) {
+            playback.audio = null
+          }
+
+          if (playback.segmentStop === stopSegment) {
+            playback.segmentStop = null
+          }
+
+          callback()
+        }
+
+        function handleEnded() {
+          settleSegment(resolve)
+        }
+
+        function handleError() {
+          settleSegment(() => reject(new Error(`Unable to play alert audio: ${source}`)))
+        }
+
+        function stopSegment() {
+          audio.pause()
+          audio.currentTime = 0
+          settleSegment(resolve)
+        }
+
+        playback.audio = audio
+        playback.segmentStop = stopSegment
+        audio.addEventListener('ended', handleEnded)
+        audio.addEventListener('error', handleError)
+
+        audio.play().catch((error) => {
+          settleSegment(() => reject(error))
+        })
+      })
+
+      const playSpeechText = (text) => new Promise((resolve, reject) => {
+        const normalizedText = typeof text === 'string' ? text.trim() : ''
+
+        if (!normalizedText || playback.stopped || !canUseSpeechSynthesis()) {
+          resolve()
+          return
+        }
+
+        window.speechSynthesis.cancel()
+
+        const utterance = new SpeechSynthesisUtterance(normalizedText)
+        let segmentSettled = false
+
+        function cleanup() {
+          utterance.onend = null
+          utterance.onerror = null
+        }
+
+        function settleSegment(callback) {
+          if (segmentSettled) {
+            return
+          }
+
+          segmentSettled = true
+          cleanup()
+
+          if (playback.utterance === utterance) {
+            playback.utterance = null
+          }
+
+          if (playback.segmentStop === stopSegment) {
+            playback.segmentStop = null
+          }
+
+          callback()
+        }
+
+        function stopSegment() {
+          settleSegment(resolve)
+          window.speechSynthesis.cancel()
+        }
+
+        utterance.lang = getSpeechLang()
+        utterance.rate = 0.95
+        utterance.pitch = 1
+        utterance.onend = () => settleSegment(resolve)
+        utterance.onerror = (speechEvent) => {
+          if (speechEvent.error === 'canceled' || speechEvent.error === 'interrupted') {
+            settleSegment(resolve)
+            return
+          }
+
+          settleSegment(() => reject(new Error(`Alert speech failed: ${speechEvent.error}`)))
+        }
+
+        playback.utterance = utterance
+        playback.segmentStop = stopSegment
+        window.speechSynthesis.speak(utterance)
+      })
 
       playback.finish = finishPlayback
+      playback.stop = (reason = 'stopped') => {
+        if (playback.stopped) {
+          return
+        }
+
+        playback.stopped = true
+        playback.segmentStop?.()
+        finishPlayback(reason)
+      }
       alertAudioRef.current = playback
 
-      audio.addEventListener('ended', handleEnded)
-      audio.addEventListener('error', handleError)
+      const playAlertSound = async () => {
+        try {
+          await playAudioSource(audioSource)
 
-      audio.play().catch(() => {
-        finishPlayback('error')
-      })
+          if (playback.stopped) {
+            return
+          }
+
+          await playAudioSource(followUpAudio)
+
+          if (playback.stopped) {
+            return
+          }
+
+          await playSpeechText(speechText)
+
+          if (playback.stopped) {
+            return
+          }
+
+          finishPlayback('ended')
+        } catch {
+          finishPlayback('error')
+        }
+      }
+
+      playAlertSound()
     }
 
     const handleAlertSoundStop = (event) => {

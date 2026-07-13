@@ -51,6 +51,27 @@
     linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 36%, rgba(59, 28, 10, 0.2));
 }
 
+.ai-guide-active-target {
+  outline: 4px solid rgba(45, 212, 191, 0.92) !important;
+  outline-offset: 5px;
+  filter: brightness(1.08) saturate(1.12);
+  box-shadow:
+    0 0 0 7px rgba(255, 255, 255, 0.82),
+    0 0 0 13px rgba(45, 212, 191, 0.22),
+    0 0 30px rgba(45, 212, 191, 0.84) !important;
+  animation: ai-guide-target-pulse 1150ms ease-in-out infinite;
+}
+
+@keyframes ai-guide-target-pulse {
+  50% {
+    outline-color: rgba(255, 244, 191, 0.98);
+    box-shadow:
+      0 0 0 7px rgba(255, 255, 255, 0.9),
+      0 0 0 16px rgba(45, 212, 191, 0.34),
+      0 0 38px rgba(45, 212, 191, 0.96);
+  }
+}
+
 .workspace-grid {
   position: absolute;
   top: 108px;
@@ -400,6 +421,7 @@
   font-size: 15px;
   font-weight: 600;
   line-height: 1.42;
+  text-align: justify;
   text-shadow: none;
 }
 
@@ -1014,6 +1036,22 @@
   grid-template-rows: 58px 1fr;
 }
 
+.app-footer {
+  display: flex;
+  width: 1440px;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 16px;
+  border-top: 1px solid rgba(255, 227, 177, 0.34);
+  color: #f8e7c8;
+  background: rgba(27, 15, 10, 0.9);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+
 .graph-panel::before {
   position: absolute;
   inset: 8px;
@@ -1371,6 +1409,7 @@
   font-size: 11px;
   font-weight: 700;
   line-height: 1.3;
+  text-align: justify;
 }
 
 .formula-panel__note {
@@ -1381,6 +1420,7 @@
   background: rgba(63, 143, 67, 0.12);
   font-size: 12px;
   font-weight: 900;
+  text-align: justify;
 }
 
 .graph-panel__line--i1 {

@@ -7,6 +7,10 @@ const isConfiguredAudioSource = (audioSource) => (
   typeof audioSource === 'string' && audioSource.trim() !== '' && audioSource.trim() !== '#'
 )
 
+const hasSpeechText = (speechText) => (
+  typeof speechText === 'string' && speechText.trim() !== ''
+)
+
 const dispatchLabAlertEvent = (eventName, detail) => {
   if (typeof window === 'undefined') {
     return
@@ -34,12 +38,17 @@ const LabAlertCard = ({ alert, onDismiss }) => {
     requiresConfirmation,
     stepNumber,
     title,
-    totalSteps,
     tutorialMode,
     type,
   } = alert
   const audioSource = alert.audio ?? alert.audioSource
-  const waitsForAudio = !requiresConfirmation && isConfiguredAudioSource(audioSource)
+  const followUpAudio = alert.followUpAudio ?? alert.audioAfter
+  const audioSpeech = alert.audioSpeech ?? alert.speech
+  const waitsForAudio = !requiresConfirmation && (
+    isConfiguredAudioSource(audioSource)
+    || isConfiguredAudioSource(followUpAudio)
+    || hasSpeechText(audioSpeech)
+  )
   const [audioPlaybackComplete, setAudioPlaybackComplete] = useState(!waitsForAudio)
   const hasProgressTimer = !requiresConfirmation && Number.isFinite(duration) && duration > 0
   const timerDuration = waitsForAudio ? AUDIO_COMPLETE_HOLD_DURATION : duration
@@ -90,13 +99,15 @@ const LabAlertCard = ({ alert, onDismiss }) => {
   useEffect(() => {
     dispatchLabAlertEvent('lab-alert:sound', {
       audio: audioSource,
+      followUpAudio,
       id,
       sound: alert.sound ?? type,
+      speech: audioSpeech,
       stepNumber,
       title,
       type,
     })
-  }, [alert.sound, audioSource, id, stepNumber, title, type])
+  }, [alert.sound, audioSource, audioSpeech, followUpAudio, id, stepNumber, title, type])
 
   useEffect(() => {
     if (!hasProgressTimer || (waitsForAudio && !audioPlaybackComplete)) {
@@ -157,7 +168,6 @@ const LabAlertCard = ({ alert, onDismiss }) => {
 
         <div className="lab-alert-card__content">
           <div className="lab-alert-card__meta">
-            {stepNumber ? <span>STEP {stepNumber}</span> : null}
             <span>{type.toUpperCase()}</span>
           </div>
           <h2 id={titleId}>{title}</h2>
@@ -223,9 +233,6 @@ const LabAlertCard = ({ alert, onDismiss }) => {
         </div>
       ) : null}
 
-      {totalSteps ? (
-        <span className="sr-only">Step {stepNumber} of {totalSteps}</span>
-      ) : null}
     </article>
   )
 }

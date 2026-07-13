@@ -184,6 +184,18 @@ const getConnectionEndpointIds = (connection) => ({
   targetId: connection?.targetId || connection?.target?.id,
 })
 
+export const getConnectedTerminalIds = (instance) => (
+  Array.from(new Set(
+    getAllConnections(instance)
+      .flatMap((connection) => {
+        const { sourceId, targetId } = getConnectionEndpointIds(connection)
+
+        return [sourceId, targetId]
+      })
+      .filter(Boolean),
+  ))
+)
+
 export const isValidConnectionPair = (firstId, secondId) => (
   Boolean(firstId && secondId && VALID_CONNECTION_PAIR_KEYS.has(getTerminalPairKey(firstId, secondId)))
 )

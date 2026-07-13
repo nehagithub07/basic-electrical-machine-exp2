@@ -203,6 +203,7 @@
   font-size: 13px;
   font-weight: 700;
   line-height: 1.35;
+  text-align: justify;
 }
 
 .lab-alert-card__tools {
