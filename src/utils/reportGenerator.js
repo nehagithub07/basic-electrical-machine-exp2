@@ -835,15 +835,25 @@ tr:nth-child(even) {
     size: A4;
     margin: 12mm;
   }
+  *,
+  *::before,
+  *::after {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
   .print-btn,
   .download-btn,
   .report-actions {
-    display: none;
+    display: none !important;
   }
   body {
     margin: 0;
     padding: 0;
     background: #ffffff;
+    overflow: visible;
+  }
+  .report-document {
+    width: 100%;
   }
   .report-page {
     width: 100%;
@@ -861,8 +871,26 @@ tr:nth-child(even) {
     font-size: 22px;
   }
   .report-graph-card #report-graph {
-    min-height: 320px;
+    width: 100%;
+    height: 320px;
+    min-height: 0;
+    overflow: hidden;
   }
+  .report-graph__svg,
+  .report-graph__image {
+    display: block;
+    width: 100%;
+    height: 320px;
+    object-fit: contain;
+  }
+  h1,
+  h2,
+  h3,
+  table,
+  .table-shell,
+  .results-card,
+  .results-section,
+  .report-title-block,
   .section,
   .header-row,
   .info-grid,

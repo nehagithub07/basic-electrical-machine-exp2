@@ -1536,3 +1536,129 @@ input:focus-visible {
   flex-direction: column;
   gap: 18px;
 }
+
+@page {
+  size: 15in 14.770833in;
+  margin: 0;
+}
+
+@media print {
+  html,
+  body,
+  #root {
+    width: 1440px !important;
+    height: 1418px !important;
+    min-width: 1440px !important;
+    min-height: 1418px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+    scrollbar-gutter: auto !important;
+    background: #2b170d !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  #app-wrapper,
+  #app-viewport,
+  #app-scale {
+    width: 1440px !important;
+    height: 1418px !important;
+    min-width: 1440px !important;
+    min-height: 1418px !important;
+    max-width: 1440px !important;
+    max-height: 1418px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+
+  #app-wrapper {
+    display: block !important;
+  }
+
+  #app-viewport {
+    position: relative !important;
+    flex: none !important;
+  }
+
+  #app-scale {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+    transform-origin: top left !important;
+  }
+
+  .simulation-shell {
+    width: 1440px !important;
+    height: 960px !important;
+    overflow: hidden !important;
+  }
+
+  .graph-panel,
+  .graph-panel--separate {
+    width: 1440px !important;
+    height: 430px !important;
+    margin: 28px 0 0 !important;
+    overflow: hidden !important;
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+
+  .graph-panel__body {
+    margin: 6px 24px 24px !important;
+    overflow: hidden !important;
+  }
+
+  .graph-panel__chart {
+    inset: 18px 20px 16px !important;
+    width: auto !important;
+    height: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+  }
+
+  #app-wrapper,
+  #app-viewport,
+  #app-scale,
+  .simulation-shell,
+  .graph-panel {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+    break-after: avoid !important;
+    page-break-after: avoid !important;
+  }
+
+  .walkthrough-layer,
+  .walkthrough-dim-panel,
+  .walkthrough-interaction-shield,
+  .walkthrough-spotlight-ring,
+  .walkthrough-popup,
+  .walkthrough-start-button,
+  .lab-alert-region,
+  .lab-alert-interaction-shield,
+  .lab-alert-card,
+  .lab-alert-spotlight,
+  .action-instructions-panel,
+  .connection-lab .jtk-overlay,
+  .app-footer,
+  [role="tooltip"],
+  .tooltip,
+  .tippy-box {
+    display: none !important;
+  }
+
+  .walkthrough-active-target,
+  .lab-alert-active-target,
+  .connection-terminal--guide-highlight,
+  .terminal-number-label--guide-highlight {
+    animation: none !important;
+    filter: none !important;
+  }
+}

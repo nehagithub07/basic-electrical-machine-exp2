@@ -618,41 +618,6 @@ const App = () => {
   }
 
   const handlePrint = () => {
-    if (!canPlotGraph) {
-      showStepAlert(EXPERIMENT_ALERTS.minimumReadingsRequired, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.minimumReadingsRequired.audio,
-        description: 'Collect at least 6 readings before preparing the print layout.',
-      })
-
-      if (aiGuidePlaying) {
-        playAiGuideSteps([16])
-      }
-
-      return
-    }
-
-    if (!graphGenerated) {
-      setStatus('Please generate the graph first.')
-      showStepAlert(EXPERIMENT_ALERTS.insufficientGraphReadings, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.insufficientGraphReadings.audio,
-        description: 'Please generate the graph first.',
-        target: '#plot-button',
-        title: 'Generate Graph First',
-        type: 'warning',
-      })
-      if (aiGuidePlaying) {
-        playAiGuideSteps([29])
-      }
-      window.alert('Please generate the graph first.')
-      return
-    }
-
-    if (aiGuidePlaying) {
-      playAiGuideSteps([32])
-    } else {
-      playLabAlertAudio(ALERT_AUDIO.print)
-    }
-
     window.print()
   }
 
