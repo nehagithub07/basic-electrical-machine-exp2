@@ -76,11 +76,11 @@ const buttons = [
 const instructionSteps = [
   {
     number: 1,
-    text: 'Make connections by dragging nodes from apparatus to the circuit.',
+    text: 'Make connections as per the instructions given below by drag and drop the wire from terminals.',
     substeps: [
       'Connect power supply to the circuit (1-9, 2-10).',
-      'Connect ammeters (3-11, 4-12), (5-13, 6-14) and (7-15, 8-16), or connect any ammeter to any resistance in circuit.',
-      'Click on the label to delete all the connections for the corresponding terminals.',
+      'Connect ammeters (3-11, 4-12), (5-13, 6-14) and (7-15, 8-16).',
+      'Note: Click on the label to delete the connection for the corresponding terminals.',
     ],
   },
   {
@@ -113,14 +113,10 @@ const instructionSteps = [
   },
   {
     number: 9,
-    text: 'Click the "Generate Report" button to generate the simulation report, which will be displayed below the graph.',
+    text: 'Click "Generate Report" to generate the simulation report, then use the report page to print or download it.',
   },
   {
     number: 10,
-    text: 'Use the report page controls to print or download the generated report.',
-  },
-  {
-    number: 11,
     text: "Click on 'RESET' button to refresh the simulation.",
   },
 ]

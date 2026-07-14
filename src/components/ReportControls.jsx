@@ -93,10 +93,8 @@ const ReportControls = ({
         id="formula-button"
         type="button"
         className="formula-button"
-        title={formulasOpen ? 'Hide experiment formulas.' : 'Show experiment formulas.'}
         aria-controls="experiment-formula-panel"
         aria-expanded={formulasOpen}
-      
         onClick={() => setFormulasOpen((current) => !current)}
       >
         <FormulaIcon />

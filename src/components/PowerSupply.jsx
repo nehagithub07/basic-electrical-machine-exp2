@@ -64,7 +64,7 @@ const PowerSupply = ({ connectedTerminalIds = [], highlightedTerminalIds = [], o
           className="voltage-range"
           disabled={!powerOn}
           id="voltage-slider"
-          max="12"
+          max="10"
           min="1"
           onChange={handleVoltageChange}
           step="0.1"
