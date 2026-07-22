@@ -5,7 +5,8 @@ import needleImg from '../assets/needle.png'
 import { getTerminalConnectedClass, getTerminalHighlightClass, getTerminalNumberHighlightClass } from '../utils/terminalHighlight.js'
 
 const METER_MAX_CURRENT = 10
-const DIAL_START_ANGLE = 180
+// The needle artwork points upward, so a -90 degree rotation places it on 0.
+const DIAL_START_ANGLE = -90
 const DIAL_SWEEP_ANGLE = 180
 
 const ammeterImages = {

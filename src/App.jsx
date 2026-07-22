@@ -945,7 +945,7 @@ const App = () => {
           id="app-scale"
           style={{
             height: `${CONTENT_HEIGHT}px`,
-            transform: `scale(${scale})`,
+            zoom: scale,
           }}
         >
           <main className="simulation-shell" id="walkthrough-demo-experiment">

@@ -298,9 +298,9 @@ const createReportHtml = ({
 }) => {
   const reportDate = new Date()
   const sessionEnd = reportDate.getTime()
-  const reportDateText = reportDate.toLocaleDateString(undefined, {
-    day: 'numeric',
+  const reportDateText = reportDate.toLocaleDateString('en-US', {
     month: 'long',
+    day: 'numeric',
     year: 'numeric',
   })
   const startTimeText = new Date(sessionStart).toLocaleTimeString()

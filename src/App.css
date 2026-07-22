@@ -816,12 +816,12 @@
   --ammeter-image-top: 0;
   --ammeter-needle-top: 101px;
   --ammeter-needle-left: 102px;
-  --ammeter-needle-width: 47px;
-  --ammeter-needle-height: 1px;
+  --ammeter-needle-width: 0;
+  --ammeter-needle-height: 0;
   --ammeter-needle-origin-x: 0;
-  --ammeter-needle-origin-y: 50%;
-  --ammeter-needle-image-top: 3px;
-  --ammeter-needle-image-left: -8px;
+  --ammeter-needle-origin-y: 0;
+  --ammeter-needle-image-top: -45px;
+  --ammeter-needle-image-left: -33px;
   --ammeter-needle-image-width: 70px;
   filter: none;
   transform: none;
@@ -845,25 +845,16 @@
 .ammeter--A1 {
   --ammeter-needle-top: 120px;
   --ammeter-needle-left: 97px;
-  --ammeter-needle-image-top: 3px;
-  --ammeter-needle-image-left: -8px;
-  --ammeter-needle-image-width: 70px;
 }
 
 .ammeter--A2 {
   --ammeter-needle-top: 120px;
   --ammeter-needle-left: 102px;
-  --ammeter-needle-image-top: 3px;
-  --ammeter-needle-image-left: -8px;
-  --ammeter-needle-image-width: 70px;
 }
 
 .ammeter--A3 {
   --ammeter-needle-top: 120px;
   --ammeter-needle-left: 102px;
-  --ammeter-needle-image-top: 3px;
-  --ammeter-needle-image-left: -8px;
-  --ammeter-needle-image-width: 70px;
 }
 
 .ammeter::before {
@@ -903,7 +894,7 @@
   display: block;
   width: var(--ammeter-needle-image-width);
   height: auto;
-  transform: translateY(-50%);
+  max-width: none;
 }
 
 .ammeter__label {
@@ -1593,6 +1584,7 @@ input:focus-visible {
     left: 0 !important;
     transform: none !important;
     transform-origin: top left !important;
+    zoom: 1 !important;
   }
 
   .simulation-shell {
