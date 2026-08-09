@@ -1,14 +1,14 @@
 import { useState } from 'react'
 
-const MIN_RESISTANCE = 1
-const MAX_RESISTANCE = 10
-const RESISTANCE_STEP = 0.1
+const MIN_RESISTANCE = 1000
+const MAX_RESISTANCE = 5000
+const RESISTANCE_STEP = 1000
 
 const normalizeResistance = (value) => {
   const number = Number(value)
   const bounded = Math.min(Math.max(Number.isFinite(number) ? number : 0, MIN_RESISTANCE), MAX_RESISTANCE)
 
-  return Number(bounded.toFixed(1))
+  return Math.round(bounded / RESISTANCE_STEP) * RESISTANCE_STEP
 }
 
 const ResistanceSlider = ({ disabled = false, label, onChange, value }) => {
@@ -28,12 +28,13 @@ const ResistanceSlider = ({ disabled = false, label, onChange, value }) => {
     <div className={`resistance-slider ${disabled ? 'resistance-slider--locked' : ''}`}>
       <label className="resistance-slider__label" htmlFor={`${label}-slider`}>
         {label.slice(0, 1)}
-        <sub>{label.slice(1)}</sub> (&Omega;)
+        <sub>{label.slice(1)}</sub> (k&Omega;)
       </label>
 
       <div className="resistance-slider__control">
         <input
           aria-label={`${label} resistance`}
+          aria-valuetext={`${sliderValue / 1000} kilo-ohms`}
           className="resistance-slider__input"
           disabled={disabled}
           id={`${label}-slider`}
@@ -53,7 +54,7 @@ const ResistanceSlider = ({ disabled = false, label, onChange, value }) => {
         />
       </div>
 
-      <span className="resistance-slider__value">{sliderValue.toFixed(1)}</span>
+      <span className="resistance-slider__value">{sliderValue / 1000}</span>
     </div>
   )
 }

@@ -1,17 +1,17 @@
 const GRAPH_VIEWBOX = {
-  height: 320,
+  height: 410,
   width: 960,
 }
 
 const GRAPH_CHART = {
-  height: 178,
+  height: 318,
   left: 92,
-  top: 48,
+  top: 26,
   width: 762,
 }
 
-const GRAPH_VOLTAGE_MAX = 12
-const GRAPH_X_TICKS = [0, 2, 4, 6, 8, 10, 12]
+const GRAPH_VOLTAGE_MAX = 15
+const GRAPH_X_TICKS = [0, 3, 6, 9, 12, 15]
 const GRAPH_Y_TICK_COUNT = 5
 const GRAPH_SERIES = [
   { className: 'i1', color: '#c83f35', key: 'i1', labelIndex: '1', labelOffset: -12 },
@@ -34,16 +34,9 @@ const toNumber = (value) => {
 
 const formatNumber = (value, fractionDigits = 3) => toNumber(value).toFixed(fractionDigits)
 
-const formatResistance = (value) => formatNumber(value, 1)
-
-const calculateTotalResistance = ({ r1, r2, r3 }) => {
-  const parallelDenominator = r2 + r3
-
-  if (parallelDenominator === 0) {
-    return 0
-  }
-
-  return r1 + ((r2 * r3) / parallelDenominator)
+const formatResistance = (value) => {
+  const resistance = toNumber(value) / 1000
+  return Number.isInteger(resistance) ? String(resistance) : formatNumber(resistance, 1)
 }
 
 const formatCurrentTick = (value) => {
@@ -243,7 +236,7 @@ const createReportGraphSvg = (observations) => {
         x="${yAxisTitleX}"
         y="${yAxisTitleY}"
       >
-        Current (A)
+        Current (mA)
       </text>
 
       <g clip-path="url(#report-graph-plot-clip)">
@@ -253,16 +246,6 @@ const createReportGraphSvg = (observations) => {
       ${labelMarkup}
     </svg>
   `
-}
-
-const getKclStats = (observations) => {
-  const errors = observations.map((row) => Math.abs(toNumber(row.i1) - (toNumber(row.i2) + toNumber(row.i3))))
-  const totalError = errors.reduce((sum, error) => sum + error, 0)
-
-  return {
-    averageError: errors.length ? totalError / errors.length : 0,
-    maxError: errors.length ? Math.max(...errors) : 0,
-  }
 }
 
 const getSessionDurationText = (sessionStart, sessionEnd) => {
@@ -288,12 +271,39 @@ const createObservationRows = (observations) => (
   }).join('')
 )
 
+const createVerificationMarkup = (verification) => {
+  const verifications = Array.isArray(verification) ? verification : Object.values(verification ?? {})
+
+  if (!verifications.length) {
+    return '<p class="verification-empty">The theoretical verification has not yet been submitted.</p>'
+  }
+
+  const labels = {
+    equivalentResistance: 'Equivalent resistance R (kΩ)', voltage: 'Voltage V', resistance: 'Resistance R (kΩ)',
+    i1Result: 'Calculated I1', i1ForI2: 'I1 used for I2', r3Numerator: 'R3 numerator for I2 (kΩ)',
+    r2ForI2: 'R2 denominator for I2 (kΩ)', r3ForI2: 'R3 denominator for I2 (kΩ)', i2Result: 'Calculated I2',
+    i1ForI3: 'I1 used for I3', r2Numerator: 'R2 numerator for I3 (kΩ)', r2ForI3: 'R2 denominator for I3 (kΩ)',
+    r3ForI3: 'R3 denominator for I3 (kΩ)', i3Result: 'Calculated I3',
+  }
+  return verifications.sort((a, b) => a.readingId - b.readingId).map((entry) => {
+    const fields = Object.entries(labels).map(([key, label]) => {
+      const entered = entry.answers?.[key] ?? ''
+      const expected = entry.expected?.[key] ?? ''
+      return `<div class="verification-report__item"><strong>${escapeHtml(label)}</strong><span>User: ${escapeHtml(entered || '-')}</span><span>Expected: ${escapeHtml(formatNumber(expected))}</span></div>`
+    }).join('')
+    const resultClass = entry.result?.correct ? 'is-correct' : 'is-wrong'
+
+    return `<div class="verification-report__entry"><div class="verification-report__summary ${resultClass}"><strong>Reading ${escapeHtml(entry.readingId)} (${escapeHtml(entry.voltage)} V)</strong><span>${escapeHtml(entry.result?.message ?? 'Verification pending')}</span></div><div class="verification-report__grid">${fields}</div></div>`
+  }).join('')
+}
+
 const createReportHtml = ({
   baseHref,
   iitLogoSrc,
   observations,
   resistances,
   sessionStart,
+  verification,
   virtualLabsLogoSrc,
 }) => {
   const reportDate = new Date()
@@ -310,10 +320,9 @@ const createReportHtml = ({
   const r1 = toNumber(resistances?.r1 ?? firstObservation.r1)
   const r2 = toNumber(resistances?.r2 ?? firstObservation.r2)
   const r3 = toNumber(resistances?.r3 ?? firstObservation.r3)
-  const totalResistance = toNumber(firstObservation.totalResistance ?? calculateTotalResistance({ r1, r2, r3 }))
-  const { averageError, maxError } = getKclStats(observations)
   const observationRows = createObservationRows(observations)
   const graphSvg = createReportGraphSvg(observations)
+  const verificationMarkup = createVerificationMarkup(verification)
 
   const css = `
 body {
@@ -604,6 +613,14 @@ tr:nth-child(even) {
   max-width: 100%;
   height: auto;
 }
+.verification-report__summary { display: flex; justify-content: space-between; gap: 16px; padding: 12px 14px; border-radius: 10px; font-weight: 700; }
+.verification-report__entry + .verification-report__entry { margin-top: 18px; padding-top: 18px; border-top: 1px solid #dce4ec; }
+.verification-report__summary.is-correct { color: #17633b; background: #e8f7ee; border: 1px solid #a8d9bb; }
+.verification-report__summary.is-wrong { color: #92372f; background: #fff0ee; border: 1px solid #edbbb6; }
+.verification-report__grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.verification-report__item { display: grid; gap: 3px; padding: 9px 10px; border: 1px solid #dce4ec; border-radius: 8px; background: #f8fafc; font-size: 11px; }
+.verification-report__item strong { color: #233a50; }
+.verification-empty { color: #66788a; font-style: italic; }
 .report-graph__plot-bg {
   fill: #fffdf8;
   stroke: rgba(112, 82, 55, 0.28);
@@ -953,9 +970,9 @@ tr:nth-child(even) {
         <li>DC Ammeter A<sub>1</sub> for total current I<sub>1</sub>: 0 - 10 V</li>
         <li>DC Ammeter A<sub>2</sub> for branch current I<sub>2</sub>: 0 - 10 V</li>
         <li>DC Ammeter A<sub>3</sub> for branch current I<sub>3</sub>: 0 - 10 V</li>
-        <li>R<sub>1</sub>: ${formatResistance(r1)} &Omega;</li>
-        <li>R<sub>2</sub>: ${formatResistance(r2)} &Omega;</li>
-        <li>R<sub>3</sub>: ${formatResistance(r3)} &Omega;</li>
+        <li>R<sub>1</sub>: ${formatResistance(r1)} k&Omega;</li>
+        <li>R<sub>2</sub>: ${formatResistance(r2)} k&Omega;</li>
+        <li>R<sub>3</sub>: ${formatResistance(r3)} k&Omega;</li>
         <li>Connecting leads</li>
       </ul>
 
@@ -974,9 +991,9 @@ tr:nth-child(even) {
                 <tr>
                   <th>S.No.</th>
                   <th>Voltage (V)</th>
-                  <th>I<sub>1</sub> (A)</th>
-                  <th>I<sub>2</sub> (A)</th>
-                  <th>I<sub>3</sub> (A)</th>
+                  <th>I<sub>1</sub> (mA)</th>
+                  <th>I<sub>2</sub> (mA)</th>
+                  <th>I<sub>3</sub> (mA)</th>
                 </tr>
               </thead>
               <tbody>${observationRows}</tbody>
@@ -991,11 +1008,16 @@ tr:nth-child(even) {
 
   <div class="report-page report-page--graph">
     <div class="section results-section">
-      <h2>Graph and Conclusion</h2>
+      <h2>GRAPH AND THEORETICAL VERIFICATION</h2>
       <div class="results-stack">
         <div class="graph report-graph-card results-card results-card--graph">
           <h3>Current versus Voltage Graph</h3>
           <div id="report-graph">${graphSvg}</div>
+        </div>
+
+        <div class="results-card verification-report-card">
+          <h3>Theoretical Verification</h3>
+          ${verificationMarkup}
         </div>
 
         <div class="results-card">
@@ -1108,7 +1130,7 @@ tr:nth-child(even) {
   `
 }
 
-export const generateKclReport = ({ observations, resistances, sessionStart }) => {
+export const generateKclReport = ({ observations, resistances, sessionStart, verification }) => {
   const baseHref = new URL(import.meta.env.BASE_URL, window.location.origin).href
   const iitLogoSrc = new URL('../assets/IIT Logo.png', import.meta.url).href
   const virtualLabsLogoSrc = new URL('../assets/image.png', import.meta.url).href
@@ -1118,6 +1140,7 @@ export const generateKclReport = ({ observations, resistances, sessionStart }) =
     observations,
     resistances,
     sessionStart,
+    verification,
     virtualLabsLogoSrc,
   })
   const reportBlob = new Blob([reportHtml], { type: 'text/html' })

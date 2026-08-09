@@ -92,7 +92,7 @@
   --jtk-endpoint-hover-outline-width: 2.1;
   --jtk-endpoint-hover-stroke: #64748b;
   --jtk-endpoint-hover-stroke-width: 1.4;
-  --terminal-size: 29px;
+  --terminal-size: 32px;
   --terminal-neutral: #7c8da1;
   --terminal-neutral-rgb: 124, 141, 161;
   --terminal-accent: #64748b;
@@ -301,35 +301,39 @@
 }
 
 .connection-terminal[data-polarity="plus"] {
-  --jtk-endpoint-fill: #1677ff;
-  --jtk-endpoint-outline-stroke: #eef7ff;
-  --jtk-endpoint-stroke: #0d4ea6;
-  --jtk-endpoint-hover-fill: #4b96ff;
-  --jtk-endpoint-hover-stroke: #0b3f86;
-  --terminal-accent: #1677ff;
-  --terminal-accent-rgb: 22, 119, 255;
+  --jtk-endpoint-fill: #ef2b2d;
+  --jtk-endpoint-outline-stroke: #fff2f2;
+  --jtk-endpoint-stroke: #991b1d;
+  --jtk-endpoint-hover-fill: #ff4b4d;
+  --jtk-endpoint-hover-stroke: #7f1517;
+  --terminal-neutral: #ef2b2d;
+  --terminal-neutral-rgb: 239, 43, 45;
+  --terminal-accent: #ef2b2d;
+  --terminal-accent-rgb: 239, 43, 45;
   --terminal-symbol: "+";
 }
 
 .connection-terminal[data-polarity="plus"] + .terminal-number-label {
-  --endpoint-accent: #1677ff;
-  --endpoint-accent-rgb: 22, 119, 255;
+  --endpoint-accent: #ef2b2d;
+  --endpoint-accent-rgb: 239, 43, 45;
 }
 
 .connection-terminal[data-polarity="minus"] {
-  --jtk-endpoint-fill: #f04438;
-  --jtk-endpoint-outline-stroke: #fff3f0;
-  --jtk-endpoint-stroke: #a91f18;
-  --jtk-endpoint-hover-fill: #ff665d;
-  --jtk-endpoint-hover-stroke: #871b16;
-  --terminal-accent: #f04438;
-  --terminal-accent-rgb: 240, 68, 56;
+  --jtk-endpoint-fill: #151515;
+  --jtk-endpoint-outline-stroke: #eeeeee;
+  --jtk-endpoint-stroke: #000000;
+  --jtk-endpoint-hover-fill: #333333;
+  --jtk-endpoint-hover-stroke: #000000;
+  --terminal-neutral: #151515;
+  --terminal-neutral-rgb: 21, 21, 21;
+  --terminal-accent: #151515;
+  --terminal-accent-rgb: 21, 21, 21;
   --terminal-symbol: "-";
 }
 
 .connection-terminal[data-polarity="minus"] + .terminal-number-label {
-  --endpoint-accent: #f04438;
-  --endpoint-accent-rgb: 240, 68, 56;
+  --endpoint-accent: #151515;
+  --endpoint-accent-rgb: 21, 21, 21;
 }
 
 .connection-terminal.jtk-connected + .terminal-number-label {
@@ -386,8 +390,8 @@
 */
 .connection-lab .jtk-endpoint--terminal-1,
 .connection-terminal--endpoint-1 {
-  --jtk-endpoint-offset-x: -19px;
-  --jtk-endpoint-offset-y: 9px;
+  --jtk-endpoint-offset-x: -22px;
+  --jtk-endpoint-offset-y: 5px;
 }
 
 .connection-terminal--endpoint-1 {
@@ -398,7 +402,7 @@
 .connection-lab .jtk-endpoint--terminal-2,
 .connection-terminal--endpoint-2 {
   --jtk-endpoint-offset-x: -19px;
-  --jtk-endpoint-offset-y: 9px;
+  --jtk-endpoint-offset-y: 5px;
 }
 
 .connection-terminal--endpoint-2 {
@@ -430,7 +434,7 @@
 
 .connection-lab .jtk-endpoint--terminal-5,
 .connection-terminal--endpoint-5 {
-  --jtk-endpoint-offset-x: -6px;
+  --jtk-endpoint-offset-x: -9px;
   --jtk-endpoint-offset-y: 22.9px;
 }
 
@@ -452,7 +456,7 @@
 
 .connection-lab .jtk-endpoint--terminal-7,
 .connection-terminal--endpoint-7 {
-  --jtk-endpoint-offset-x: -3px;
+  --jtk-endpoint-offset-x: -6px;
   --jtk-endpoint-offset-y: 20px;
 }
 
@@ -475,7 +479,7 @@
 .connection-lab .jtk-endpoint--terminal-9,
 .connection-terminal--endpoint-9 {
    --jtk-endpoint-offset-x: -12px;
-  --jtk-endpoint-offset-y: 1px;
+  --jtk-endpoint-offset-y: -3px;
 }
 
 .connection-terminal--endpoint-9 {
@@ -486,7 +490,7 @@
 .connection-lab .jtk-endpoint--terminal-10,
 .connection-terminal--endpoint-10 {
   --jtk-endpoint-offset-x: -12px;
-  --jtk-endpoint-offset-y: 1px;
+  --jtk-endpoint-offset-y: -2px;
 }
 
 .connection-terminal--endpoint-10 {
@@ -497,7 +501,7 @@
 .connection-lab .jtk-endpoint--terminal-11,
 .connection-terminal--endpoint-11 {
   --jtk-endpoint-offset-x: -12px;
-  --jtk-endpoint-offset-y: 1px;
+  --jtk-endpoint-offset-y: -3px;;
 }
 
 .connection-terminal--endpoint-11 {
@@ -508,7 +512,7 @@
 .connection-lab .jtk-endpoint--terminal-12,
 .connection-terminal--endpoint-12 {
   --jtk-endpoint-offset-x: -12px;
-  --jtk-endpoint-offset-y: 1px;
+  --jtk-endpoint-offset-y: -3px;;
 }
 
 .connection-terminal--endpoint-12 {
@@ -519,7 +523,7 @@
 .connection-lab .jtk-endpoint--terminal-13,
 .connection-terminal--endpoint-13 {
   --jtk-endpoint-offset-x: -12px;
-  --jtk-endpoint-offset-y: 1px;
+  --jtk-endpoint-offset-y:-3px;
 }
 
 .connection-terminal--endpoint-13 {
@@ -530,7 +534,7 @@
 .connection-lab .jtk-endpoint--terminal-14,
 .connection-terminal--endpoint-14 {
   --jtk-endpoint-offset-x: -12px;
-  --jtk-endpoint-offset-y: 1px;
+  --jtk-endpoint-offset-y: -4px;
 }
 
 .connection-terminal--endpoint-14 {
@@ -540,8 +544,8 @@
 
 .connection-lab .jtk-endpoint--terminal-15,
 .connection-terminal--endpoint-15 {
-  --jtk-endpoint-offset-x: -12px;
-  --jtk-endpoint-offset-y: 1px;
+  --jtk-endpoint-offset-x: -14px;
+  --jtk-endpoint-offset-y: -3px;
 }
 
 .connection-terminal--endpoint-15 {
@@ -552,7 +556,7 @@
 .connection-lab .jtk-endpoint--terminal-16,
 .connection-terminal--endpoint-16 {
   --jtk-endpoint-offset-x: -12px;
-  --jtk-endpoint-offset-y: 1px;
+  --jtk-endpoint-offset-y: -3px;
 }
 
 .connection-terminal--endpoint-16 {
@@ -562,19 +566,34 @@
 
 /* Keep the invisible jsPlumb hit targets in the same modern polarity palette. */
 .connection-terminal[data-polarity="plus"] {
-  --jtk-endpoint-fill: #1677ff;
-  --jtk-endpoint-outline-stroke: #eef7ff;
-  --jtk-endpoint-stroke: #0d4ea6;
-  --jtk-endpoint-hover-fill: #4b96ff;
-  --jtk-endpoint-hover-stroke: #0b3f86;
+  --jtk-endpoint-fill: #ef2b2d;
+  --jtk-endpoint-outline-stroke: #fff2f2;
+  --jtk-endpoint-stroke: #991b1d;
+  --jtk-endpoint-hover-fill: #ff4b4d;
+  --jtk-endpoint-hover-stroke: #7f1517;
+}
+
+.connection-terminal[data-polarity]::before {
+  background:
+    radial-gradient(circle at 36% 30%, rgba(255, 255, 255, .42) 0 10%, transparent 12%),
+    linear-gradient(145deg, var(--terminal-accent), color-mix(in srgb, var(--terminal-accent) 72%, #000));
+  box-shadow:
+    inset 1px 1px 2px rgba(255, 255, 255, .32),
+    inset -2px -2px 3px rgba(0, 0, 0, .28),
+    0 0 0 1px rgba(var(--terminal-accent-rgb), .32);
+}
+
+.connection-terminal[data-polarity]::after {
+  background: var(--terminal-accent);
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.28), 0 0 0 1px rgba(255,255,255,.7);
 }
 
 .connection-terminal[data-polarity="minus"] {
-  --jtk-endpoint-fill: #f04438;
-  --jtk-endpoint-outline-stroke: #fff3f0;
-  --jtk-endpoint-stroke: #a91f18;
-  --jtk-endpoint-hover-fill: #ff665d;
-  --jtk-endpoint-hover-stroke: #871b16;
+  --jtk-endpoint-fill: #151515;
+  --jtk-endpoint-outline-stroke: #eeeeee;
+  --jtk-endpoint-stroke: #000000;
+  --jtk-endpoint-hover-fill: #333333;
+  --jtk-endpoint-hover-stroke: #000000;
 }
 
 /* Adjust each terminal number label here. */
@@ -619,7 +638,7 @@
 }
 
 .terminal-number-label--endpoint-9 {
-  top: 127px;
+  top: 125px;
   left: 35px;
 }
 
@@ -640,12 +659,12 @@
 
 .terminal-number-label--endpoint-13 {
   top: 110px;
-  left: 440px;
+  left: 445px;
 }
 
 .terminal-number-label--endpoint-14 {
   top: 155px;
-  left: 440px;
+  left: 445px;
 }
 
 .terminal-number-label--endpoint-15 {

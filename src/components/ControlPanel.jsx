@@ -5,6 +5,8 @@ import SectionCard from './SectionCard.jsx'
 const ControlPanel = ({
   locked,
   observations,
+  onGenerateReport,
+  reportGenerated,
   r1,
   r2,
   r3,
@@ -21,7 +23,7 @@ const ControlPanel = ({
       </div>
     </SectionCard>
 
-    <ObservationTable observations={observations} />
+    <ObservationTable observations={observations} onGenerateReport={onGenerateReport} reportGenerated={reportGenerated} />
   </>
 )
 

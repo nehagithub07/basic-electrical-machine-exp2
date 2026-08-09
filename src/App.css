@@ -20,7 +20,7 @@
   top: 0;
   left: 0;
   width: 1440px;
-  height: 1418px;
+  height: 1608px;
   transform-origin: top left;
 }
 
@@ -534,14 +534,14 @@
 
 .resistance-slider__value {
   display: grid;
-  width: 54px;
+  width: 68px;
   height: 34px;
   place-items: center;
   border: 1px solid rgba(107, 76, 45, 0.38);
   border-radius: 7px;
   color: #3d2517;
   background: #fff4e4;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 800;
   box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.82);
 }
@@ -557,8 +557,9 @@
 .observation-table-wrap {
   position: relative;
   z-index: 1;
-  height: 296px;
-  margin: 8px 10px 0;
+  height: calc(32px + (var(--observation-row-count) * 29px));
+  width: calc(80% + (var(--observation-row-count) * 4%));
+  margin: 8px auto 0;
   overflow: hidden;
   border: 1px solid rgba(96, 61, 35, 0.34);
   border-radius: 8px;
@@ -820,8 +821,8 @@
   --ammeter-needle-height: 0;
   --ammeter-needle-origin-x: 0;
   --ammeter-needle-origin-y: 0;
-  --ammeter-needle-image-top: -45px;
-  --ammeter-needle-image-left: -33px;
+  --ammeter-needle-image-top: -44.5px;
+  --ammeter-needle-image-left: -35px;
   --ammeter-needle-image-width: 70px;
   filter: none;
   transform: none;
@@ -844,7 +845,7 @@
 
 .ammeter--A1 {
   --ammeter-needle-top: 120px;
-  --ammeter-needle-left: 97px;
+  --ammeter-needle-left: 102px;
 }
 
 .ammeter--A2 {
@@ -1002,9 +1003,274 @@
 .graph-panel--separate {
   margin: 28px 0 0;
   width: 1440px;
-  height: 430px;
+  height: 620px;
   grid-template-rows: 58px 1fr;
 }
+
+.graph-panel--separate .graph-panel__heading {
+  margin: 10px 24px 0;
+  padding: 12px 20px;
+  border: 1px solid rgba(126, 88, 52, .18);
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 8% 50%, rgba(187, 126, 63, .16), transparent 30%),
+    linear-gradient(100deg, rgba(255,255,255,.88), rgba(230,204,165,.42));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.9), 0 5px 14px rgba(66,38,19,.08);
+}
+
+.graph-panel--separate .graph-panel__heading h2 { font-size: 20px; letter-spacing: .045em; }
+.graph-panel--separate .graph-panel__content { gap: 20px; padding: 14px 26px 28px; }
+.graph-panel--separate .graph-panel__body {
+  border-color: rgba(112,73,40,.26);
+  border-radius: 14px;
+  background: linear-gradient(155deg, #fffefa, #f7efe3);
+  box-shadow: inset 0 1px 0 #fff, 0 14px 30px rgba(62,34,16,.14);
+}
+
+.graph-panel--separate .graph-panel__chart { inset: 20px 22px 18px; }
+
+.observation-module { position: relative; display: flex; flex-direction: column; }
+
+.observation-formula-panel {
+  top: 0;
+  right: 0;
+  bottom: auto;
+  left: 0;
+  z-index: 30;
+  width: 100%;
+  max-width: 100%;
+  height: calc(100% - 62px);
+  padding: 14px;
+  overflow: auto;
+  border: 1px solid rgba(91, 58, 35, .28);
+  border-radius: 17px;
+  animation: equation-panel-in 180ms ease-out;
+  background:
+    radial-gradient(circle at 8% 0, rgba(237, 184, 105, .2), transparent 35%),
+    linear-gradient(155deg, #fffdf7, #f3e7d5);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 18px 38px rgba(48,26,11,.3);
+}
+
+.observation-formula-panel .formula-panel__header { margin-bottom: 10px; }
+.observation-formula-panel .formula-panel__list { grid-template-columns: 1fr; gap: 6px; }
+.observation-formula-panel .formula-panel__item {
+  min-height: 52px;
+  grid-template-columns: 39px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+  padding: 6px 8px;
+  border-color: rgba(111, 72, 41, .18);
+  background: rgba(255,255,255,.72);
+  box-shadow: inset 0 1px 0 #fff, 0 3px 8px rgba(73,42,21,.06);
+}
+
+.observation-formula-panel .formula-panel__item dt {
+  min-height: 34px;
+  border-radius: 9px;
+  background: linear-gradient(145deg, #1373b5, #07528c);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.28), 0 3px 7px rgba(4,66,111,.18);
+}
+
+.observation-formula-panel .formula-panel__equation { margin-bottom: 2px; font-size: 12px; }
+.observation-formula-panel .formula-panel__description { font-size: 10px; line-height: 1.2; }
+.observation-formula-panel .formula-panel__note {
+  margin-top: 9px;
+  padding: 8px 12px;
+  border: 1px solid rgba(49,119,65,.14);
+  border-radius: 9px;
+  background: linear-gradient(90deg, rgba(75,146,79,.14), rgba(75,146,79,.07));
+  text-align: center;
+}
+
+.formula-panel__title { display: flex; min-width: 0; align-items: center; gap: 10px; }
+.formula-panel__title > span:last-child { display: grid; gap: 1px; }
+.formula-panel__title small { color: #806048; font-size: 9px; font-weight: 700; }
+.formula-panel__title-icon { display: grid; width: 34px; height: 34px; flex: 0 0 auto; place-items: center; border-radius: 9px; color: #fff; background: linear-gradient(145deg, #98612e, #663819); }
+.formula-panel__title-icon svg { width: 22px; height: 22px; }
+
+.formula-panel__close {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid rgba(91,58,35,.24);
+  flex: 0 0 auto;
+  border-radius: 50%;
+  color: #4d2d1c;
+  background: rgba(255,255,255,.82);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.formula-panel__close:hover { background: #fff; box-shadow: 0 3px 8px rgba(66,34,14,.12); }
+
+@keyframes equation-panel-in {
+  from { opacity: 0; transform: translateY(6px) scale(.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.observation-card {
+  height: auto;
+  min-height: 300px;
+  padding: 10px 12px 12px;
+  border: 3px solid rgba(255, 248, 230, .92);
+  border-radius: 18px;
+  background: linear-gradient(145deg, #fffaf0, #eee3d2);
+  box-shadow: inset 0 0 0 2px #d7c6ae, inset 0 0 0 7px rgba(255,255,255,.48), 0 7px 14px rgba(63,34,15,.28);
+}
+
+.observation-card::before { inset: 8px; border-radius: 12px; }
+.observation-card .section-card__heading { height: 50px; color: #4a2a1e; }
+.observation-card .section-card__heading h2 { font-size: 20px; letter-spacing: .02em; }
+.observation-card .section-card__heading svg { width: 27px; height: 27px; }
+.observation-card .section-card__line { max-width: 64px; background: rgba(100,67,44,.2); }
+
+.observation-equations {
+  display: grid;
+  margin: 8px 12px 2px;
+  grid-template-columns: 1fr 1fr;
+  gap: 3px 10px;
+  color: #4b301f;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.observation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.observation-report-button,
+.observation-equations-button {
+  display: flex;
+  height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 170px;
+  padding: 0 20px;
+  border: 1px solid #6b431f;
+  border-radius: 11px;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.65), 0 5px 9px rgba(54, 29, 13, 0.3);
+}
+
+.observation-equations-button { color: #4f2d1d; background: linear-gradient(180deg, #ffe19a, #e6a932); }
+.observation-report-button { color: #f5e7d3; background: linear-gradient(180deg, #437f83, #285d62); }
+.observation-report-button svg,
+.observation-equations-button svg { width: 25px; height: 25px; }
+.observation-report-button:disabled { opacity: 0.48; cursor: not-allowed; }
+
+.graph-panel__content {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  min-height: 0;
+  grid-template-columns: 42% 58%;
+  gap: 14px;
+  padding: 6px 24px 24px;
+}
+
+.graph-panel__content .graph-panel__body {
+  min-width: 0;
+  margin: 0;
+}
+
+.verification-panel {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  justify-content: space-evenly;
+  padding: 14px 22px;
+  border: 1px solid rgba(96, 61, 35, 0.24);
+  border-radius: 10px;
+  background:
+    radial-gradient(circle at 0 0, rgba(210, 155, 86, 0.18), transparent 38%),
+    linear-gradient(145deg, rgba(255, 253, 248, 0.99), rgba(244, 231, 209, 0.98));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 10px 24px rgba(60, 32, 10, 0.15);
+}
+
+.verification-panel__toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.verification-panel__toolbar select { max-width: 170px; padding: 6px 8px; border: 1px solid #9a7654; border-radius: 7px; color: #3e2a1f; background: #fffaf2; font-weight: 800; }
+.verification-panel h3 { margin: 0 0 4px; color: #3e2a1f; font-size: 15px; font-weight: 900; letter-spacing: .04em; }
+
+.verification-panel__equation {
+  display: flex;
+  min-height: 48px;
+  align-items: center;
+  gap: 9px;
+  color: #3e2a1f;
+  font-size: 17px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.verification-panel__equation--total { font-size: 16px; }
+
+.verification-panel__input-wrap {
+  position: relative;
+  display: inline-flex;
+  width: 76px;
+  align-items: center;
+}
+
+.verification-panel__input {
+  width: 100%;
+  height: 32px;
+  padding: 5px 7px;
+  border: 2px solid rgba(78, 59, 47, 0.55);
+  border-radius: 3px;
+  outline: none;
+  color: #3e2a1f;
+  background: rgba(255, 255, 255, 0.72);
+  font-size: 14px;
+  text-align: center;
+}
+
+.verification-panel__input:focus {
+  border-color: #8e6844;
+  box-shadow: 0 0 0 2px rgba(142, 104, 68, 0.16);
+}
+
+.verification-panel__input-wrap:has(.verification-panel__unit) { width: 105px; }
+.verification-panel__input-wrap:has(.verification-panel__unit) .verification-panel__input { padding-right: 34px; }
+
+.verification-panel__unit {
+  position: absolute;
+  right: 7px;
+  color: #6a4b34;
+  font-size: 11px;
+  pointer-events: none;
+}
+
+.verification-panel__fraction {
+  display: inline-grid;
+  min-width: 100px;
+  grid-template-rows: 1fr 1fr;
+  text-align: center;
+}
+
+.verification-panel__fraction > span {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.verification-panel__fraction > span:first-child { padding: 0 6px 3px; border-bottom: 2px solid #563927; }
+.verification-panel__fraction > span:last-child { padding-top: 3px; }
+
+.verification-panel__actions { display: flex; min-height: 34px; align-items: center; gap: 10px; }
+.verification-panel__actions button { min-width: 92px; height: 32px; border: 0; border-radius: 7px; color: #fff; background: linear-gradient(180deg, #9a5b2f, #5b321b); font-weight: 900; cursor: pointer; box-shadow: 0 4px 9px rgba(64, 33, 14, .2); }
+.verification-panel__actions span { font-size: 11px; white-space: normal; }
+.verification-panel__actions .is-correct { color: #237446; }
+.verification-panel__actions .is-wrong { color: #ae3e35; }
 
 .app-footer {
   display: flex;
@@ -1119,7 +1385,7 @@
 }
 
 .graph-panel__plot-bg {
-  fill: #fffdf8;
+  fill: #fffefa;
   stroke: rgba(112, 82, 55, 0.28);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
@@ -1170,17 +1436,17 @@
 
 .graph-panel__tick-label {
   fill: #6a4b34;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
 }
 
 .graph-panel__tick-label--y {
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .graph-panel__axis-title {
   fill: #38271c;
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 900;
 }
 
@@ -1192,7 +1458,7 @@
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1;
+  stroke-width: 1.8;
   vector-effect: non-scaling-stroke;
   shape-rendering: geometricPrecision;
 }
@@ -1529,7 +1795,7 @@ input:focus-visible {
 }
 
 @page {
-  size: 15in 14.770833in;
+  size: 15in 16.75in;
   margin: 0;
 }
 
@@ -1538,9 +1804,9 @@ input:focus-visible {
   body,
   #root {
     width: 1440px !important;
-    height: 1418px !important;
+    height: 1608px !important;
     min-width: 1440px !important;
-    min-height: 1418px !important;
+    min-height: 1608px !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden !important;
@@ -1559,11 +1825,11 @@ input:focus-visible {
   #app-viewport,
   #app-scale {
     width: 1440px !important;
-    height: 1418px !important;
+    height: 1608px !important;
     min-width: 1440px !important;
-    min-height: 1418px !important;
+    min-height: 1608px !important;
     max-width: 1440px !important;
-    max-height: 1418px !important;
+    max-height: 1608px !important;
     margin: 0 !important;
     padding: 0 !important;
     overflow: hidden !important;
@@ -1596,7 +1862,7 @@ input:focus-visible {
   .graph-panel,
   .graph-panel--separate {
     width: 1440px !important;
-    height: 430px !important;
+    height: 620px !important;
     margin: 28px 0 0 !important;
     overflow: hidden !important;
     break-inside: avoid !important;

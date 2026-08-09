@@ -14,7 +14,9 @@ export const calculateReadings = ({ voltage, r1, r2, r3 }) => {
     ? (r2Value * r3Value) / branchResistance
     : 0
   const totalResistance = r1Value + parallelResistance
-  const i1 = totalResistance > 0 ? powerSupply / totalResistance : 0
+  // Ohm's-law calculations produce amperes; the simulation consistently
+  // exposes currents in milliamperes.
+  const i1 = totalResistance > 0 ? (powerSupply / totalResistance) * 1000 : 0
   const i2 = branchResistance > 0 ? (r3Value / branchResistance) * i1 : 0
   const i3 = branchResistance > 0 ? (r2Value / branchResistance) * i1 : 0
 
@@ -24,4 +26,10 @@ export const calculateReadings = ({ voltage, r1, r2, r3 }) => {
     i2,
     i3,
   }
+}
+
+export const formatCurrent = (value) => {
+  const current = toFiniteNumber(value)
+
+  return Number.isInteger(current) ? String(current) : current.toFixed(3).replace(/0+$/, '').replace(/\.$/, '')
 }

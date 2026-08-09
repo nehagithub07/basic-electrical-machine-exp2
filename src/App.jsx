@@ -6,7 +6,6 @@ import ActionButtons from './components/ActionButtons.jsx'
 import ControlPanel from './components/ControlPanel.jsx'
 import GraphPanel from './components/GraphPanel.jsx'
 import HeaderBoard from './components/HeaderBoard.jsx'
-import ReportControls from './components/ReportControls.jsx'
 import WalkthroughStartButton from './walkthrough/components/WalkthroughStartButton.jsx'
 import { useWalkthrough } from './walkthrough/useWalkthrough.js'
 import { ALERT_AUDIO, ALERT_AUDIO_PLACEHOLDER, EXPERIMENT_ALERTS } from './alerts/experimentStepAlerts.js'
@@ -20,15 +19,15 @@ import { generateKclReport } from './utils/reportGenerator.js'
 const BASE_WIDTH = 1440
 const BASE_HEIGHT = 960
 const GRAPH_SECTION_GAP = 28
-const GRAPH_SECTION_HEIGHT = 430
+const GRAPH_SECTION_HEIGHT = 620
 const FOOTER_SECTION_GAP = 16
 const FOOTER_HEIGHT = 48
 const CONTENT_HEIGHT = BASE_HEIGHT + GRAPH_SECTION_GAP + GRAPH_SECTION_HEIGHT + FOOTER_SECTION_GAP + FOOTER_HEIGHT
-const PANEL_MAX_SCALE = 1
+const PANEL_MAX_SCALE = 1.25
 const PANEL_VIEWPORT_MARGIN = 24
-const MIN_GRAPH_READINGS = 6
-const MAX_OBSERVATIONS = 10
-const INITIAL_RESISTANCE = 1.0
+const MIN_GRAPH_READINGS = 3
+const MAX_OBSERVATIONS = 5
+const INITIAL_RESISTANCE = 1000
 const INITIAL_VOLTAGE = 1.0
 
 const getTerminalPairKey = (connection) => {
@@ -179,9 +178,7 @@ const getScale = () => {
   }
 
   const widthScale = (window.innerWidth - PANEL_VIEWPORT_MARGIN) / BASE_WIDTH
-  const heightScale = (window.innerHeight - PANEL_VIEWPORT_MARGIN) / BASE_HEIGHT
-
-  return Math.max(Math.min(widthScale, heightScale, PANEL_MAX_SCALE), 0.1)
+  return Math.max(Math.min(widthScale, PANEL_MAX_SCALE), 0.1)
 }
 
 const App = () => {
@@ -196,6 +193,7 @@ const App = () => {
   const [observations, setObservations] = useState([])
   const [graphGenerated, setGraphGenerated] = useState(false)
   const [reportGenerated, setReportGenerated] = useState(false)
+  const [verificationReport, setVerificationReport] = useState({})
   const [status, setStatus] = useState('Make the connections, click CHECK, then set the resistance values.')
 
   const [autoConnectRequest, setAutoConnectRequest] = useState(0)
@@ -214,12 +212,19 @@ const App = () => {
   const walkthroughWasOpenRef = useRef(false)
 
   useEffect(() => {
-    const handleResize = () => setScale(getScale())
+    let frame
+    const handleResize = () => {
+      cancelAnimationFrame(frame)
+      frame = requestAnimationFrame(() => setScale(getScale()))
+    }
 
     handleResize()
     window.addEventListener('resize', handleResize)
 
-    return () => window.removeEventListener('resize', handleResize)
+    return () => {
+      cancelAnimationFrame(frame)
+      window.removeEventListener('resize', handleResize)
+    }
   }, [])
 
   const readings = useMemo(
@@ -451,7 +456,7 @@ const App = () => {
     }
 
     if (readingCount >= MAX_OBSERVATIONS) {
-      setStatus('Ten readings are already recorded. Plot the graph or reset for a new run.')
+      setStatus('Five readings are already recorded. Reset for a new run.')
       showStepAlert(EXPERIMENT_ALERTS.maxReadingsReached, {
         audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.maxReadingsReached.audio,
       })
@@ -490,7 +495,7 @@ const App = () => {
     const nextObservationCount = readingCount + 1
 
     setObservations([...observations, nextObservation])
-    setGraphGenerated(false)
+    setGraphGenerated(nextObservationCount >= MIN_GRAPH_READINGS)
     setReportGenerated(false)
     setStatus('Reading added to the observation table.')
 
@@ -554,6 +559,7 @@ const App = () => {
     setObservations([])
     setGraphGenerated(false)
     setReportGenerated(false)
+    setVerificationReport({})
     setAutoConnectRequest(0)
     setCheckRequest(0)
     setConnectionsReadyForCheck(false)
@@ -664,6 +670,7 @@ const App = () => {
           observations,
           resistances: { r1, r2, r3 },
           sessionStart,
+          verification: verificationReport,
         })
 
         if (!generated) {
@@ -980,6 +987,8 @@ const App = () => {
                 <ControlPanel
                   locked={!connectionsVerified || powerOn || observations.length > 0}
                   observations={observations}
+                  onGenerateReport={handleGenerateReport}
+                  reportGenerated={reportGenerated}
                   r1={r1}
                   r2={r2}
                   r3={r3}
@@ -1012,20 +1021,16 @@ const App = () => {
               </section>
             </section>
 
-            <ReportControls
-              graphGenerated={graphGenerated}
-              minReadings={MIN_GRAPH_READINGS}
-              onGenerateReport={handleGenerateReport}
-              readingCount={readingCount}
-              reportGenerated={reportGenerated}
-            />
-
           </main>
 
           <GraphPanel
             className="graph-panel--separate"
             id="graph-panel"
             observations={observations}
+            onVerificationChange={(verification) => setVerificationReport((current) => ({
+              ...current,
+              [verification.readingId]: verification,
+            }))}
             plotted={graphGenerated}
           />
 

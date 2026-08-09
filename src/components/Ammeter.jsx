@@ -2,6 +2,7 @@ import a1Img from '../assets/A1.png'
 import a2Img from '../assets/A2.png'
 import a3Img from '../assets/A3.png'
 import needleImg from '../assets/needle.png'
+import { memo } from 'react'
 import { getTerminalConnectedClass, getTerminalHighlightClass, getTerminalNumberHighlightClass } from '../utils/terminalHighlight.js'
 
 const METER_MAX_CURRENT = 10
@@ -81,4 +82,4 @@ const Ammeter = ({ connectedTerminalIds = [], highlightedTerminalIds = [], label
   )
 }
 
-export default Ammeter
+export default memo(Ammeter)

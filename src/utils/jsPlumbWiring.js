@@ -243,34 +243,34 @@ const isNegativeTerminal = (terminalId) => (
 
 const terminalPaintStyles = {
   positive: {
-    fill: '#0969e8',
-    outlineStroke: '#f8fbff',
+    fill: '#ef2b2d',
+    outlineStroke: '#fff2f2',
     outlineWidth: 2,
-    stroke: '#062b77',
+    stroke: '#991b1d',
     strokeWidth: 1.4,
   },
   negative: {
-    fill: '#e33024',
-    outlineStroke: '#fff8f6',
+    fill: '#151515',
+    outlineStroke: '#eeeeee',
     outlineWidth: 2,
-    stroke: '#8f140e',
+    stroke: '#000000',
     strokeWidth: 1.4,
   },
 }
 
 const terminalHoverPaintStyles = {
   positive: {
-    fill: '#2a7cff',
+    fill: '#ff4b4d',
     outlineStroke: '#ffffff',
     outlineWidth: 2.4,
-    stroke: '#082767',
+    stroke: '#7f1517',
     strokeWidth: 1.6,
   },
   negative: {
-    fill: '#ff4a3d',
+    fill: '#333333',
     outlineStroke: '#ffffff',
     outlineWidth: 2.4,
-    stroke: '#81130f',
+    stroke: '#000000',
     strokeWidth: 1.6,
   },
 }
@@ -334,30 +334,30 @@ const getEndpointCssClass = (terminalId, type) => {
 
 export const wirePaintStyles = {
   positive: {
-    outlineStroke: '#07306e',
+    outlineStroke: '#861719',
     outlineWidth: 1.15,
-    stroke: '#1f73e6',
+    stroke: '#ef2b2d',
     strokeWidth: 4.6,
   },
   negative: {
-    outlineStroke: '#771914',
+    outlineStroke: '#000000',
     outlineWidth: 1.15,
-    stroke: '#dd342d',
+    stroke: '#151515',
     strokeWidth: 4.6,
   },
 }
 
 export const wireHoverPaintStyles = {
   positive: {
-    outlineStroke: '#052357',
+    outlineStroke: '#731214',
     outlineWidth: 1.35,
-    stroke: '#3a8aff',
+    stroke: '#ff4b4d',
     strokeWidth: 5,
   },
   negative: {
-    outlineStroke: '#5d110d',
+    outlineStroke: '#000000',
     outlineWidth: 1.35,
-    stroke: '#f04a42',
+    stroke: '#333333',
     strokeWidth: 5,
   },
 }

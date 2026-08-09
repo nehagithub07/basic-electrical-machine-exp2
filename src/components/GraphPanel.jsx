@@ -1,16 +1,19 @@
-const MIN_GRAPH_READINGS = 6
-const VOLTAGE_MAX = 12
+import { memo, useMemo, useState } from 'react'
+import { formatCurrent } from '../utils/circuitMath.js'
+
+const MIN_GRAPH_READINGS = 3
+const VOLTAGE_MAX = 15
 const CHART_VIEWBOX = {
-  height: 220,
+  height: 320,
   width: 960,
 }
 const CHART = {
-  height: 136,
+  height: 242,
   left: 88,
-  top: 28,
+  top: 24,
   width: 784,
 }
-const X_TICKS = [0, 2, 4, 6, 8, 10, 12]
+const X_TICKS = [0, 3, 6, 9, 12, 15]
 const Y_TICK_COUNT = 5
 // Tune labelLeft and labelTop to manually adjust graph labels in SVG units.
 const SERIES = [
@@ -68,7 +71,7 @@ const formatCurrentTick = (value) => {
     return '0'
   }
 
-  return value.toFixed(2)
+  return formatCurrent(value)
 }
 
 const getYTicks = (maxCurrent) => (
@@ -152,9 +155,92 @@ const SvgCurrentLabel = ({ index }) => (
   </>
 )
 
-const GraphPanel = ({ className = '', id, observations = [], plotted = false }) => {
+const VerificationInput = ({ label, name, onChange, unit, value }) => (
+  <label className="verification-panel__input-wrap">
+    <span className="sr-only">{label}</span>
+    <input
+      aria-label={label}
+      className="verification-panel__input"
+      inputMode="decimal"
+      min="0"
+      name={name}
+      onChange={onChange}
+      step="any"
+      type="number"
+      value={value}
+    />
+    {unit && <span className="verification-panel__unit">{unit}</span>}
+  </label>
+)
+
+const EMPTY_ANSWERS = {
+  equivalentResistance: '', voltage: '', resistance: '', i1Result: '', i1ForI2: '', r3Numerator: '',
+  r2ForI2: '', r3ForI2: '', i2Result: '', i1ForI3: '', r2Numerator: '', r2ForI3: '', r3ForI3: '', i3Result: '',
+}
+
+const VerificationPanel = ({ observations, onVerificationChange }) => {
+  const [readingId, setReadingId] = useState('')
+  const [answers, setAnswers] = useState(EMPTY_ANSWERS)
+  const [result, setResult] = useState(null)
+  const reading = observations.find((row) => String(row.id) === readingId)
+  const field = (name, label, unit) => (
+    <VerificationInput label={label} name={name} onChange={(event) => {
+      setAnswers((current) => ({ ...current, [name]: event.target.value }))
+      setResult(null)
+    }} unit={unit} value={answers[name]} />
+  )
+  const verify = () => {
+    if (!reading) {
+      setResult({ correct: false, message: 'Select a reading first.' })
+      return
+    }
+
+    const expected = {
+      equivalentResistance: reading.totalResistance / 1000, voltage: reading.voltage, resistance: reading.totalResistance / 1000,
+      i1Result: reading.i1, i1ForI2: reading.i1, r3Numerator: reading.r3 / 1000, r2ForI2: reading.r2 / 1000,
+      r3ForI2: reading.r3 / 1000, i2Result: reading.i2, i1ForI3: reading.i1, r2Numerator: reading.r2 / 1000,
+      r2ForI3: reading.r2 / 1000, r3ForI3: reading.r3 / 1000, i3Result: reading.i3,
+    }
+    const correct = Object.entries(expected).every(([key, value]) => (
+      answers[key] !== '' && Math.abs(Number(answers[key]) - value) <= Math.max(Math.abs(value) * 0.001, 0.001)
+    ))
+    const verificationResult = { correct, message: correct ? 'Correct! All calculations are verified.' : 'Some values are incorrect. Check the selected reading and try again.' }
+    setResult(verificationResult)
+    onVerificationChange?.({ answers, expected, readingId: reading.id, result: verificationResult, voltage: reading.voltage })
+  }
+
+  return (
+    <div className="verification-panel" aria-label="Calculated current verification">
+      <div className="verification-panel__toolbar">
+        <h3>THEORETICAL VERIFICATION</h3>
+        <select aria-label="Select reading to verify" onChange={(event) => { setReadingId(event.target.value); setAnswers(EMPTY_ANSWERS); setResult(null) }} value={readingId}>
+          <option value="">Select reading</option>
+          {observations.map((row) => <option key={row.id} value={row.id}>Reading {row.id} — {row.voltage.toFixed(1)} V</option>)}
+        </select>
+      </div>
+      <div className="verification-panel__equation verification-panel__equation--total">
+        <strong>Equivalent Resistance (R)</strong><span>=</span>{field('equivalentResistance', 'Equivalent resistance', 'kΩ')}
+      </div>
+      <div className="verification-panel__equation">
+        <strong>I<sub>1</sub></strong><span>=</span><span className="verification-panel__fraction"><span>V {field('voltage', 'Voltage for I1')}</span><span>R {field('resistance', 'Resistance for I1', 'kΩ')}</span></span><span>=</span>{field('i1Result', 'Calculated I1', 'mA')}
+      </div>
+      <div className="verification-panel__equation">
+        <strong>I<sub>2</sub></strong><span>= I<sub>1</sub> {field('i1ForI2', 'I1 value for I2')} ×</span><span className="verification-panel__fraction"><span>R<sub>3</sub> {field('r3Numerator', 'R3 numerator for I2 in kilo-ohms')}</span><span>R<sub>2</sub> {field('r2ForI2', 'R2 denominator for I2 in kilo-ohms')} + R<sub>3</sub> {field('r3ForI2', 'R3 denominator for I2 in kilo-ohms')}</span></span><span>=</span>{field('i2Result', 'Calculated I2', 'mA')}
+      </div>
+      <div className="verification-panel__equation">
+        <strong>I<sub>3</sub></strong><span>= I<sub>1</sub> {field('i1ForI3', 'I1 value for I3')} ×</span><span className="verification-panel__fraction"><span>R<sub>2</sub> {field('r2Numerator', 'R2 numerator for I3 in kilo-ohms')}</span><span>R<sub>2</sub> {field('r2ForI3', 'R2 denominator for I3 in kilo-ohms')} + R<sub>3</sub> {field('r3ForI3', 'R3 denominator for I3 in kilo-ohms')}</span></span><span>=</span>{field('i3Result', 'Calculated I3', 'mA')}
+      </div>
+      <div className="verification-panel__actions"><button onClick={verify} type="button">Verify</button>{result && <span className={result.correct ? 'is-correct' : 'is-wrong'} role="status">{result.message}</span>}</div>
+    </div>
+  )
+}
+
+const GraphPanel = ({ className = '', id, observations = [], onVerificationChange, plotted = false }) => {
   const shouldPlot = plotted && observations.length >= MIN_GRAPH_READINGS
-  const plottedObservations = [...observations].sort((current, next) => current.voltage - next.voltage)
+  const plottedObservations = useMemo(
+    () => [...observations].sort((current, next) => current.voltage - next.voltage),
+    [observations],
+  )
   const maxCurrent = getMaxCurrent(plottedObservations)
   const yTicks = getYTicks(maxCurrent)
   const chartBottom = CHART.top + CHART.height
@@ -168,7 +254,7 @@ const GraphPanel = ({ className = '', id, observations = [], plotted = false }) 
       <div className="graph-panel__heading">
         <div>
           
-          <h2>GRAPH</h2>
+          <h2>GRAPH AND THEORETICAL VERIFICATION</h2>
         </div>
 
         {/* <div className="graph-panel__legend" aria-label="Current lines">
@@ -178,12 +264,14 @@ const GraphPanel = ({ className = '', id, observations = [], plotted = false }) 
         </div> */}
       </div>
 
-      <div className="graph-panel__body">
+      <div className="graph-panel__content">
+        <VerificationPanel observations={observations} onVerificationChange={onVerificationChange} />
+        <div className="graph-panel__body">
         <svg
           className="graph-panel__chart"
           preserveAspectRatio="none"
           role="img"
-          aria-label="Line graph of current in amperes against voltage in volts"
+          aria-label="Line graph of current in milliamperes against voltage in volts"
           viewBox={`0 0 ${CHART_VIEWBOX.width} ${CHART_VIEWBOX.height}`}
         >
           <defs>
@@ -241,7 +329,7 @@ const GraphPanel = ({ className = '', id, observations = [], plotted = false }) 
             x={yAxisTitleX}
             y={yAxisTitleY}
           >
-            Current (A)
+            Current (mA)
           </text>
 
           {!shouldPlot && (
@@ -306,9 +394,10 @@ const GraphPanel = ({ className = '', id, observations = [], plotted = false }) 
             </g>
           )}
         </svg>
+        </div>
       </div>
     </section>
   )
 }
 
-export default GraphPanel
+export default memo(GraphPanel)
