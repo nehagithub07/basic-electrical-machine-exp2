@@ -8,7 +8,7 @@ import GraphPanel from './components/GraphPanel.jsx'
 import HeaderBoard from './components/HeaderBoard.jsx'
 import WalkthroughStartButton from './walkthrough/components/WalkthroughStartButton.jsx'
 import { useWalkthrough } from './walkthrough/useWalkthrough.js'
-import { ALERT_AUDIO_PLACEHOLDER, EXPERIMENT_ALERTS, getInstructionStep } from './alerts/experimentStepAlerts.js'
+import { ALERT_AUDIO, ALERT_AUDIO_PLACEHOLDER, EXPERIMENT_ALERTS, getInstructionStep } from './alerts/experimentStepAlerts.js'
 import { useLabAlerts } from './alerts/useLabAlerts.js'
 import { useAiGuideNarration } from './aiGuide/useAiGuideNarration.js'
  
@@ -507,11 +507,20 @@ useEffect(() => {
     announceStep(EXPERIMENT_ALERTS.graphPlotted)
   }
 
-  const handlePrint = async () => {
-    const completed = await announceStep(EXPERIMENT_ALERTS.print)
-    if (completed) window.print()
-  }
-
+   const handlePrint = () => {
+     const audio = new Audio(ALERT_AUDIO.print)
+   
+     audio.play()
+       .then(() => {
+         setTimeout(() => {
+           window.print()
+         }, 300)
+       })
+       .catch((error) => {
+         console.warn('Unable to play print audio:', error)
+         window.print()
+       })
+   }
   const handleGenerateReport = () => {
     if (!canGenerateReport) return
     pendingReportRef.current?.dispose()
@@ -729,7 +738,7 @@ useEffect(() => {
               <section className="right-panel">
 
              
-                <ConnectionLab
+                   <ConnectionLab
                      aiGuideActive={aiGuidePlaying}
                      guideEndpointHighlightActive={
                        aiGuidePlaying

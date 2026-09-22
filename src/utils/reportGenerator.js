@@ -1101,7 +1101,7 @@ tr:nth-child(even) {
         var element = document.getElementById('report-document') || document.body;
         var opts = {
           margin: [0.18, 0.18, 0.18, 0.18],
-          filename: 'kcl-simulation-report.pdf',
+          filename: 'KCL Simulation Report.pdf',
           image: { type: 'jpeg', quality: 0.98 },
           html2canvas: {
             scale: 2,
