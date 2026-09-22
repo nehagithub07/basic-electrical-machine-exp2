@@ -24,7 +24,7 @@ const FORMULAS = [
   },
 ]
 
-const ObservationTable = ({ observations, onGenerateReport, reportGenerated }) => {
+const ObservationTable = ({ canGenerateReport = false, observations, onGenerateReport, reportGenerated }) => {
   const [equationsOpen, setEquationsOpen] = useState(false)
   const rows = TABLE_ROWS
 
@@ -79,7 +79,7 @@ const ObservationTable = ({ observations, onGenerateReport, reportGenerated }) =
         <button aria-controls="experiment-formula-panel" aria-expanded={equationsOpen} className="observation-equations-button" id="formula-button" onClick={() => setEquationsOpen((current) => !current)} type="button">
           <FormulaIcon /><span>Equations</span>
         </button>
-        <button className="observation-report-button" data-report-generated={reportGenerated ? 'true' : 'false'} disabled={observations.length < 3} id="generate-report-button" onClick={onGenerateReport} type="button">
+        <button className="observation-report-button" data-report-generated={reportGenerated ? 'true' : 'false'} disabled={!canGenerateReport} title={canGenerateReport ? 'Generate a report with your verified readings.' : 'Successfully verify at least one reading to generate a report.'} id="generate-report-button" onClick={onGenerateReport} type="button">
           <PdfIcon /><span>Generate Report</span>
         </button>
       </div>

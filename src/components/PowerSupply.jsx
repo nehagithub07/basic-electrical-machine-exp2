@@ -50,9 +50,11 @@ const PowerSupply = ({ connectedTerminalIds = [], highlightedTerminalIds = [], o
       </span>
       <button
         id="power-toggle-button"
-        aria-label={powerOn ? 'Switch power supply off' : 'Switch power supply on'}
+        aria-label={powerOn ? 'Power supply on (locked until reset)' : 'Switch power supply on'}
         aria-pressed={powerOn}
         className="power-supply__button"
+        disabled={powerOn}
+        title={powerOn ? 'Power remains on until the simulation is reset.' : 'Switch power supply on'}
         onClick={onTogglePower}
         type="button"
       />

@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 
 import { addExclusiveAudioListener, dispatchExclusiveAudioStart } from '../../utils/audioCoordinator.js'
 import { useFocusTrap } from '../hooks/useFocusTrap.js'
+import WalkthroughText from './WalkthroughText.jsx'
 
 const EDGE_GAP = 16
 const TARGET_GAP = 18
@@ -240,12 +241,12 @@ const WalkthroughPopup = ({
       <div className="walkthrough-popup__header">
         <div>
           <p className="walkthrough-popup__eyebrow">Guided Walkthrough</p>
-          <h2 id={titleId}>{activeStep.title}</h2>
+          <h2 id={titleId}><WalkthroughText text={activeStep.title} /></h2>
         </div>
       </div>
 
       <p className="walkthrough-popup__description" id={descriptionId}>
-        {activeStep.description}
+        <WalkthroughText text={activeStep.description} />
       </p>
 
       <div className="walkthrough-popup__progress" aria-hidden="true">

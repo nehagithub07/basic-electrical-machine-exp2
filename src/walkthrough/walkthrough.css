@@ -132,6 +132,21 @@
   transform: translateY(2px);
 }
 
+.walkthrough-start-button--highlighted {
+  outline: 3px solid #fef08a;
+  outline-offset: 4px;
+  animation: walkthrough-guide-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes walkthrough-guide-pulse {
+  0%, 100% { box-shadow: 0 0 0 6px rgba(250, 204, 21, .18), 0 0 24px rgba(250, 204, 21, .55); }
+  50% { box-shadow: 0 0 0 12px rgba(250, 204, 21, .3), 0 0 38px rgba(250, 204, 21, .85); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .walkthrough-start-button--highlighted { animation: none; box-shadow: 0 0 22px #facc15; }
+}
+
 .walkthrough-popup {
   position: fixed;
   z-index: 1002;
@@ -183,7 +198,10 @@
   font-weight: 600;
   line-height: 1.55;
   text-align: justify;
+  white-space: pre-line;
 }
+
+.walkthrough-popup__description strong { font-weight: 900; }
 
 .walkthrough-popup__progress {
   height: 7px;

@@ -3,6 +3,7 @@ import ResistanceSlider from './ResistanceSlider.jsx'
 import SectionCard from './SectionCard.jsx'
 
 const ControlPanel = ({
+  canGenerateReport,
   locked,
   observations,
   onGenerateReport,
@@ -23,7 +24,7 @@ const ControlPanel = ({
       </div>
     </SectionCard>
 
-    <ObservationTable observations={observations} onGenerateReport={onGenerateReport} reportGenerated={reportGenerated} />
+    <ObservationTable canGenerateReport={canGenerateReport} observations={observations} onGenerateReport={onGenerateReport} reportGenerated={reportGenerated} />
   </>
 )
 

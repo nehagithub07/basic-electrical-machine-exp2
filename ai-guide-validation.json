@@ -1,0 +1,773 @@
+{
+  "status": "validatedExistingConflictsPreserved",
+  "runtimeIntegrationComplete": false,
+  "source": "C:/Users/Admin/.codex/attachments/3d80f400-3680-464c-bc97-ac7b0d4ca85f/pasted-text.txt",
+  "changes": {
+    "guideConfig": "src/aiGuide/aiGuideConfig.json",
+    "addedGuideStepIds": [],
+    "alertConfig": "src/alerts/experimentStepAlerts.js",
+    "addedAlertKeys": [],
+    "existingGuideEntriesUnchanged": true,
+    "existingAlertEntriesUnchanged": true,
+    "existingAudioMappingsUnchanged": true,
+    "applicationLogicChanged": false
+  },
+  "summary": {
+    "taggedInstructions": 34,
+    "audioOnlyInstructions": 16,
+    "alertAndAudioInstructions": 18,
+    "staticLines": 6,
+    "existingMatchedInstructions": 34,
+    "missingInstructions": 0,
+    "validGuideAudioPaths": 25,
+    "preservedPlaceholderStepIds": [
+      15,
+      16,
+      17,
+      26,
+      27,
+      28,
+      29,
+      30,
+      33,
+      34,
+      35,
+      36,
+      37
+    ],
+    "duplicateGuideIds": 0,
+    "duplicateGuideTexts": 0
+  },
+  "instructions": [
+    {
+      "sourceLineNumber": 2,
+      "sourceLine": "AI Guide click: Hello! I am your AI Guide. I will guide you through each step of the experiment. Please follow the instructions carefully and perform the actions as directed. Before we begin, let us familiarize ourselves with the simulation interface. To start, click on the start walkthrough -audio",
+      "expectedMapping": "aiGuide",
+      "guideStepId": 1,
+      "alertKey": null,
+      "match": "existingTextMatches",
+      "audio": "./audios/AI Guide click.wav"
+    },
+    {
+      "sourceLineNumber": 5,
+      "sourceLine": "The interface walkthrough is now complete. You are now ready to perform the experiment. You may either click the Auto Connect button to make the circuit connections automatically or connect the circuit manually by following the highlighted terminals. Let's begin with the first connection. -audio",
+      "expectedMapping": "aiGuide",
+      "guideStepId": 2,
+      "alertKey": null,
+      "match": "existingFormattingDiffers",
+      "audio": "./audios/The interface walkthrough is now complete.wav"
+    },
+    {
+      "sourceLineNumber": 9,
+      "sourceLine": "Connect the DC power supply to the circuit by clicking and drag the wire from terminal 1 and drop it on terminal 9. -audio ",
+      "expectedMapping": "aiGuide",
+      "guideStepId": 3,
+      "alertKey": null,
+      "match": "existingTextMatches",
+      "audio": "./audios/Correct Connections.wav"
+    },
+    {
+      "sourceLineNumber": 11,
+      "sourceLine": "Let's move on to the next connection. Connect terminal 2 to terminal 10. -audio ",
+      "expectedMapping": "aiGuide",
+      "guideStepId": 4,
+      "alertKey": null,
+      "match": "existingTextMatches",
+      "audio": "./audios/Let's move on to the next connection.wav"
+    },
+    {
+      "sourceLineNumber": 12,
+      "sourceLine": "Now, connect terminal 3 of the ammeter to terminal 11. -audio ",
+      "expectedMapping": "aiGuide",
+      "guideStepId": 5,
+      "alertKey": null,
+      "match": "existingTextMatches",
+      "audio": "./audios/Now, connect terminal 3 of the ammeter to terminal 11.wav"
+    },
+    {
+      "sourceLineNumber": 13,
+      "sourceLine": "Connect terminal 4 to terminal 12. -audio ",
+      "expectedMapping": "aiGuide",
+      "guideStepId": 6,
+      "alertKey": null,
+      "match": "existingTextMatches",
+      "audio": "./audios/Connect terminal 4 to terminal 12.wav"
+    },
+    {
+      "sourceLineNumber": 14,
+      "sourceLine": "Connect terminal 5 to terminal 13. -audio ",
+      "expectedMapping": "aiGuide",
+      "guideStepId": 7,
+      "alertKey": null,
+      "match": "existingTextMatches",
+      "audio": "./audios/Connect terminal 5 to terminal 13.wav"
+    },
+    {
+      "sourceLineNumber": 15,
+      "sourceLine": "Connect terminal 6 to terminal 14. -audio ",
+      "expectedMapping": "aiGuide",
+      "guideStepId": 8,
+      "alertKey": null,
+      "match": "existingTextMatches",
+      "audio": "./audios/Connect terminal 6 to terminal 14..wav"
+    },
+    {
+      "sourceLineNumber": 16,
+      "sourceLine": "Connect terminal 7 to terminal 15. -audio ",
+      "expectedMapping": "aiGuide",
+      "guideStepId": 9,
+      "alertKey": null,
+      "match": "existingTextMatches",
+      "audio": "./audios/Connect terminal 7 to terminal 15.wav"
+    },
+    {
+      "sourceLineNumber": 17,
+      "sourceLine": "Connect terminal 8 to terminal 16. -audio ",
+      "expectedMapping": "aiGuide",
+      "guideStepId": 10,
+      "alertKey": null,
+      "match": "existingTextMatches",
+      "audio": "./audios/Connect terminal 8 to terminal 16.wav"
+    },
+    {
+      "sourceLineNumber": 18,
+      "sourceLine": "Guide all complete conn: All connections are completed. Click on the Check button to verify the connections. -audio ",
+      "expectedMapping": "aiGuide",
+      "guideStepId": 11,
+      "alertKey": null,
+      "match": "existingTextMatches",
+      "audio": "./audios/Guide all complete conn.wav"
+    },
+    {
+      "sourceLineNumber": 19,
+      "sourceLine": "Wrong connection: This connection is wrong. -audio",
+      "expectedMapping": "aiGuide",
+      "guideStepId": 12,
+      "alertKey": null,
+      "match": "existingTextMatches",
+      "audio": "./audios/Wrong connection.wav"
+    },
+    {
+      "sourceLineNumber": 21,
+      "sourceLine": "Multiple wrong connections: Some connections are wrong. -audio",
+      "expectedMapping": "aiGuide",
+      "guideStepId": 13,
+      "alertKey": null,
+      "match": "existingTextMatches",
+      "audio": "./audios/Multiple wrong connections.wav"
+    },
+    {
+      "sourceLineNumber": 24,
+      "sourceLine": "1st time check button click: Please make the required connections as per the given instructions. -alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 14,
+      "alertKey": "requiredConnectionsFirst",
+      "match": "existingTextMatches",
+      "audio": "./audios/1st time check button click.wav"
+    },
+    {
+      "sourceLineNumber": 27,
+      "sourceLine": "Autoconnect: Autoconnect completed. Now set the required resistance value by moving the resistance sliders. - alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 15,
+      "alertKey": "circuitConnectionsCompleted",
+      "match": "existingTextMatches",
+      "audio": "#"
+    },
+    {
+      "sourceLineNumber": 33,
+      "sourceLine": "1st time Power Supply click: Please complete or check the connections first to turn on the power supply. -alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 18,
+      "alertKey": "cannotStartPower",
+      "match": "existingFormattingDiffers",
+      "audio": "./audios/1st time Power Supply click.wav"
+    },
+    {
+      "sourceLineNumber": 36,
+      "sourceLine": "For correct connections, check click: Connections Verified: Connections Verified successfully. Now set the required resistance value by moving the resistance sliders. -alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 19,
+      "alertKey": "connectionsVerified",
+      "match": "existingTextMatches",
+      "audio": "./audios/For correct connections, check click.wav"
+    },
+    {
+      "sourceLineNumber": 39,
+      "sourceLine": "After correct connections, ps click: Please set R1, R2 and R3 by moving the resistance sliders before turning ON the power supply. -alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 20,
+      "alertKey": "adjustResistance",
+      "match": "existingTextMatches",
+      "audio": "./audios/After correct connections, ps click.wav"
+    },
+    {
+      "sourceLineNumber": 42,
+      "sourceLine": "After resistance is set: Resistance Values Selected Successfully: The resistance values for R₁, R₂, and R₃ have been set. Click on the Power to turn ON the power supply. -alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 21,
+      "alertKey": "resistanceValuesSelected",
+      "match": "existingTextMatches",
+      "audio": "./audios/After resistance is set.wav"
+    },
+    {
+      "sourceLineNumber": 45,
+      "sourceLine": "After the above step: Power supply has been turned ON. Now, set the voltage by moving the voltage slider. -alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 22,
+      "alertKey": "powerOn",
+      "match": "existingTextMatches",
+      "audio": "./audios/powerSupplyTurnOn.wav"
+    },
+    {
+      "sourceLineNumber": 48,
+      "sourceLine": "Voltage is set: The readings are displayed on the ammeters. Now, click on the add button to add the readings to the observation table. -audio",
+      "expectedMapping": "aiGuide",
+      "guideStepId": 23,
+      "alertKey": null,
+      "match": "existingTextMatches",
+      "audio": "./audios/Voltage is set.wav"
+    },
+    {
+      "sourceLineNumber": 51,
+      "sourceLine": "1st readings added: Readings added successfully. To record the second reading, change the voltage and click the Add button again. -alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 24,
+      "alertKey": "readingAdded",
+      "match": "existingTextMatches",
+      "audio": "./audios/1st readings added.wav"
+    },
+    {
+      "sourceLineNumber": 54,
+      "sourceLine": "For Duplicate Readings, Add click: Duplicate Readings: This reading is already added to the table. Change the voltage value and take the next reading. -alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 25,
+      "alertKey": "readingAlreadyExists",
+      "match": "existingTextMatches",
+      "audio": "./audios/For Duplicate Readings, Add click.wav"
+    },
+    {
+      "sourceLineNumber": 57,
+      "sourceLine": "2nd reading added: Second reading added successfully. Change the voltage value and click the Add button again to record the next reading. Repeat the same steps until all five readings are recorded.  -audio",
+      "expectedMapping": "aiGuide",
+      "guideStepId": 26,
+      "alertKey": null,
+      "match": "existingTextMatches",
+      "audio": "#"
+    },
+    {
+      "sourceLineNumber": 60,
+      "sourceLine": "After 5 readings: You have added five readings. Now you can plot the graph by clicking on the Plot button. -alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 28,
+      "alertKey": "fiveReadingsRecorded",
+      "match": "existingTextMatches",
+      "audio": "#"
+    },
+    {
+      "sourceLineNumber": 63,
+      "sourceLine": "After Plot Click: The graph of current v/s voltage has been plotted successfully. Now, Select the reading from the dropdown menu and calculate the equivalent resistance and branch currents theoretically using the equations provided in the “Equations” button. Enter the calculated values in the input fields, then click the “Verify” button to verify KCL for the selected reading. -alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 30,
+      "alertKey": "graphPlotted",
+      "match": "existingTextMatches",
+      "audio": "#"
+    },
+    {
+      "sourceLineNumber": 65,
+      "sourceLine": "For max. readings, add button click: You can add up to five readings to the table. Now, Click the Plot button and verify the KCL in the theoretical verification section. -alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 29,
+      "alertKey": "maxReadingsReached",
+      "match": "existingTextMatches",
+      "audio": "#"
+    },
+    {
+      "sourceLineNumber": 69,
+      "sourceLine": "Verify button click, more than one value is missing: Please enter all the values, then click the “Verify” button to verify KCL. -alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 34,
+      "alertKey": "verificationMissingMultiple",
+      "match": "existingTextMatches",
+      "audio": "#"
+    },
+    {
+      "sourceLineNumber": 72,
+      "sourceLine": "Verify button click, one value is missing: Please enter the required value, then click the “Verify” button to verify KCL. -alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 35,
+      "alertKey": "verificationMissingOne",
+      "match": "existingTextMatches",
+      "audio": "#"
+    },
+    {
+      "sourceLineNumber": 78,
+      "sourceLine": "Verify button click, Incorrect calculations: Incorrect calculations. Kirchhoff’s Current Law (KCL) is not verified. Please review your calculations and try again. -alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 36,
+      "alertKey": "verificationIncorrect",
+      "match": "existingTextMatches",
+      "audio": "#"
+    },
+    {
+      "sourceLineNumber": 81,
+      "sourceLine": "Verify button click, Correct calculations: Calculations are correct. Kirchhoff’s Current Law (KCL) has been verified successfully. Now, click on the Generate Report button. -alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 37,
+      "alertKey": "verificationCorrect",
+      "match": "existingTextMatches",
+      "audio": "#"
+    },
+    {
+      "sourceLineNumber": 84,
+      "sourceLine": "Reset: The simulation has been reset. You can start again. -alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 31,
+      "alertKey": "resetSuccess",
+      "match": "existingTextMatches",
+      "audio": "./audios/Reset.wav"
+    },
+    {
+      "sourceLineNumber": 86,
+      "sourceLine": "Print: Opening the print dialog. -audio",
+      "expectedMapping": "aiGuide",
+      "guideStepId": 32,
+      "alertKey": null,
+      "match": "existingTextMatches",
+      "audio": "./audios/Print.wav"
+    },
+    {
+      "sourceLineNumber": 87,
+      "sourceLine": "Generate Report button click: Report Generated: Your report has been generated successfully. Click OK to view your report. -alert and audio",
+      "expectedMapping": "both",
+      "guideStepId": 38,
+      "alertKey": "reportGenerated",
+      "match": "existingTextMatches",
+      "audio": "./audios/Generate Report button click.wav"
+    }
+  ],
+  "staticText": [
+    {
+      "sourceLineNumber": 1,
+      "text": "Alerts and Audio - KCL"
+    },
+    {
+      "sourceLineNumber": 3,
+      "text": "Note: 1st walkthrough - Written text. "
+    },
+    {
+      "sourceLineNumber": 7,
+      "text": "Correct Connections:"
+    },
+    {
+      "sourceLineNumber": 30,
+      "text": "Note: Before adding reading, 1st time Add button click: disabled, enabled after the power supply value is set for the first reading."
+    },
+    {
+      "sourceLineNumber": 66,
+      "text": "When the user enters incomplete values and clicks Verify"
+    },
+    {
+      "sourceLineNumber": 75,
+      "text": "When all values are entered and click Verify"
+    }
+  ],
+  "audioFiles": [
+    {
+      "guideStepId": 1,
+      "audio": "./audios/AI Guide click.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 2,
+      "audio": "./audios/The interface walkthrough is now complete.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 3,
+      "audio": "./audios/Correct Connections.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 4,
+      "audio": "./audios/Let's move on to the next connection.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 5,
+      "audio": "./audios/Now, connect terminal 3 of the ammeter to terminal 11.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 6,
+      "audio": "./audios/Connect terminal 4 to terminal 12.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 7,
+      "audio": "./audios/Connect terminal 5 to terminal 13.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 8,
+      "audio": "./audios/Connect terminal 6 to terminal 14..wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 9,
+      "audio": "./audios/Connect terminal 7 to terminal 15.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 10,
+      "audio": "./audios/Connect terminal 8 to terminal 16.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 11,
+      "audio": "./audios/Guide all complete conn.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 12,
+      "audio": "./audios/Wrong connection.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 13,
+      "audio": "./audios/Multiple wrong connections.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 14,
+      "audio": "./audios/1st time check button click.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 15,
+      "audio": "#",
+      "status": "placeholderPreserved"
+    },
+    {
+      "guideStepId": 16,
+      "audio": "#",
+      "status": "placeholderPreserved"
+    },
+    {
+      "guideStepId": 17,
+      "audio": "#",
+      "status": "placeholderPreserved"
+    },
+    {
+      "guideStepId": 18,
+      "audio": "./audios/1st time Power Supply click.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 19,
+      "audio": "./audios/For correct connections, check click.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 20,
+      "audio": "./audios/After correct connections, ps click.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 21,
+      "audio": "./audios/After resistance is set.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 22,
+      "audio": "./audios/powerSupplyTurnOn.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 23,
+      "audio": "./audios/Voltage is set.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 24,
+      "audio": "./audios/1st readings added.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 25,
+      "audio": "./audios/For Duplicate Readings, Add click.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 26,
+      "audio": "#",
+      "status": "placeholderPreserved"
+    },
+    {
+      "guideStepId": 27,
+      "audio": "#",
+      "status": "placeholderPreserved"
+    },
+    {
+      "guideStepId": 28,
+      "audio": "#",
+      "status": "placeholderPreserved"
+    },
+    {
+      "guideStepId": 29,
+      "audio": "#",
+      "status": "placeholderPreserved"
+    },
+    {
+      "guideStepId": 30,
+      "audio": "#",
+      "status": "placeholderPreserved"
+    },
+    {
+      "guideStepId": 31,
+      "audio": "./audios/Reset.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 32,
+      "audio": "./audios/Print.wav",
+      "status": "validWavPath"
+    },
+    {
+      "guideStepId": 33,
+      "audio": "#",
+      "status": "placeholderPreserved"
+    },
+    {
+      "guideStepId": 34,
+      "audio": "#",
+      "status": "placeholderPreserved"
+    },
+    {
+      "guideStepId": 35,
+      "audio": "#",
+      "status": "placeholderPreserved"
+    },
+    {
+      "guideStepId": 36,
+      "audio": "#",
+      "status": "placeholderPreserved"
+    },
+    {
+      "guideStepId": 37,
+      "audio": "#",
+      "status": "placeholderPreserved"
+    },
+    {
+      "guideStepId": 38,
+      "audio": "./audios/Generate Report button click.wav",
+      "status": "validWavPath"
+    }
+  ],
+  "existingAlertAudio": [
+    {
+      "key": "aiGuideClick",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "allConnectionsCompleted",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "autoConnect",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "connect1To9",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "connect2To10",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "connect3To11",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "connect4To12",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "connect5To13",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "connect6To14",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "connect7To15",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "connect8To16",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "connectionsVerified",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "duplicateReading",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "firstCheckClick",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "firstPowerSupplyClick",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "firstReadingAdded",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "graph",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "insufficientReadings",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "maxReadings",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "multipleWrongConnections",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "powerSupplyTurnOn",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "print",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "reportGenerated",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "reset",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "resistanceRequired",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "resistanceSet",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "secondReadingAdded",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "sixReadingsAdded",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "tenReadingsAdded",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "voltageSet",
+      "status": "resolvedExistingAsset"
+    },
+    {
+      "key": "wrongConnection",
+      "status": "resolvedExistingAsset"
+    }
+  ],
+  "unresolvedConflicts": [
+    {
+      "guideStepId": 2,
+      "code": "trailingWhitespaceMismatch",
+      "expected": "The interface walkthrough is now complete. You are now ready to perform the experiment. You may either click the Auto Connect button to make the circuit connections automatically or connect the circuit manually by following the highlighted terminals. Let's begin with the first connection.",
+      "actual": "The interface walkthrough is now complete. You are now ready to perform the experiment. You may either click the Auto Connect button to make the circuit connections automatically or connect the circuit manually by following the highlighted terminals. Let's begin with the first connection. "
+    },
+    {
+      "guideStepId": 18,
+      "code": "leadingWhitespaceMismatch",
+      "expected": "Please complete or check the connections first to turn on the power supply.",
+      "actual": " Please complete or check the connections first to turn on the power supply."
+    },
+    {
+      "guideStepId": 21,
+      "code": "alertSubscriptMismatch",
+      "alertKey": "resistanceValuesSelected",
+      "expected": "The resistance values for R₁, R₂, and R₃ have been set. Click on the Power to turn ON the power supply.",
+      "actual": "The resistance values for R1, R2, and R3 have been set. Click on the Power to turn ON the power supply."
+    },
+    {
+      "guideStepIds": [
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "code": "audioOnlyInstructionsAlsoAppearAsPopupCorrections",
+      "location": "src/App.jsx:handleConnectionChange / handleCheckConnections",
+      "reason": "Existing error and missing-connection popup descriptions contain the corresponding terminal instructions."
+    },
+    {
+      "guideStepId": 11,
+      "code": "audioOnlyInstructionAlsoShowsPopup",
+      "alertKey": "allConnectionsCompleted",
+      "expected": "All connections are completed. Click on the Check button to verify the connections.",
+      "actual": "All connections are completed. Click on the check button to verify the connections.",
+      "location": "src/App.jsx:handleConnectionChange"
+    },
+    {
+      "guideStepId": 12,
+      "code": "audioOnlyInstructionAlsoShowsPopup",
+      "alertKey": "incorrectNodeConnection",
+      "location": "src/App.jsx:handleConnectionChange / handleCheckConnections"
+    },
+    {
+      "guideStepId": 13,
+      "code": "audioOnlyInstructionHasAlertPresetsAndNoDedicatedGuideTrigger",
+      "alertKeys": [
+        "connectionErrorFound",
+        "wrongConnectionsFound",
+        "multipleWrongConnections"
+      ],
+      "location": "src/App.jsx:recordObservation / handleCheckConnections"
+    },
+    {
+      "guideStepId": 14,
+      "code": "activeAlertTextDiffers",
+      "expected": "Please make the required connections as per the given instructions.",
+      "existingExactPreset": "requiredConnectionsFirst",
+      "activePreset": "missingConnections",
+      "location": "src/App.jsx:handleCheckConnections"
+    },
+    {
+      "guideStepId": 32,
+      "code": "existingNarrationIsNotTriggered",
+      "location": "src/App.jsx:handlePrint"
+    },
+    {
+      "guideStepId": 38,
+      "code": "existingMappingsNotTriggered",
+      "alertKey": "reportGenerated",
+      "activeGuideStepId": 33,
+      "activeAlertKey": "printLayoutGenerated",
+      "location": "src/App.jsx:handleGenerateReport",
+      "reason": "The current handler asks for confirmation before creating a report. Connecting the completion message requires changing existing behavior."
+    }
+  ],
+  "audioContentVerification": "File paths and WAV headers were validated. Recording transcripts were not verified; existing recordings and placeholders were preserved."
+}

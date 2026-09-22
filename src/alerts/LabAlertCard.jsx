@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { useFocusTrap } from '../walkthrough/hooks/useFocusTrap.js'
 
 const EXIT_DURATION = 180
 const AUDIO_COMPLETE_HOLD_DURATION = 10000
@@ -22,6 +23,7 @@ const dispatchLabAlertEvent = (eventName, detail) => {
 const LabAlertCard = ({ alert, onDismiss }) => {
   const [isClosing, setIsClosing] = useState(false)
   const dismissTimerRef = useRef(null)
+  const cardRef = useRef(null)
   const {
     canGoNext,
     canGoPrevious,
@@ -55,9 +57,10 @@ const LabAlertCard = ({ alert, onDismiss }) => {
   const showProgressTimer = hasProgressTimer && (!waitsForAudio || audioPlaybackComplete)
   const titleId = `lab-alert-title-${id}`
   const descriptionId = `lab-alert-description-${id}`
-  const role = type === 'error' || type === 'warning' ? 'alert' : 'status'
+  const role = requiresConfirmation ? 'alertdialog' : type === 'error' || type === 'warning' ? 'alert' : 'status'
   const showNarration = Boolean(alert.audioNarration || alert.narration || onNarration)
   const showTutorialControls = Boolean(tutorialMode || onNext || onPrevious)
+  useFocusTrap(cardRef, requiresConfirmation)
 
   const dismiss = useCallback((reason = 'dismiss', callClose = true) => {
     if (isClosing) {
@@ -133,6 +136,7 @@ const LabAlertCard = ({ alert, onDismiss }) => {
   }, [id])
 
   const handleConfirm = () => {
+    if (isClosing) return
     dismiss('confirm', false)
     onConfirm?.(alert)
   }
@@ -154,11 +158,16 @@ const LabAlertCard = ({ alert, onDismiss }) => {
 
   return (
     <article
+      aria-modal={requiresConfirmation && alert.critical ? true : undefined}
       aria-describedby={description ? descriptionId : undefined}
       aria-labelledby={titleId}
       className={`lab-alert-card lab-alert-card--${type} ${isClosing ? 'lab-alert-card--closing' : ''}`}
       data-placement={placement}
       role={role}
+      ref={cardRef}
+      onKeyDown={(event) => {
+        if (requiresConfirmation && event.key === 'Escape') dismiss('close')
+      }}
       style={{ '--alert-duration': `${timerDuration ?? 0}ms` }}
     >
       <div className="lab-alert-card__glow" aria-hidden="true" />
@@ -220,6 +229,7 @@ const LabAlertCard = ({ alert, onDismiss }) => {
 
         <button
           className="lab-alert-card__button lab-alert-card__button--primary"
+          data-autofocus={requiresConfirmation ? true : undefined}
           onClick={requiresConfirmation ? handleConfirm : handleOk}
           type="button"
         >

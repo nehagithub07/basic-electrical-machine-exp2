@@ -1,4 +1,12 @@
+import aiGuideConfig from '../aiGuide/aiGuideConfig.json'
+
 export const ALERT_AUDIO_PLACEHOLDER = '#'
+
+// Revised prompts share one script with the AI Guide and use speech synthesis.
+const narrationForStep = (guideStepId) => {
+  const { text } = aiGuideConfig.steps.find((step) => step.id === guideStepId)
+  return { audio: ALERT_AUDIO_PLACEHOLDER, audioSpeech: text, description: text, guideStepId }
+}
 
 const alertAudioModules = import.meta.glob('../audios/*', {
   eager: true,
@@ -63,12 +71,11 @@ export const EXPERIMENT_ALERTS = {
     type: 'info',
   },
   circuitConnectionsCompleted: {
-    audio: ALERT_AUDIO.autoConnect,
-    description: '',
+    ...narrationForStep(15),
     icon: '✅',
     stepNumber: 1,
-    target: '#check-button',
-    title: 'Autoconnect completed. Click on the check button to verify the connections.',
+    target: '#resistance-controls',
+    title: 'Auto Connect Completed',
     type: 'success',
   },
   allConnectionsCompleted: {
@@ -258,7 +265,7 @@ export const EXPERIMENT_ALERTS = {
     icon: '📊',
     stepNumber: 7,
     target: '#add-reading-button',
-    title: 'Continue Taking Readings Until Minimum 6 Entries',
+    title: 'Continue Taking Readings — Up to Five Entries',
     type: 'info',
   },
   minimumReadingsRequired: {
@@ -270,17 +277,18 @@ export const EXPERIMENT_ALERTS = {
     type: 'warning',
   },
   sufficientData: {
-    audio: ALERT_AUDIO.sixReadingsAdded,
-    description: 'The graph has been generated automatically. You may add up to five readings.',
+    ...narrationForStep(27),
     icon: '✅',
     stepNumber: 7,
     target: '#plot-button',
-    title: 'Three readings added — graph generated.',
+    title: 'Ready to Plot',
     type: 'success',
   },
-  tenReadingsRecorded: {
-    audio: ALERT_AUDIO.tenReadingsAdded,
-    description: 'You can now verify the values and generate the report.',
+  secondReadingAdded: {
+    ...narrationForStep(26),
+  },
+  fiveReadingsRecorded: {
+    ...narrationForStep(28),
     icon: 'OK',
     stepNumber: 7,
     target: '#plot-button',
@@ -288,12 +296,11 @@ export const EXPERIMENT_ALERTS = {
     type: 'success',
   },
   maxReadingsReached: {
-    audio: ALERT_AUDIO.maxReadings,
-    description: 'Verify the recorded values or generate the report.',
+    ...narrationForStep(29),
     icon: '!',
     stepNumber: 7,
     target: '#plot-button',
-    title: 'You can add a maximum of five readings to the table.',
+    title: 'Maximum Readings Reached',
     type: 'warning',
   },
   comparingValues: {
@@ -331,17 +338,15 @@ export const EXPERIMENT_ALERTS = {
     type: 'info',
   },
   graphPlotted: {
-    audio: ALERT_AUDIO.graph,
-    description: 'Your simulation is now complete. You may view the report by clicking on the generate report button, then use print to print the page or reset to start the simulation again.',
+    ...narrationForStep(30),
     icon: '✅',
     stepNumber: 9,
-    target: '#generate-report-button',
-    title: 'The graph of current vs voltage has been plotted successfully.',
+    target: '#verification-panel',
+    title: 'Graph Plotted Successfully',
     type: 'success',
   },
   insufficientGraphReadings: {
-    audio: ALERT_AUDIO.insufficientReadings,
-    description: 'Please add at least three readings to plot the graph.',
+    ...narrationForStep(16),
     icon: '❌',
     stepNumber: 9,
     target: '#observation-table-panel',
@@ -358,12 +363,52 @@ export const EXPERIMENT_ALERTS = {
     type: 'info',
   },
   printLayoutGenerated: {
+    ...narrationForStep(33),
+    description: 'Click OK to open your report.',
+    icon: '?',
+    stepNumber: 10,
+    target: '#generate-report-button',
+    title: 'Are you sure?',
+    type: 'info',
+  },
+  reportGenerated: {
     audio: ALERT_AUDIO.reportGenerated,
     description: 'Your report has been generated successfully. Click OK to view your report.',
+    guideStepId: 38,
     icon: '✅',
     stepNumber: 10,
     target: '#generate-report-button',
     title: 'Report Generated',
+    type: 'success',
+  },
+  verificationRequired: {
+    ...narrationForStep(17),
+    title: 'Verify a Reading First',
+    target: '#verification-panel',
+    type: 'warning',
+  },
+  verificationMissingMultiple: {
+    ...narrationForStep(34),
+    title: 'Incomplete Values',
+    target: '#verification-panel',
+    type: 'warning',
+  },
+  verificationMissingOne: {
+    ...narrationForStep(35),
+    title: 'Required Value Missing',
+    target: '#verification-panel',
+    type: 'warning',
+  },
+  verificationIncorrect: {
+    ...narrationForStep(36),
+    title: 'Check Your Calculations',
+    target: '#verification-panel',
+    type: 'error',
+  },
+  verificationCorrect: {
+    ...narrationForStep(37),
+    title: 'KCL Verified Successfully',
+    target: '#generate-report-button',
     type: 'success',
   },
   resettingSetup: {

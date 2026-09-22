@@ -86,6 +86,7 @@ const ConnectionLab = ({
   const aiGuideActiveRef = useRef(aiGuideActive)
   const scaleRef = useRef(getJsPlumbZoom(scale))
   const suppressConnectionAlertsRef = useRef(false)
+  const completedAutoConnectRequestRef = useRef(0)
 
   const [isLocked, setIsLocked] = useState(false)
   const [ammeterCurrentKeys, setAmmeterCurrentKeys] = useState(DEFAULT_AMMETER_CURRENT_KEYS)
@@ -268,23 +269,38 @@ const ConnectionLab = ({
   }, [scale])
 
   useEffect(() => {
-    if (autoConnectRequest === 0 || !instanceRef.current || isLocked) {
+    if (autoConnectRequest === 0 || completedAutoConnectRequestRef.current === autoConnectRequest || !instanceRef.current || isLocked) {
       return
     }
 
+    completedAutoConnectRequestRef.current = autoConnectRequest
     suppressConnectionAlertsRef.current = true
 
     try {
+      // Replace partial or incorrect manual wiring before completing the circuit.
+      instanceRef.current.deleteEveryConnection()
       autoConnectDefaultCircuit(instanceRef.current)
     } finally {
       suppressConnectionAlertsRef.current = false
     }
 
+    const result = getConnectionStatus(instanceRef.current)
+    if (result.isCorrect) {
+      setAmmeterCurrentKeys(getAmmeterCurrentKeys(instanceRef.current))
+      lockJsPlumbCircuit(instanceRef.current, containerRef.current)
+      setIsLocked(true)
+    }
+    onCheckConnectionsRef.current?.({
+      ...result,
+      autoConnected: true,
+      nextRequiredConnection: getNextRequiredConnectionPair(instanceRef.current),
+    })
+
     window.setTimeout(() => {
       instanceRef.current?.repaintEverything()
     }, 80)
     setConnectionRevision((current) => current + 1)
-  }, [autoConnectRequest, isLocked])
+  }, [autoConnectRequest, connectionRevision, isLocked])
 
   useEffect(() => {
     if (checkRequest === 0 || !instanceRef.current) {

@@ -13,7 +13,7 @@
         "en": "Aim"
       },
       "description": {
-        "en": "The aim of the experiment is to verify KCL by applying Kirchhoff’s rules to an electrical circuit and determining the currents flowing through its respective branches."
+        "en": "To verify Kirchhoff’s Current Law by measuring that the total current entering the junction is equal to the total current leaving it in a resistive DC circuit."
       },
       "audio": "./walkthrough-audios/AIM.wav",
       "placement": "bottom"
@@ -85,7 +85,7 @@
         "en": "Plot Button"
       },
       "description": {
-        "en": " The PLOT button helps visualise the readings through a graph."
+        "en": "The PLOT button will display the graph of the recorded readings."
       },
       "audio": "./walkthrough-audios/plot button.wav",
       "placement": "right"
@@ -121,7 +121,7 @@
         "en": "Resistance Sliders"
       },
       "description": {
-        "en": "Set the values of R1, R2, and R3 by moving the resistance sliders. These resistance values will remain constant throughout the experiment to ensure accurate verification of Kirchhoff’s Current Law."
+        "en": "Set the values of R1, R2, and R3 by moving the resistance sliders. These resistance values will remain constant throughout the experiment to ensure accurate verification of Kirchhoff’s Current Law. \n\n **Range:** 1 - 5 kΩ"
       },
       "audio": "./walkthrough-audios/Resistance Sliders.wav",
       "placement": "right"
@@ -133,7 +133,7 @@
         "en": "Regulated DC Power Supply"
       },
       "description": {
-        "en": "This section provides the required DC voltage to the circuit. The display shows the active voltage supplied to the circuit, and the slider can be used to set the desired voltage value."
+        "en": "This section provides the required DC voltage to the circuit. The display shows the active voltage supplied to the circuit, and the slider can be used to set the desired voltage value. \n\n **Rating:** 15 V DC"
       },
       "audio": "./walkthrough-audios/Regulated DC Power Supply.wav",
       "placement": "left"
@@ -145,7 +145,7 @@
         "en": "DC Ammeters"
       },
       "description": {
-        "en": "DC Ammeters are used to measure the branch currents in the circuit. Record the current readings for each branch at different voltage values. The measured currents are used to compare the current entering and leaving the junction for KCL verification."
+        "en": "Ammeters are used to measure the branch currents in the circuit. Record the current readings for each branch at different voltage values. The measured currents will be used to compare the current entering and leaving the junction for KCL verification. \n\n **Rating:** 0 - 10 mA"
       },
       "audio": "./walkthrough-audios/DC Ammeters.wav",
       "placement": "bottom"
@@ -169,7 +169,7 @@
         "en": "Observation Table"
       },
       "description": {
-        "en": "This table records the measured branch currents I₁, I₂, and I₃ at different voltages. These readings will be used later to plot the graph."
+        "en": "This table will record the measured branch currents I<sub>1</sub>, I<sub>2</sub>, and I<sub>3</sub> at different voltages.  These readings will be used later to plot the graph and verify Kirchhoff’s Current Law."
       },
       "audio": "./walkthrough-audios/Observation table.wav",
       "placement": "right"
@@ -181,19 +181,20 @@
         "en": "Equations"
       },
       "description": {
-        "en": " This section displays the equations used to determine the branch currents."
+        "en": "This section displays the equations used to determine an equivalent resistance and the branch currents. "
       },
       "audio": "./walkthrough-audios/Equations.wav",
       "placement": "top"
     },
+    
     {
       "id": 16,
       "target": "#graph-panel",
       "title": {
-        "en": "Graph"
+        "en": "Theoretical Verification and Graph"
       },
       "description": {
-        "en": "After recording the observations, this section generates the current–voltage graph from the measured readings for analysis. "
+        "en": "In this section, the recorded reading will be selected for theoretical verification, and the required resistance and current values will be calculated to verify KCL. In addition, after recording the observations, a current v/s voltage graph will be displayed using the measured readings for analysis."
       },
       "audio": "./walkthrough-audios/graph.wav",
       "placement": "top"
@@ -205,7 +206,7 @@
         "en": "Generate Report"
       },
       "description": {
-        "en": "The Report button generates a summarised report of the simulation. After completing the observation table and graph plotting, generate the report. The report will include the time taken to complete the simulation, key parameters, recorded readings, graph plot and conclusion."
+        "en": " The Report button generates a summarised report of the simulation. After completing the observation table, graph and theoretical verification, generate the report. The report will include the time taken to complete the simulation, key parameters, recorded readings, graph, user-calculated results and conclusion."
       },
       "audio": "./walkthrough-audios/Generate Report.wav",
       "placement": "top"

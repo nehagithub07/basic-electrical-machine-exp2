@@ -85,7 +85,7 @@ const instructionSteps = [
   },
   {
     number: 2,
-    text: "Check your connections by clicking on the 'CHECK' button.",
+    text: "Check manual connections by clicking 'CHECK'. Auto Connect verifies and locks the circuit automatically.",
   },
   {
     number: 3,
@@ -105,7 +105,7 @@ const instructionSteps = [
   },
   {
     number: 7,
-    text: 'Repeat Steps 5 and 6 until three readings are recorded. The graph is generated automatically after 3 readings.',
+    text: 'Repeat Steps 5 and 6 to record up to five readings. At least three readings are needed to plot the graph.',
   },
   {
     number: 8,
@@ -113,7 +113,7 @@ const instructionSteps = [
   },
   {
     number: 9,
-    text: 'Click "Generate Report" to generate the simulation report, then use the report page to print or download it.',
+    text: 'Select a reading, use Equations to calculate the values, and click Verify KCL. After at least one successful verification, click Generate Report and confirm with OK.',
   },
   {
     number: 10,

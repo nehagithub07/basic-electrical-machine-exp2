@@ -15,6 +15,7 @@ import { useAiGuideNarration } from './aiGuide/useAiGuideNarration.js'
  
 import { calculateReadings } from './utils/circuitMath.js'
 import { generateKclReport } from './utils/reportGenerator.js'
+import { hasVerifiedReading } from './utils/verification.js'
  
 const BASE_WIDTH = 1440
 const BASE_HEIGHT = 960
@@ -147,13 +148,13 @@ const getActiveInstructionStep = ({
   return voltageAdjusted ? 6 : 5
 }
 
-const playLabAlertAudio = (audio) => {
-  if (typeof window === 'undefined' || !audio || audio === '#') {
+const playLabAlertAudio = (audio, speech) => {
+  if (typeof window === 'undefined' || ((!audio || audio === '#') && !speech)) {
     return
   }
 
   window.dispatchEvent(new CustomEvent('lab-alert:sound', {
-    detail: { audio },
+    detail: { audio, speech },
   }))
 }
 
@@ -197,6 +198,7 @@ const App = () => {
   const [status, setStatus] = useState('Make the connections, click CHECK, then set the resistance values.')
 
   const [autoConnectRequest, setAutoConnectRequest] = useState(0)
+  const [autoConnecting, setAutoConnecting] = useState(false)
   const [checkRequest, setCheckRequest] = useState(0)
   const [resetRequest, setResetRequest] = useState(0)
   const [connectionsReadyForCheck, setConnectionsReadyForCheck] = useState(false)
@@ -245,6 +247,7 @@ const App = () => {
   ))
   const readingCount = observations.length
   const canPlotGraph = readingCount >= MIN_GRAPH_READINGS
+  const canGenerateReport = hasVerifiedReading(observations, verificationReport)
   const allResistanceValuesAdjusted = resistanceAdjusted.r1 && resistanceAdjusted.r2 && resistanceAdjusted.r3
   const activeInstructionStep = useMemo(
     () => getActiveInstructionStep({
@@ -294,6 +297,24 @@ const App = () => {
     onFinish: handleAiGuideFinish,
     onStart: handleAiGuideStart,
   })
+
+  const announceStep = useCallback((preset, { audioOnly = false, ...overrides } = {}) => {
+    if (!audioOnly) {
+      showStepAlert(preset, {
+        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : preset.audio,
+        audioSpeech: aiGuidePlaying ? null : preset.audioSpeech,
+        // Leave enough time to read long instructions while the guide speaks.
+        duration: Math.max(10000, (preset.description?.split(/\s+/).length ?? 0) * 500 + 10000),
+        replaceExisting: true,
+        ...overrides,
+      })
+    }
+    if (aiGuidePlaying) {
+      playAiGuideSteps([preset.guideStepId])
+    } else if (audioOnly) {
+      playLabAlertAudio(preset.audio, preset.audioSpeech)
+    }
+  }, [aiGuidePlaying, playAiGuideSteps, showStepAlert])
 
   const playWrongConnectionCorrection = useCallback(async (terminalIds) => {
     const correctionAudio = getConnectionPromptAudio(terminalIds)
@@ -456,14 +477,8 @@ const App = () => {
     }
 
     if (readingCount >= MAX_OBSERVATIONS) {
-      setStatus('Five readings are already recorded. Reset for a new run.')
-      showStepAlert(EXPERIMENT_ALERTS.maxReadingsReached, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.maxReadingsReached.audio,
-      })
-
-      if (aiGuidePlaying) {
-        playAiGuideSteps([29])
-      }
+      setStatus(EXPERIMENT_ALERTS.maxReadingsReached.description)
+      announceStep(EXPERIMENT_ALERTS.maxReadingsReached)
 
       return
     }
@@ -495,7 +510,7 @@ const App = () => {
     const nextObservationCount = readingCount + 1
 
     setObservations([...observations, nextObservation])
-    setGraphGenerated(nextObservationCount >= MIN_GRAPH_READINGS)
+    setGraphGenerated(false)
     setReportGenerated(false)
     setStatus('Reading added to the observation table.')
 
@@ -512,37 +527,19 @@ const App = () => {
     }
 
     if (nextObservationCount === 2) {
-      if (aiGuidePlaying) {
-        playAiGuideSteps([26])
-      } else {
-        playLabAlertAudio(ALERT_AUDIO.secondReadingAdded)
-      }
+      announceStep(EXPERIMENT_ALERTS.secondReadingAdded, { audioOnly: true })
 
       return
     }
 
     if (nextObservationCount === MIN_GRAPH_READINGS) {
-      showStepAlert(EXPERIMENT_ALERTS.sufficientData, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.sufficientData.audio,
-        replaceExisting: true,
-      })
-
-      if (aiGuidePlaying) {
-        playAiGuideSteps([27])
-      }
+      announceStep(EXPERIMENT_ALERTS.sufficientData)
 
       return
     }
 
     if (nextObservationCount === MAX_OBSERVATIONS) {
-      showStepAlert(EXPERIMENT_ALERTS.tenReadingsRecorded, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.tenReadingsRecorded.audio,
-        replaceExisting: true,
-      })
-
-      if (aiGuidePlaying) {
-        playAiGuideSteps([28])
-      }
+      announceStep(EXPERIMENT_ALERTS.fiveReadingsRecorded)
     }
   }
 
@@ -561,6 +558,7 @@ const App = () => {
     setReportGenerated(false)
     setVerificationReport({})
     setAutoConnectRequest(0)
+    setAutoConnecting(false)
     setCheckRequest(0)
     setConnectionsReadyForCheck(false)
     setConnectionsVerified(false)
@@ -599,28 +597,15 @@ const App = () => {
       setGraphGenerated(false)
       setReportGenerated(false)
       setStatus(`Add ${remainingReadings} more reading(s) before plotting the graph.`)
-      showStepAlert(EXPERIMENT_ALERTS.insufficientGraphReadings, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.insufficientGraphReadings.audio,
-      })
-
-      if (aiGuidePlaying) {
-        playAiGuideSteps([16])
-      }
+      announceStep(EXPERIMENT_ALERTS.insufficientGraphReadings)
 
       return
     }
 
     setGraphGenerated(true)
     setReportGenerated(false)
-    setStatus('Graph is plotted. Now you can generate the report.')
-    showStepAlert(EXPERIMENT_ALERTS.graphPlotted, {
-      audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.graphPlotted.audio,
-      replaceExisting: true,
-    })
-
-    if (aiGuidePlaying) {
-      playAiGuideSteps([30])
-    }
+    setStatus('Graph plotted. Select a reading and verify your theoretical calculations.')
+    announceStep(EXPERIMENT_ALERTS.graphPlotted)
   }
 
   const handlePrint = () => {
@@ -628,43 +613,16 @@ const App = () => {
   }
 
   const handleGenerateReport = () => {
-    if (readingCount < MIN_GRAPH_READINGS) {
-      const remainingReadings = MIN_GRAPH_READINGS - readingCount
-
-      setStatus(`Add ${remainingReadings} more reading(s) before generating the report.`)
-      showStepAlert(EXPERIMENT_ALERTS.minimumReadingsRequired, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.minimumReadingsRequired.audio,
-        description: `Add ${remainingReadings} more reading(s), then plot the graph before generating a report.`,
-        target: '#generate-report-button',
-        title: 'Report Requires 6 Readings',
-      })
-
-      if (aiGuidePlaying) {
-        playAiGuideSteps([17])
-      }
-
+    if (!canGenerateReport) {
+      setStatus(EXPERIMENT_ALERTS.verificationRequired.description)
+      announceStep(EXPERIMENT_ALERTS.verificationRequired)
       return
     }
 
-    if (!graphGenerated) {
-      setStatus('Please generate the graph first.')
-      showStepAlert(EXPERIMENT_ALERTS.insufficientGraphReadings, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.insufficientGraphReadings.audio,
-        description: 'Please generate the graph first.',
-        target: '#plot-button',
-        title: 'Generate Graph First',
-        type: 'warning',
-      })
-      if (aiGuidePlaying) {
-        playAiGuideSteps([29])
-      }
-      window.alert('Please generate the graph first.')
-      return
-    }
-
-    setStatus('Report Generated: Your report has been generated successfully. Click OK to view your report.')
-    showStepAlert(EXPERIMENT_ALERTS.printLayoutGenerated, {
-      audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.printLayoutGenerated.audio,
+    setStatus('Confirm to open the experiment report.')
+    announceStep(EXPERIMENT_ALERTS.printLayoutGenerated, {
+      critical: true,
+      confirmLabel: 'OK',
       onConfirm: () => {
         const generated = generateKclReport({
           observations,
@@ -686,9 +644,6 @@ const App = () => {
       requiresConfirmation: true,
     })
 
-    if (aiGuidePlaying) {
-      playAiGuideSteps([33])
-    }
   }
 
   const scaledWidth = Math.ceil(BASE_WIDTH * scale)
@@ -766,6 +721,7 @@ const App = () => {
   }, [aiGuidePlaying, connectionsVerified, playAiGuideSteps, playWrongConnectionCorrection, showStepAlert])
 
   const handleCheckConnections = useCallback((result) => {
+    setAutoConnecting(false)
     if (result.isCorrect) {
       setConnectionsVerified(true)
       setConnectionsReadyForCheck(true)
@@ -776,12 +732,13 @@ const App = () => {
       setStatus(
         'Right connections! Move R1, R2, and R3 before switching on the power supply.',
       )
-      showStepAlert(EXPERIMENT_ALERTS.connectionsVerified, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.connectionsVerified.audio,
-      })
-
-      if (aiGuidePlaying) {
-        playAiGuideSteps([19])
+      if (result.autoConnected) {
+        announceStep(EXPERIMENT_ALERTS.circuitConnectionsCompleted)
+      } else {
+        showStepAlert(EXPERIMENT_ALERTS.connectionsVerified, {
+          audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.connectionsVerified.audio,
+        })
+        if (aiGuidePlaying) playAiGuideSteps([19])
       }
 
       return
@@ -844,13 +801,16 @@ const App = () => {
     if (aiGuidePlaying) {
       playAiGuideSteps([14, correctionStepId].filter(Boolean))
     }
-  }, [aiGuidePlaying, playAiGuideSteps, playWrongConnectionCorrection, showStepAlert])
+  }, [aiGuidePlaying, announceStep, playAiGuideSteps, playWrongConnectionCorrection, showStepAlert])
 
   const handleCheck = () => {
+    if (autoConnecting || connectionsVerified) return
     setCheckRequest((current) => current + 1)
   }
   const handleTogglePower = () => {
-    if (!powerOn && !connectionsVerified) {
+    if (powerOn) return
+
+    if (!connectionsVerified) {
       setStatus('Check the circuit connections before switching on the power supply.')
       showStepAlert(EXPERIMENT_ALERTS.cannotStartPower, {
         audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.cannotStartPower.audio,
@@ -863,7 +823,7 @@ const App = () => {
       return
     }
 
-    if (!powerOn && !allResistanceValuesAdjusted) {
+    if (!allResistanceValuesAdjusted) {
       setStatus('Move R1, R2, and R3 before switching on the power supply.')
       showStepAlert(EXPERIMENT_ALERTS.adjustResistance, {
         audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.adjustResistance.audio,
@@ -874,16 +834,6 @@ const App = () => {
         playAiGuideSteps([20])
       }
 
-      return
-    }
-
-    if (powerOn) {
-      setPowerOn(false)
-      setVoltage(INITIAL_VOLTAGE)
-      setVoltageAdjusted(false)
-      voltageSetAudioPlayedRef.current = false
-      setStatus('Power supply switched off.')
-      showStepAlert(EXPERIMENT_ALERTS.powerOffDuringExperiment)
       return
     }
 
@@ -900,8 +850,10 @@ const App = () => {
     }
   }
   const handleAutoConnect = () => {
+    if (autoConnecting || connectionsVerified) return
+    setAutoConnecting(true)
     setAutoConnectRequest((current) => current + 1)
-    setConnectionsReadyForCheck(true)
+    setConnectionsReadyForCheck(false)
     setConnectionsVerified(false)
     setResistanceAdjusted(getInitialResistanceAdjusted())
     allConnectionsAlertShownRef.current = true
@@ -909,16 +861,7 @@ const App = () => {
     resistanceValuesAlertShownRef.current = false
     voltageSetAudioPlayedRef.current = false
 
-    setStatus(
-      'Autoconnect completed. Click on the check button to verify the connections.',
-    )
-    showStepAlert(EXPERIMENT_ALERTS.circuitConnectionsCompleted, {
-      audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.circuitConnectionsCompleted.audio,
-    })
-
-    if (aiGuidePlaying) {
-      playAiGuideSteps([15])
-    }
+    setStatus('Connecting the circuit automatically.')
   }
 
   const handleVoltageChange = useCallback((nextVoltage) => {
@@ -957,7 +900,7 @@ const App = () => {
         >
           <main className="simulation-shell" id="walkthrough-demo-experiment">
             <HeaderBoard />
-            <WalkthroughStartButton variant="side-tab" />
+            <WalkthroughStartButton highlighted={aiGuidePlaying && String(activeAiGuideStepId) === '1'} variant="side-tab" />
             {/* <StatusBar status={status} /> */}
             <span className="sr-only" role="status" aria-live="polite">{status}</span>
 
@@ -970,8 +913,8 @@ const App = () => {
                   }}
                   disabledButtons={{
                     onAdd: !powerOn || !voltageAdjusted,
-                    onAutoConnect: connectionsVerified || powerOn,
-                    onCheck: connectionsVerified,
+                    onAutoConnect: autoConnecting || connectionsVerified || powerOn,
+                    onCheck: autoConnecting || connectionsVerified,
                     onPlot: false,
                     onPrint: false,
                   }}
@@ -985,6 +928,7 @@ const App = () => {
                 />
 
                 <ControlPanel
+                  canGenerateReport={canGenerateReport}
                   locked={!connectionsVerified || powerOn || observations.length > 0}
                   observations={observations}
                   onGenerateReport={handleGenerateReport}
@@ -1024,13 +968,15 @@ const App = () => {
           </main>
 
           <GraphPanel
+            key={`graph-panel-${resetRequest}`}
             className="graph-panel--separate"
             id="graph-panel"
             observations={observations}
-            onVerificationChange={(verification) => setVerificationReport((current) => ({
-              ...current,
-              [verification.readingId]: verification,
-            }))}
+            onVerificationChange={(verification) => {
+              setReportGenerated(false)
+              setVerificationReport((current) => ({ ...current, [verification.readingId]: verification }))
+            }}
+            onVerificationResult={(outcome) => announceStep(EXPERIMENT_ALERTS[outcome])}
             plotted={graphGenerated}
           />
 
