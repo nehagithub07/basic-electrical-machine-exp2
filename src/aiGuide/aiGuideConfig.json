@@ -10,7 +10,7 @@
     },
     {
       "id": 2,
-      "text": "The interface walkthrough is now complete. You are now ready to perform the experiment. You may either click the Auto Connect button to make the circuit connections automatically or connect the circuit manually by following the highlighted terminals. Let's begin with the first connection. ",
+      "text": "The interface walkthrough is now complete. You are now ready to perform the experiment. You may either click the Auto Connect button to make the circuit connections automatically or connect the circuit manually by following the highlighted terminals. Let's begin with the first connection.",
       "audio": "./audios/The interface walkthrough is now complete.wav"
     },
     {
@@ -76,26 +76,16 @@
     {
       "id": 15,
       "text": "Autoconnect completed. Now set the required resistance value by moving the resistance sliders.",
-      "audio": "#"
-    },
-    {
-      "id": 16,
-      "text": "Please add at least three readings to plot the graph.",
-      "audio": "#"
-    },
-    {
-      "id": 17,
-      "text": "Please verify at least one reading successfully before generating the report.",
-      "audio": "#"
+      "audio": "./audios/Autoconnect.wav"
     },
     {
       "id": 18,
-      "text": " Please complete or check the connections first to turn on the power supply.",
+      "text": "Please complete or check the connections first to turn on the power supply.",
       "audio": "./audios/1st time Power Supply click.wav"
     },
     {
       "id": 19,
-      "text": "Connections Verified successfully. Now set the required resistance value by moving the resistance sliders.",
+      "text": "Connections Verified: Connections Verified successfully. Now set the required resistance value by moving the resistance sliders.",
       "audio": "./audios/For correct connections, check click.wav"
     },
     {
@@ -105,7 +95,7 @@
     },
     {
       "id": 21,
-      "text": "The resistance values for R₁, R₂, and R₃ have been set. Click on the Power to turn ON the power supply.",
+      "text": "Resistance Values Selected Successfully: The resistance values for R₁, R₂, and R₃ have been set. Click on the Power to turn ON the power supply.",
       "audio": "./audios/After resistance is set.wav"
     },
     {
@@ -131,27 +121,22 @@
     {
       "id": 26,
       "text": "Second reading added successfully. Change the voltage value and click the Add button again to record the next reading. Repeat the same steps until all five readings are recorded.",
-      "audio": "#"
-    },
-    {
-      "id": 27,
-      "text": "You can plot the graph now or continue recording up to five readings.",
-      "audio": "#"
+      "audio": "./audios/2nd reading added.wav"
     },
     {
       "id": 28,
       "text": "You have added five readings. Now you can plot the graph by clicking on the Plot button.",
-      "audio": "#"
+      "audio": "./audios/After 5 readings.wav"
     },
     {
       "id": 29,
       "text": "You can add up to five readings to the table. Now, Click the Plot button and verify the KCL in the theoretical verification section.",
-      "audio": "#"
+      "audio": "./audios/For max. readings, add button click.wav"
     },
     {
       "id": 30,
       "text": "The graph of current v/s voltage has been plotted successfully. Now, Select the reading from the dropdown menu and calculate the equivalent resistance and branch currents theoretically using the equations provided in the “Equations” button. Enter the calculated values in the input fields, then click the “Verify” button to verify KCL for the selected reading.",
-      "audio": "#"
+      "audio": "./audios/After Plot Click.wav"
     },
     {
       "id": 31,
@@ -164,29 +149,24 @@
       "audio": "./audios/Print.wav"
     },
     {
-      "id": 33,
-      "text": "Are you sure? Click OK to open your report.",
-      "audio": "#"
-    },
-    {
       "id": 34,
       "text": "Please enter all the values, then click the “Verify” button to verify KCL.",
-      "audio": "#"
+      "audio": "./audios/Verify button click, more than one value is missing.wav"
     },
     {
       "id": 35,
       "text": "Please enter the required value, then click the “Verify” button to verify KCL.",
-      "audio": "#"
+      "audio": "./audios/Verify button click, one value is missing.wav"
     },
     {
       "id": 36,
       "text": "Incorrect calculations. Kirchhoff’s Current Law (KCL) is not verified. Please review your calculations and try again.",
-      "audio": "#"
+      "audio": "./audios/Verify button click, Incorrect calculations.wav"
     },
     {
       "id": 37,
       "text": "Calculations are correct. Kirchhoff’s Current Law (KCL) has been verified successfully. Now, click on the Generate Report button.",
-      "audio": "#"
+      "audio": "./audios/Verify button click, Correct calculations.wav"
     },
     {
       "id": 38,

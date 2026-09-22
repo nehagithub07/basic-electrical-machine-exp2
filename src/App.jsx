@@ -8,13 +8,12 @@ import GraphPanel from './components/GraphPanel.jsx'
 import HeaderBoard from './components/HeaderBoard.jsx'
 import WalkthroughStartButton from './walkthrough/components/WalkthroughStartButton.jsx'
 import { useWalkthrough } from './walkthrough/useWalkthrough.js'
-import { ALERT_AUDIO, ALERT_AUDIO_PLACEHOLDER, EXPERIMENT_ALERTS } from './alerts/experimentStepAlerts.js'
+import { ALERT_AUDIO_PLACEHOLDER, EXPERIMENT_ALERTS, getInstructionStep } from './alerts/experimentStepAlerts.js'
 import { useLabAlerts } from './alerts/useLabAlerts.js'
 import { useAiGuideNarration } from './aiGuide/useAiGuideNarration.js'
-// import StatusBar from './components/StatusBar.jsx'
  
 import { calculateReadings } from './utils/circuitMath.js'
-import { generateKclReport } from './utils/reportGenerator.js'
+import { prepareKclReport } from './utils/reportGenerator.js'
 import { hasVerifiedReading } from './utils/verification.js'
  
 const BASE_WIDTH = 1440
@@ -26,7 +25,7 @@ const FOOTER_HEIGHT = 48
 const CONTENT_HEIGHT = BASE_HEIGHT + GRAPH_SECTION_GAP + GRAPH_SECTION_HEIGHT + FOOTER_SECTION_GAP + FOOTER_HEIGHT
 const PANEL_MAX_SCALE = 1.25
 const PANEL_VIEWPORT_MARGIN = 24
-const MIN_GRAPH_READINGS = 3
+const MIN_GRAPH_READINGS = 5
 const MAX_OBSERVATIONS = 5
 const INITIAL_RESISTANCE = 1000
 const INITIAL_VOLTAGE = 1.0
@@ -37,27 +36,6 @@ const getTerminalPairKey = (connection) => {
   }
 
   return [connection.sourceId, connection.targetId].sort().join('|')
-}
-
-const NEXT_CONNECTION_AUDIO_BY_PAIR = {
-  '1-endpoint|9-endpoint': ALERT_AUDIO.connect2To10,
-  '10-endpoint|2-endpoint': ALERT_AUDIO.connect3To11,
-  '11-endpoint|3-endpoint': ALERT_AUDIO.connect4To12,
-  '12-endpoint|4-endpoint': ALERT_AUDIO.connect5To13,
-  '13-endpoint|5-endpoint': ALERT_AUDIO.connect6To14,
-  '14-endpoint|6-endpoint': ALERT_AUDIO.connect7To15,
-  '15-endpoint|7-endpoint': ALERT_AUDIO.connect8To16,
-}
-
-const CONNECTION_PROMPT_AUDIO_BY_PAIR = {
-  '1-endpoint|9-endpoint': ALERT_AUDIO.connect1To9,
-  '10-endpoint|2-endpoint': ALERT_AUDIO.connect2To10,
-  '11-endpoint|3-endpoint': ALERT_AUDIO.connect3To11,
-  '12-endpoint|4-endpoint': ALERT_AUDIO.connect4To12,
-  '13-endpoint|5-endpoint': ALERT_AUDIO.connect5To13,
-  '14-endpoint|6-endpoint': ALERT_AUDIO.connect6To14,
-  '15-endpoint|7-endpoint': ALERT_AUDIO.connect7To15,
-  '16-endpoint|8-endpoint': ALERT_AUDIO.connect8To16,
 }
 
 const AI_GUIDE_CONNECTION_STEP_BY_PAIR = {
@@ -71,8 +49,6 @@ const AI_GUIDE_CONNECTION_STEP_BY_PAIR = {
   '16-endpoint|8-endpoint': 10,
 }
 
-const getTerminalNumber = (terminalId) => terminalId?.replace('-endpoint', '') ?? ''
-
 const getTerminalPairKeyFromIds = (terminalIds) => (
   Array.isArray(terminalIds) && terminalIds.length === 2
     ? [...terminalIds].sort().join('|')
@@ -85,26 +61,10 @@ const getAiGuideConnectionStepId = (terminalIds) => {
   return pairKey ? AI_GUIDE_CONNECTION_STEP_BY_PAIR[pairKey] : null
 }
 
-const getConnectionPromptAudio = (terminalIds) => {
-  const pairKey = getTerminalPairKeyFromIds(terminalIds)
-
-  return pairKey ? CONNECTION_PROMPT_AUDIO_BY_PAIR[pairKey] : null
-}
-
 const isAiGuideConnectionStep = (stepId) => {
   const numericStepId = Number(stepId)
 
   return numericStepId >= 3 && numericStepId <= 10
-}
-
-const getConnectionPromptText = (terminalIds) => {
-  if (!Array.isArray(terminalIds) || terminalIds.length !== 2) {
-    return 'Follow the highlighted terminals to complete the next connection.'
-  }
-
-  const [sourceId, targetId] = terminalIds
-
-  return `Connect terminal ${getTerminalNumber(sourceId)} to terminal ${getTerminalNumber(targetId)}.`
 }
 
 const getActiveInstructionStep = ({
@@ -148,16 +108,6 @@ const getActiveInstructionStep = ({
   return voltageAdjusted ? 6 : 5
 }
 
-const playLabAlertAudio = (audio, speech) => {
-  if (typeof window === 'undefined' || ((!audio || audio === '#') && !speech)) {
-    return
-  }
-
-  window.dispatchEvent(new CustomEvent('lab-alert:sound', {
-    detail: { audio, speech },
-  }))
-}
-
 const getInitialResistanceAdjusted = () => ({
   r1: false,
   r2: false,
@@ -184,7 +134,7 @@ const getScale = () => {
 
 const App = () => {
   const { clearAlerts, showStepAlert } = useLabAlerts()
-  const { isOpen: walkthroughOpen } = useWalkthrough()
+  const { isOpen: walkthroughOpen, hasCompleted: walkthroughCompleted } = useWalkthrough()
   const [scale, setScale] = useState(getScale)
   const [r1, setR1] = useState(INITIAL_RESISTANCE)
   const [r2, setR2] = useState(INITIAL_RESISTANCE)
@@ -195,7 +145,7 @@ const App = () => {
   const [graphGenerated, setGraphGenerated] = useState(false)
   const [reportGenerated, setReportGenerated] = useState(false)
   const [verificationReport, setVerificationReport] = useState({})
-  const [status, setStatus] = useState('Make the connections, click CHECK, then set the resistance values.')
+  const [status, setStatus] = useState('')
 
   const [autoConnectRequest, setAutoConnectRequest] = useState(0)
   const [autoConnecting, setAutoConnecting] = useState(false)
@@ -203,15 +153,17 @@ const App = () => {
   const [resetRequest, setResetRequest] = useState(0)
   const [connectionsReadyForCheck, setConnectionsReadyForCheck] = useState(false)
   const [connectionsVerified, setConnectionsVerified] = useState(false)
+  const [connectionGuidanceStarted, setConnectionGuidanceStarted] = useState(false)
   const [resistanceAdjusted, setResistanceAdjusted] = useState(getInitialResistanceAdjusted)
   const [voltageAdjusted, setVoltageAdjusted] = useState(false)
   const [sessionStart, setSessionStart] = useState(() => Date.now())
   const allConnectionsAlertShownRef = useRef(false)
   const lastConnectionInstructionAudioKeyRef = useRef(null)
   const resistanceValuesAlertShownRef = useRef(false)
-  const interfaceIntroPlayedRef = useRef(false)
   const voltageSetAudioPlayedRef = useRef(false)
   const walkthroughWasOpenRef = useRef(false)
+  const nextRequiredConnectionRef = useRef(['1-endpoint', '9-endpoint'])
+  const pendingReportRef = useRef(null)
 
   useEffect(() => {
     let frame
@@ -272,122 +224,113 @@ const App = () => {
     ],
   )
 
-  const handleAiGuideStart = useCallback(() => {
-    setStatus('AI Guide narration started.')
-  }, [])
-
-  const handleAiGuideFinish = useCallback(() => {
-    setStatus('AI Guide narration completed.')
-  }, [])
-
-  const handleAiGuideError = useCallback(() => {
-    setStatus('AI Guide narration could not start. Add audio files or use a browser with speech synthesis.')
-  }, [])
-
   const {
     activeStepId: activeAiGuideStepId,
     isPlaying: aiGuidePlaying,
-    playAudioSource: playAiGuideAudio,
-    playText: playAiGuideText,
     playStepsById: playAiGuideSteps,
     start: startAiGuide,
     stop: stopAiGuide,
-  } = useAiGuideNarration({
-    onError: handleAiGuideError,
-    onFinish: handleAiGuideFinish,
-    onStart: handleAiGuideStart,
-  })
+    pause: pauseAiGuide,
+    finish: finishAiGuide,
+  } = useAiGuideNarration()
 
-  const announceStep = useCallback((preset, { audioOnly = false, ...overrides } = {}) => {
-    if (!audioOnly) {
+  const announceStep = useCallback((preset, { nextSteps = [], ...overrides } = {}) => {
+    setStatus(preset.description)
+    if ([preset.guideStepId, ...nextSteps].some(isAiGuideConnectionStep)) {
+      setConnectionGuidanceStarted(true)
+    }
+    const narration = aiGuidePlaying
+      ? playAiGuideSteps([preset.guideStepId, ...nextSteps])
+      : null
+
+    if (!preset.audioOnly) {
       showStepAlert(preset, {
         audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : preset.audio,
         audioSpeech: aiGuidePlaying ? null : preset.audioSpeech,
-        // Leave enough time to read long instructions while the guide speaks.
-        duration: Math.max(10000, (preset.description?.split(/\s+/).length ?? 0) * 500 + 10000),
+        guideNarration: narration,
         replaceExisting: true,
         ...overrides,
       })
     }
-    if (aiGuidePlaying) {
-      playAiGuideSteps([preset.guideStepId])
-    } else if (audioOnly) {
-      playLabAlertAudio(preset.audio, preset.audioSpeech)
-    }
+    return narration ?? Promise.resolve(true)
   }, [aiGuidePlaying, playAiGuideSteps, showStepAlert])
 
-  const playWrongConnectionCorrection = useCallback(async (terminalIds) => {
-    const correctionAudio = getConnectionPromptAudio(terminalIds)
-    const correctionText = getConnectionPromptText(terminalIds)
-
-    await playAiGuideSteps([12])
-
-    if (correctionAudio && correctionAudio !== ALERT_AUDIO_PLACEHOLDER) {
-      await playAiGuideAudio(
-        correctionAudio,
-        {
-          activeStepId: getAiGuideConnectionStepId(terminalIds),
-          fallbackText: correctionText,
-        },
-      )
-      return
-    }
-
-    await playAiGuideText(correctionText, {
-      activeStepId: getAiGuideConnectionStepId(terminalIds),
-    })
-  }, [playAiGuideAudio, playAiGuideSteps, playAiGuideText])
-
-  useEffect(() => {
-    if (!connectionsVerified || !allResistanceValuesAdjusted || powerOn) {
-      return
-    }
-
-    if (resistanceValuesAlertShownRef.current) {
-      return
-    }
-
-    resistanceValuesAlertShownRef.current = true
-    showStepAlert(EXPERIMENT_ALERTS.resistanceValuesSelected, {
-      audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.resistanceValuesSelected.audio,
-    })
-
-    if (aiGuidePlaying) {
-      playAiGuideSteps([21])
-    }
-  }, [aiGuidePlaying, allResistanceValuesAdjusted, connectionsVerified, playAiGuideSteps, powerOn, showStepAlert])
+  const getResumeStepId = useCallback(() => {
+    if (canGenerateReport) return 37
+    if (graphGenerated) return 30
+    if (readingCount >= MAX_OBSERVATIONS) return 28
+    if (readingCount >= 2) return 26
+    if (readingCount === 1) return 24
+    if (powerOn) return voltageAdjusted ? 23 : 22
+    if (allResistanceValuesAdjusted) return 21
+    if (connectionsVerified) return 19
+    if (connectionsReadyForCheck) return 11
+    return getAiGuideConnectionStepId(nextRequiredConnectionRef.current) ?? 3
+  }, [allResistanceValuesAdjusted, canGenerateReport, connectionsReadyForCheck,
+    connectionsVerified, graphGenerated, powerOn, readingCount, voltageAdjusted])
 
   const handleAiGuide = useCallback(() => {
     if (aiGuidePlaying) {
       stopAiGuide()
-      interfaceIntroPlayedRef.current = false
-      walkthroughWasOpenRef.current = false
-      setStatus('AI Guide narration stopped.')
       return
     }
-
-    interfaceIntroPlayedRef.current = false
-    walkthroughWasOpenRef.current = false
-    startAiGuide()
-  }, [aiGuidePlaying, startAiGuide, stopAiGuide])
-
+    clearAlerts()
+    const hasStartedExperiment = connectionsVerified || connectionsReadyForCheck
+      || lastConnectionInstructionAudioKeyRef.current !== null
+    const stepId = walkthroughCompleted || hasStartedExperiment ? getResumeStepId() : 1
+    setConnectionGuidanceStarted(isAiGuideConnectionStep(stepId))
+    const narration = startAiGuide(stepId)
+    const preset = Object.values(EXPERIMENT_ALERTS).find((entry) => entry.guideStepId === stepId)
+      ?? getInstructionStep(stepId)
+    setStatus(preset.description)
+    if (!preset.audioOnly) {
+      showStepAlert(preset, {
+        audio: ALERT_AUDIO_PLACEHOLDER,
+        audioSpeech: null,
+        guideNarration: narration,
+        replaceExisting: true,
+      })
+    }
+  }, [aiGuidePlaying, clearAlerts, connectionsReadyForCheck, connectionsVerified,
+    getResumeStepId, showStepAlert, startAiGuide, stopAiGuide, walkthroughCompleted])
+useEffect(() => {
+  if (
+    aiGuidePlaying
+    && !walkthroughOpen
+    && isAiGuideConnectionStep(activeAiGuideStepId)
+  ) {
+    setConnectionGuidanceStarted(true)
+  }
+}, [
+  activeAiGuideStepId,
+  aiGuidePlaying,
+  walkthroughOpen,
+])
   useEffect(() => {
     if (walkthroughOpen) {
-      walkthroughWasOpenRef.current = true
+      if (!walkthroughWasOpenRef.current) {
+        walkthroughWasOpenRef.current = true
+        pauseAiGuide()
+        clearAlerts()
+      }
       return
     }
-
-    if (
-      !aiGuidePlaying
-      || !walkthroughWasOpenRef.current
-      || interfaceIntroPlayedRef.current
-    ) {
-      return
+    if (!walkthroughWasOpenRef.current) return
+    walkthroughWasOpenRef.current = false
+    if (aiGuidePlaying) {
+      playAiGuideSteps(walkthroughCompleted ? [2, getResumeStepId()] : [1])
     }
+  }, [aiGuidePlaying, clearAlerts, getResumeStepId, pauseAiGuide,
+    playAiGuideSteps, walkthroughCompleted, walkthroughOpen])
 
-    interfaceIntroPlayedRef.current = true
-    playAiGuideSteps([2, 3])
-  }, [aiGuidePlaying, playAiGuideSteps, walkthroughOpen])
+  useEffect(() => {
+    if (!connectionsVerified || !allResistanceValuesAdjusted || powerOn
+      || resistanceValuesAlertShownRef.current) return
+    resistanceValuesAlertShownRef.current = true
+    announceStep(EXPERIMENT_ALERTS.resistanceValuesSelected)
+  }, [allResistanceValuesAdjusted, announceStep, connectionsVerified, powerOn])
+
+  useEffect(() => () => pendingReportRef.current?.dispose(), [])
 
   const markResistanceAdjusted = useCallback((resistanceKey) => {
     setResistanceAdjusted((current) => {
@@ -426,128 +369,109 @@ const App = () => {
     }
   }, [markResistanceAdjusted, r3])
 
+  // const recordObservation = () => {
+  //   if (!connectionsVerified) {
+  //     announceStep(EXPERIMENT_ALERTS.cannotStartPower)
+  //     return
+  //   }
+  //   if (!powerOn) {
+  //     announceStep(EXPERIMENT_ALERTS.resistanceValuesSelected)
+  //     return
+  //   }
+  //   if (!voltageAdjusted || normalizedVoltage <= 0) {
+  //     announceStep(EXPERIMENT_ALERTS.powerOn)
+  //     return
+  //   }
+  //   if (readingCount >= MAX_OBSERVATIONS) {
+  //     announceStep(EXPERIMENT_ALERTS.maxReadingsReached)
+  //     return
+  //   }
+  //   if (hasDuplicateReading) {
+  //     announceStep(EXPERIMENT_ALERTS.readingAlreadyExists)
+  //     return
+  //   }
+
+  //   const nextObservation = {
+  //     id: (observations.at(-1)?.id ?? 0) + 1,
+  //     voltage: normalizedVoltage,
+  //     r1,
+  //     r2,
+  //     r3,
+  //     totalResistance: readings.totalResistance,
+  //     i1: readings.i1,
+  //     i2: readings.i2,
+  //     i3: readings.i3,
+  //   }
+  //   const nextObservationCount = readingCount + 1
+  //   setObservations([...observations, nextObservation])
+  //   setGraphGenerated(false)
+  //   setReportGenerated(false)
+  //   if (nextObservationCount === 1) announceStep(EXPERIMENT_ALERTS.readingAdded)
+  //   else if (nextObservationCount === 2) announceStep(EXPERIMENT_ALERTS.secondReadingAdded)
+  //   else if (nextObservationCount === MAX_OBSERVATIONS) announceStep(EXPERIMENT_ALERTS.fiveReadingsRecorded)
+  // }
   const recordObservation = () => {
-    if (!connectionsVerified) {
-      setStatus('Check the circuit connections before adding readings.')
-      showStepAlert(EXPERIMENT_ALERTS.connectionErrorFound, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.connectionErrorFound.audio,
-        description: 'Verify the wiring before storing current readings.',
-        stepNumber: 6,
-        target: '#check-button',
-        type: 'warning',
-      })
-
-      if (aiGuidePlaying) {
-        playAiGuideSteps([18])
-      }
-
-      return
-    }
-
-    if (!powerOn) {
-      setStatus('Switch on the power supply before adding readings.')
-      showStepAlert(EXPERIMENT_ALERTS.cannotStartPower, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.cannotStartPower.audio,
-        description: 'Switch on the verified power supply before adding readings.',
-        stepNumber: 6,
-        target: '#power-toggle-button',
-      })
-
-      if (aiGuidePlaying) {
-        playAiGuideSteps([21])
-      }
-
-      return
-    }
-
-    if (normalizedVoltage <= 0) {
-      setStatus('Set the power supply voltage before adding a reading.')
-      showStepAlert(EXPERIMENT_ALERTS.adjustVoltage, {
-        dedupeKey: 'step-6-zero-voltage',
-        description: 'Increase the voltage above 0 V before adding a reading.',
-        target: '#voltage-control',
-        type: 'warning',
-      })
-
-      if (aiGuidePlaying) {
-        playAiGuideSteps([22])
-      }
-
-      return
-    }
-
-    if (readingCount >= MAX_OBSERVATIONS) {
-      setStatus(EXPERIMENT_ALERTS.maxReadingsReached.description)
-      announceStep(EXPERIMENT_ALERTS.maxReadingsReached)
-
-      return
-    }
-
-    if (hasDuplicateReading) {
-      setStatus('Duplicate reading cannot be added to the observation table.')
-      showStepAlert(EXPERIMENT_ALERTS.readingAlreadyExists, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.readingAlreadyExists.audio,
-      })
-
-      if (aiGuidePlaying) {
-        playAiGuideSteps([25])
-      }
-
-      return
-    }
-
-    const nextObservation = {
-      id: (observations.at(-1)?.id ?? 0) + 1,
-      voltage: normalizedVoltage,
-      r1,
-      r2,
-      r3,
-      totalResistance: readings.totalResistance,
-      i1: readings.i1,
-      i2: readings.i2,
-      i3: readings.i3,
-    }
-    const nextObservationCount = readingCount + 1
-
-    setObservations([...observations, nextObservation])
-    setGraphGenerated(false)
-    setReportGenerated(false)
-    setStatus('Reading added to the observation table.')
-
-    if (nextObservationCount === 1) {
-      showStepAlert(EXPERIMENT_ALERTS.readingAdded, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.readingAdded.audio,
-      })
-
-      if (aiGuidePlaying) {
-        playAiGuideSteps([24])
-      }
-
-      return
-    }
-
-    if (nextObservationCount === 2) {
-      announceStep(EXPERIMENT_ALERTS.secondReadingAdded, { audioOnly: true })
-
-      return
-    }
-
-    if (nextObservationCount === MIN_GRAPH_READINGS) {
-      announceStep(EXPERIMENT_ALERTS.sufficientData)
-
-      return
-    }
-
-    if (nextObservationCount === MAX_OBSERVATIONS) {
-      announceStep(EXPERIMENT_ALERTS.fiveReadingsRecorded)
-    }
+  if (!connectionsVerified) {
+    announceStep(EXPERIMENT_ALERTS.cannotStartPower)
+    return
   }
 
-  const resetSimulation = useCallback(({ guideActive = false, stopGuide = true } = {}) => {
-    if (stopGuide) {
-      stopAiGuide()
-    }
+  if (!powerOn) {
+    announceStep(EXPERIMENT_ALERTS.resistanceValuesSelected)
+    return
+  }
 
+  if (!voltageAdjusted || normalizedVoltage <= 0) {
+    announceStep(EXPERIMENT_ALERTS.powerOn)
+    return
+  }
+
+  if (readingCount >= MAX_OBSERVATIONS) {
+    announceStep(EXPERIMENT_ALERTS.maxReadingsReached)
+    return
+  }
+
+  if (hasDuplicateReading) {
+    announceStep(EXPERIMENT_ALERTS.readingAlreadyExists)
+    return
+  }
+
+  const nextObservation = {
+    id: (observations.at(-1)?.id ?? 0) + 1,
+    voltage: normalizedVoltage,
+    r1,
+    r2,
+    r3,
+    totalResistance: readings.totalResistance,
+    i1: readings.i1,
+    i2: readings.i2,
+    i3: readings.i3,
+  }
+
+  const nextObservationCount = readingCount + 1
+
+  setObservations([...observations, nextObservation])
+  setGraphGenerated(false)
+  setReportGenerated(false)
+
+  // Disable Add again after successfully adding a reading.
+  // User must set/change the power supply value before adding the next reading.
+  setVoltageAdjusted(false)
+  voltageSetAudioPlayedRef.current = false
+
+  if (nextObservationCount === 1) {
+    announceStep(EXPERIMENT_ALERTS.readingAdded)
+  } else if (nextObservationCount === 2) {
+    announceStep(EXPERIMENT_ALERTS.secondReadingAdded)
+  } else if (nextObservationCount === MAX_OBSERVATIONS) {
+    announceStep(EXPERIMENT_ALERTS.fiveReadingsRecorded)
+  }
+}
+  const handleReset = () => {
+    clearAlerts()
+    pauseAiGuide()
+    pendingReportRef.current?.dispose()
+    pendingReportRef.current = null
     setPowerOn(false)
     setVoltage(INITIAL_VOLTAGE)
     setR1(INITIAL_RESISTANCE)
@@ -562,185 +486,108 @@ const App = () => {
     setCheckRequest(0)
     setConnectionsReadyForCheck(false)
     setConnectionsVerified(false)
+    setConnectionGuidanceStarted(aiGuidePlaying)
     setResistanceAdjusted(getInitialResistanceAdjusted())
     setVoltageAdjusted(false)
     setResetRequest((current) => current + 1)
     setSessionStart(Date.now())
     allConnectionsAlertShownRef.current = false
-    interfaceIntroPlayedRef.current = false
     lastConnectionInstructionAudioKeyRef.current = null
     resistanceValuesAlertShownRef.current = false
     voltageSetAudioPlayedRef.current = false
     walkthroughWasOpenRef.current = false
-    setStatus('Simulation reset. Make the circuit connections again.')
-    showStepAlert(EXPERIMENT_ALERTS.resetSuccess, {
-      audio: guideActive ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.resetSuccess.audio,
-    })
-  }, [showStepAlert, stopAiGuide])
-
-  const handleReset = () => {
-    clearAlerts()
-    resetSimulation({
-      guideActive: aiGuidePlaying,
-      stopGuide: !aiGuidePlaying,
-    })
-
-    if (aiGuidePlaying) {
-      playAiGuideSteps([31])
-    }
+    nextRequiredConnectionRef.current = ['1-endpoint', '9-endpoint']
+    announceStep(EXPERIMENT_ALERTS.resetSuccess, { nextSteps: [3] })
   }
 
   const handlePlot = () => {
-    if (!canPlotGraph) {
-      const remainingReadings = MIN_GRAPH_READINGS - readingCount
-
-      setGraphGenerated(false)
-      setReportGenerated(false)
-      setStatus(`Add ${remainingReadings} more reading(s) before plotting the graph.`)
-      announceStep(EXPERIMENT_ALERTS.insufficientGraphReadings)
-
-      return
-    }
-
+    if (!canPlotGraph) return
     setGraphGenerated(true)
     setReportGenerated(false)
-    setStatus('Graph plotted. Select a reading and verify your theoretical calculations.')
     announceStep(EXPERIMENT_ALERTS.graphPlotted)
   }
 
-  const handlePrint = () => {
-    window.print()
+  const handlePrint = async () => {
+    const completed = await announceStep(EXPERIMENT_ALERTS.print)
+    if (completed) window.print()
   }
 
   const handleGenerateReport = () => {
-    if (!canGenerateReport) {
-      setStatus(EXPERIMENT_ALERTS.verificationRequired.description)
-      announceStep(EXPERIMENT_ALERTS.verificationRequired)
-      return
-    }
-
-    setStatus('Confirm to open the experiment report.')
-    announceStep(EXPERIMENT_ALERTS.printLayoutGenerated, {
+    if (!canGenerateReport) return
+    pendingReportRef.current?.dispose()
+    const report = prepareKclReport({
+      observations,
+      resistances: { r1, r2, r3 },
+      sessionStart,
+      verification: verificationReport,
+    })
+    pendingReportRef.current = report
+    setReportGenerated(true)
+    announceStep(EXPERIMENT_ALERTS.reportGenerated, {
       critical: true,
       confirmLabel: 'OK',
-      onConfirm: () => {
-        const generated = generateKclReport({
-          observations,
-          resistances: { r1, r2, r3 },
-          sessionStart,
-          verification: verificationReport,
-        })
-
-        if (!generated) {
-          setStatus('Unable to open the report window.')
-          window.alert('Unable to open the report window. Please allow pop-ups and try again.')
-          return
-        }
-
-        setReportGenerated(true)
-        setStatus('Experiment report generated from the plotted graph and current observations.')
-      },
-      replaceExisting: true,
       requiresConfirmation: true,
+      onConfirm: () => {
+        if (!report.open()) return false
+        pendingReportRef.current = null
+        finishAiGuide()
+        return true
+      },
+      onClose: () => {
+        report.dispose()
+        if (pendingReportRef.current === report) pendingReportRef.current = null
+      },
     })
-
   }
 
-  const scaledWidth = Math.ceil(BASE_WIDTH * scale)
-  const scaledHeight = Math.ceil(CONTENT_HEIGHT * scale)
+  const playConnectionCorrection = useCallback((result) => {
+    const preset = result.invalidConnectionCount > 1
+      ? EXPERIMENT_ALERTS.multipleWrongConnections
+      : EXPERIMENT_ALERTS.incorrectNodeConnection
+    const correctionStep = getAiGuideConnectionStepId(result.nextRequiredConnection)
+    announceStep(preset, { nextSteps: correctionStep ? [correctionStep] : [] })
+  }, [announceStep])
+
   const handleConnectionChange = useCallback((result) => {
-    if (connectionsVerified) {
-      return
-    }
-
+    nextRequiredConnectionRef.current = result.nextRequiredConnection
+    if (connectionsVerified) return
     if (result.latestConnectionIsWrong) {
-      const correctionLine = getConnectionPromptText(result.nextRequiredConnection)
-      const correctionAudio = getConnectionPromptAudio(result.nextRequiredConnection)
-      const hasCorrectionAudio = correctionAudio && correctionAudio !== ALERT_AUDIO_PLACEHOLDER
-
-      setConnectionsReadyForCheck(false)
-      setStatus('This connection is wrong')
-      showStepAlert(EXPERIMENT_ALERTS.incorrectNodeConnection, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.incorrectNodeConnection.audio,
-        audioSpeech: aiGuidePlaying || hasCorrectionAudio ? null : correctionLine,
-        dedupeKey: null,
-        description: correctionLine,
-        followUpAudio: !aiGuidePlaying && hasCorrectionAudio ? correctionAudio : ALERT_AUDIO_PLACEHOLDER,
-        replaceExisting: true,
-        title: 'This connection is wrong.',
-      })
-
-      if (aiGuidePlaying) {
-        playWrongConnectionCorrection(result.nextRequiredConnection)
-      }
-
-      return
-    }
-
-    const latestConnectionPairKey = getTerminalPairKey(result.latestConnection)
-    const nextConnectionAudio = latestConnectionPairKey
-      ? NEXT_CONNECTION_AUDIO_BY_PAIR[latestConnectionPairKey]
-      : null
-    const nextGuideStepId = getAiGuideConnectionStepId(result.nextRequiredConnection)
-
-    if (
-      nextConnectionAudio
-      && lastConnectionInstructionAudioKeyRef.current !== latestConnectionPairKey
-    ) {
-      lastConnectionInstructionAudioKeyRef.current = latestConnectionPairKey
-
-      if (aiGuidePlaying && nextGuideStepId) {
-        playAiGuideSteps([nextGuideStepId])
-      } else {
-        playLabAlertAudio(nextConnectionAudio)
-      }
-    }
-
-    if (!result.isCorrect) {
       setConnectionsReadyForCheck(false)
       allConnectionsAlertShownRef.current = false
+      playConnectionCorrection(result)
+      return
+    }
+    if (result.isCorrect) {
+      setConnectionsReadyForCheck(true)
+      if (!allConnectionsAlertShownRef.current) {
+        allConnectionsAlertShownRef.current = true
+        announceStep(EXPERIMENT_ALERTS.allConnectionsCompleted)
+      }
       return
     }
 
-    setConnectionsReadyForCheck(true)
-
-    if (allConnectionsAlertShownRef.current) {
-      return
+    setConnectionsReadyForCheck(false)
+    allConnectionsAlertShownRef.current = false
+    const latestPair = getTerminalPairKey(result.latestConnection)
+    const nextGuideStep = getAiGuideConnectionStepId(result.nextRequiredConnection)
+    if (nextGuideStep && (!latestPair || lastConnectionInstructionAudioKeyRef.current !== latestPair)) {
+      lastConnectionInstructionAudioKeyRef.current = latestPair
+      announceStep(getInstructionStep(nextGuideStep))
     }
-
-    allConnectionsAlertShownRef.current = true
-    setStatus('All connections are completed. Click on the check button to verify the connections.')
-    showStepAlert(EXPERIMENT_ALERTS.allConnectionsCompleted, {
-      audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.allConnectionsCompleted.audio,
-      replaceExisting: true,
-    })
-
-    if (aiGuidePlaying) {
-      playAiGuideSteps([11])
-    }
-  }, [aiGuidePlaying, connectionsVerified, playAiGuideSteps, playWrongConnectionCorrection, showStepAlert])
+  }, [announceStep, connectionsVerified, playConnectionCorrection])
 
   const handleCheckConnections = useCallback((result) => {
     setAutoConnecting(false)
+    nextRequiredConnectionRef.current = result.nextRequiredConnection
     if (result.isCorrect) {
       setConnectionsVerified(true)
       setConnectionsReadyForCheck(true)
       setResistanceAdjusted(getInitialResistanceAdjusted())
       allConnectionsAlertShownRef.current = true
       resistanceValuesAlertShownRef.current = false
-
-      setStatus(
-        'Right connections! Move R1, R2, and R3 before switching on the power supply.',
-      )
-      if (result.autoConnected) {
-        announceStep(EXPERIMENT_ALERTS.circuitConnectionsCompleted)
-      } else {
-        showStepAlert(EXPERIMENT_ALERTS.connectionsVerified, {
-          audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.connectionsVerified.audio,
-        })
-        if (aiGuidePlaying) playAiGuideSteps([19])
-      }
-
+      announceStep(result.autoConnected
+        ? EXPERIMENT_ALERTS.circuitConnectionsCompleted
+        : EXPERIMENT_ALERTS.connectionsVerified)
       return
     }
 
@@ -748,107 +595,37 @@ const App = () => {
     setConnectionsReadyForCheck(false)
     setResistanceAdjusted(getInitialResistanceAdjusted())
     allConnectionsAlertShownRef.current = false
-
-    if (result.totalConnections === 0) {
-      const correctionStepId = getAiGuideConnectionStepId(result.nextRequiredConnection)
-
-      setStatus('Missing connections. Please make the required connections first.')
-      showStepAlert(EXPERIMENT_ALERTS.missingConnections, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.missingConnections.audio,
-        description: `No wires are connected yet. ${getConnectionPromptText(result.nextRequiredConnection)}`,
-        replaceExisting: true,
-      })
-
-      if (aiGuidePlaying) {
-        playAiGuideSteps([14, correctionStepId].filter(Boolean))
-      }
-
-      return
-    }
-
-    const correctionStepId = getAiGuideConnectionStepId(result.nextRequiredConnection)
-    const connectionPrompt = getConnectionPromptText(result.nextRequiredConnection)
-    const connectionPromptAudio = getConnectionPromptAudio(result.nextRequiredConnection)
-    const hasConnectionPromptAudio = connectionPromptAudio && connectionPromptAudio !== ALERT_AUDIO_PLACEHOLDER
-
     if (result.hasInvalidConnection) {
-      setStatus('This connection is wrong. Follow the suggested terminal connection.')
-      showStepAlert(EXPERIMENT_ALERTS.incorrectNodeConnection, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.incorrectNodeConnection.audio,
-        audioSpeech: aiGuidePlaying || hasConnectionPromptAudio ? null : connectionPrompt,
-        description: connectionPrompt,
-        followUpAudio: !aiGuidePlaying && hasConnectionPromptAudio ? connectionPromptAudio : ALERT_AUDIO_PLACEHOLDER,
-        replaceExisting: true,
-        title: 'This connection is wrong.',
-      })
-
-      if (aiGuidePlaying) {
-        playWrongConnectionCorrection(result.nextRequiredConnection)
-      }
-
+      playConnectionCorrection(result)
       return
     }
-
-    setStatus(
-      `Missing connections. Correct matched points: ${result.matchedCount}; total wires: ${result.totalConnections}.`,
-    )
-    showStepAlert(EXPERIMENT_ALERTS.missingConnections, {
-      audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.missingConnections.audio,
-      description: `Some required wires are still missing. ${connectionPrompt}`,
-      replaceExisting: true,
+    const correctionStep = getAiGuideConnectionStepId(result.nextRequiredConnection)
+    announceStep(EXPERIMENT_ALERTS.requiredConnectionsFirst, {
+      nextSteps: correctionStep ? [correctionStep] : [],
     })
-
-    if (aiGuidePlaying) {
-      playAiGuideSteps([14, correctionStepId].filter(Boolean))
-    }
-  }, [aiGuidePlaying, announceStep, playAiGuideSteps, playWrongConnectionCorrection, showStepAlert])
+  }, [announceStep, playConnectionCorrection])
 
   const handleCheck = () => {
     if (autoConnecting || connectionsVerified) return
     setCheckRequest((current) => current + 1)
   }
+
   const handleTogglePower = () => {
     if (powerOn) return
-
     if (!connectionsVerified) {
-      setStatus('Check the circuit connections before switching on the power supply.')
-      showStepAlert(EXPERIMENT_ALERTS.cannotStartPower, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.cannotStartPower.audio,
-      })
-
-      if (aiGuidePlaying) {
-        playAiGuideSteps([18])
-      }
-
+      announceStep(EXPERIMENT_ALERTS.cannotStartPower)
       return
     }
-
     if (!allResistanceValuesAdjusted) {
-      setStatus('Move R1, R2, and R3 before switching on the power supply.')
-      showStepAlert(EXPERIMENT_ALERTS.adjustResistance, {
-        audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.adjustResistance.audio,
-        type: 'warning',
-      })
-
-      if (aiGuidePlaying) {
-        playAiGuideSteps([20])
-      }
-
+      announceStep(EXPERIMENT_ALERTS.adjustResistance)
       return
     }
-
     setPowerOn(true)
     setVoltageAdjusted(false)
     voltageSetAudioPlayedRef.current = false
-    setStatus('Power supply switched on. Adjust voltage and add the reading.')
-    showStepAlert(EXPERIMENT_ALERTS.powerOn, {
-      audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : EXPERIMENT_ALERTS.powerOn.audio,
-    })
-
-    if (aiGuidePlaying) {
-      playAiGuideSteps([22])
-    }
+    announceStep(EXPERIMENT_ALERTS.powerOn)
   }
+
   const handleAutoConnect = () => {
     if (autoConnecting || connectionsVerified) return
     setAutoConnecting(true)
@@ -860,27 +637,35 @@ const App = () => {
     lastConnectionInstructionAudioKeyRef.current = null
     resistanceValuesAlertShownRef.current = false
     voltageSetAudioPlayedRef.current = false
-
-    setStatus('Connecting the circuit automatically.')
   }
 
-  const handleVoltageChange = useCallback((nextVoltage) => {
-    setVoltage(nextVoltage)
+  // const handleVoltageChange = useCallback((nextVoltage) => {
+  //   setVoltage(nextVoltage)
+  //   if (powerOn && nextVoltage !== INITIAL_VOLTAGE) {
+  //     setVoltageAdjusted(true)
+  //     if (!voltageSetAudioPlayedRef.current) {
+  //       voltageSetAudioPlayedRef.current = true
+  //       announceStep(EXPERIMENT_ALERTS.voltageSet)
+  //     }
+  //   }
+  // }, [announceStep, powerOn])
+   const handleVoltageChange = useCallback((nextVoltage) => {
+  const voltageChanged = nextVoltage !== INITIAL_VOLTAGE
 
-    if (powerOn && nextVoltage !== INITIAL_VOLTAGE) {
-      setVoltageAdjusted(true)
+  setVoltage(nextVoltage)
 
-      if (!voltageSetAudioPlayedRef.current) {
-        voltageSetAudioPlayedRef.current = true
+  // A fresh voltage selection is required before each reading can be added.
+  if (powerOn && voltageChanged) {
+    setVoltageAdjusted(true)
 
-        if (aiGuidePlaying) {
-          playAiGuideSteps([23])
-        } else {
-          playLabAlertAudio(ALERT_AUDIO.voltageSet)
-        }
-      }
+    if (!voltageSetAudioPlayedRef.current) {
+      voltageSetAudioPlayedRef.current = true
+      announceStep(EXPERIMENT_ALERTS.voltageSet)
     }
-  }, [aiGuidePlaying, playAiGuideSteps, powerOn])
+  }
+}, [announceStep, powerOn, voltage])
+  const scaledWidth = Math.ceil(BASE_WIDTH * scale)
+  const scaledHeight = Math.ceil(CONTENT_HEIGHT * scale)
 
   return (
     <div id="app-wrapper">
@@ -901,7 +686,6 @@ const App = () => {
           <main className="simulation-shell" id="walkthrough-demo-experiment">
             <HeaderBoard />
             <WalkthroughStartButton highlighted={aiGuidePlaying && String(activeAiGuideStepId) === '1'} variant="side-tab" />
-            {/* <StatusBar status={status} /> */}
             <span className="sr-only" role="status" aria-live="polite">{status}</span>
 
             <section className="workspace-grid">
@@ -915,7 +699,7 @@ const App = () => {
                     onAdd: !powerOn || !voltageAdjusted,
                     onAutoConnect: autoConnecting || connectionsVerified || powerOn,
                     onCheck: autoConnecting || connectionsVerified,
-                    onPlot: false,
+                    onPlot: !canPlotGraph,
                     onPrint: false,
                   }}
                   onAdd={recordObservation}
@@ -943,10 +727,17 @@ const App = () => {
               </aside>
 
               <section className="right-panel">
+
+             
                 <ConnectionLab
-                  aiGuideActive={aiGuidePlaying}
-                  guideEndpointHighlightActive={isAiGuideConnectionStep(activeAiGuideStepId)}
-                  key={`connection-lab-${resetRequest}`}
+                     aiGuideActive={aiGuidePlaying}
+                     guideEndpointHighlightActive={
+                       aiGuidePlaying
+                       && !walkthroughOpen
+                       && !connectionsVerified
+                       && connectionGuidanceStarted
+                     }
+                     key={`connection-lab-${resetRequest}`}
                   autoConnectRequest={autoConnectRequest}
                   checkRequest={checkRequest}
                   onConnectionChange={handleConnectionChange}

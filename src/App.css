@@ -1042,7 +1042,11 @@
   box-shadow: var(--verification-panel-shadow);
 }
 
-.graph-panel--separate .graph-panel__chart { inset: 20px 22px 18px; }
+.graph-panel--separate .graph-panel__chart {
+  inset: 20px 22px 18px;
+  width: calc(100% - 44px);
+  height: calc(100% - 38px);
+}
 
 .observation-module { position: relative; display: flex; flex-direction: column; }
 
@@ -1225,7 +1229,10 @@
   box-shadow: 0 1px 2px rgba(62, 42, 31, 0.04);
   transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
 }
-
+.verification-panel__toolbar select {
+  position: relative;
+  right: 250px;
+}
 .verification-panel h3 {
   margin: 0 0 4px;
   color: var(--verification-text);
@@ -1485,19 +1492,22 @@
 .graph-panel__chart {
   position: absolute;
   inset: 18px 20px 16px;
-  width: auto;
-  height: auto;
+  display: block;
+  width: calc(100% - 40px);
+  height: calc(100% - 34px);
+  overflow: visible;
+  font-family: inherit;
 }
 
 .graph-panel__plot-bg {
-  fill: #fffdf9;
-  stroke: var(--verification-border);
+  fill: #fffdfa;
+  stroke: #e7ded4;
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
 
 .graph-panel__band:nth-of-type(odd) {
-  fill: rgba(147, 81, 46, 0.025);
+  fill: rgba(147, 81, 46, 0.028);
 }
 
 .graph-panel__band:nth-of-type(even) {
@@ -1506,10 +1516,10 @@
 
 .graph-panel__axis-line {
   fill: none;
-  stroke: #563927;
+  stroke: #806451;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.1;
+  stroke-width: 1.2;
   vector-effect: non-scaling-stroke;
 }
 
@@ -1519,40 +1529,40 @@
 }
 
 .graph-panel__chart marker path {
-  fill: #563927;
+  fill: #806451;
 }
 
 .graph-panel__grid-line {
-  stroke: rgba(117, 88, 62, 0.16);
-  stroke-width: 0.55;
+  stroke: rgba(117, 88, 62, 0.13);
+  stroke-width: 0.8;
   vector-effect: non-scaling-stroke;
 }
 
 .graph-panel__grid-line--horizontal {
-  stroke-dasharray: 3 8;
+  stroke-dasharray: 3 6;
 }
 
 .graph-panel__tick-line {
-  stroke: rgba(74, 43, 31, 0.34);
+  stroke: rgba(117, 88, 62, 0.38);
   stroke-linecap: round;
   stroke-width: 0.8;
   vector-effect: non-scaling-stroke;
 }
 
 .graph-panel__tick-label {
-  fill: var(--verification-muted);
-  font-size: 12px;
-  font-weight: 600;
+  fill: #746357;
+  font-size: 13px;
+  font-weight: 500;
 }
 
 .graph-panel__tick-label--y {
-  font-size: 11px;
+  font-size: 12px;
 }
 
 .graph-panel__axis-title {
   fill: var(--verification-text);
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 600;
 }
 
 .graph-panel__axis-title--y {
@@ -1563,7 +1573,7 @@
   fill: none;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.8;
+  stroke-width: 2.2;
   vector-effect: non-scaling-stroke;
   shape-rendering: geometricPrecision;
 }
@@ -1778,7 +1788,7 @@
 
 .graph-panel__point {
   fill: #fffaf0;
-  stroke-width: 1;
+  stroke-width: 1.4;
   vector-effect: non-scaling-stroke;
   filter: none;
 }
@@ -1802,7 +1812,7 @@
 .graph-panel__series-label {
   dominant-baseline: middle;
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 700;
   paint-order: stroke;
   stroke: rgba(255, 253, 248, 0.96);
   stroke-linejoin: round;
@@ -1981,8 +1991,8 @@ input:focus-visible {
 
   .graph-panel__chart {
     inset: 18px 20px 16px !important;
-    width: auto !important;
-    height: auto !important;
+    width: calc(100% - 40px) !important;
+    height: calc(100% - 34px) !important;
     max-width: none !important;
     max-height: none !important;
   }

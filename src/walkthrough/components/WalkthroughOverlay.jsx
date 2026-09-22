@@ -11,6 +11,7 @@ const WalkthroughOverlay = () => {
     canGoNext,
     canGoPrevious,
     close,
+    complete,
     currentStep,
     isOpen,
     isPositioningTarget,
@@ -46,6 +47,7 @@ const WalkthroughOverlay = () => {
                 isReportStep={isReportStep}
                 key={activeStep.id}
                 onClose={close}
+                onComplete={complete}
                 onNext={next}
                 onPrevious={previous}
                 onSkip={skipToReport}

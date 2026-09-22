@@ -5,11 +5,11 @@ import { formatCurrent } from '../utils/circuitMath.js'
 const MIN_GRAPH_READINGS = 3
 const VOLTAGE_MAX = 15
 const CHART_VIEWBOX = {
-  height: 320,
+  height: 560,
   width: 960,
 }
 const CHART = {
-  height: 242,
+  height: 482,
   left: 88,
   top: 24,
   width: 784,
@@ -175,7 +175,7 @@ const GraphPanel = ({ className = '', id, observations = [], onVerificationChang
       <div className="graph-panel__heading">
         <div>
           
-          <h2>GRAPH AND THEORETICAL VERIFICATION</h2>
+          <h2>THEORETICAL VERIFICATION AND GRAPH</h2>
         </div>
 
         {/* <div className="graph-panel__legend" aria-label="Current lines">
@@ -190,7 +190,7 @@ const GraphPanel = ({ className = '', id, observations = [], onVerificationChang
         <div className="graph-panel__body">
         <svg
           className="graph-panel__chart"
-          preserveAspectRatio="none"
+          preserveAspectRatio="xMidYMid meet"
           role="img"
           aria-label="Line graph of current in milliamperes against voltage in volts"
           viewBox={`0 0 ${CHART_VIEWBOX.width} ${CHART_VIEWBOX.height}`}

@@ -319,7 +319,12 @@ const LabAlertProvider = ({ children }) => {
 
       const playAlertSound = async () => {
         try {
-          await playAudioSource(audioSource)
+          let needsSpeech = !isConfiguredAudioSource(audioSource)
+          try {
+            await playAudioSource(audioSource)
+          } catch {
+            needsSpeech = true
+          }
 
           if (playback.stopped) {
             return
@@ -331,7 +336,7 @@ const LabAlertProvider = ({ children }) => {
             return
           }
 
-          await playSpeechText(speechText)
+          if (needsSpeech) await playSpeechText(speechText)
 
           if (playback.stopped) {
             return
@@ -410,7 +415,7 @@ const LabAlertProvider = ({ children }) => {
       id,
       placement,
       requiresConfirmation,
-      title: alert.title ?? 'Lab Alert',
+      title: alert.title ?? '',
       type,
     }
   }, [])
@@ -511,7 +516,7 @@ const LabAlertProvider = ({ children }) => {
           aria-live={centerAlert.type === 'error' || centerAlert.type === 'warning' ? 'assertive' : 'polite'}
           className="lab-alert-region lab-alert-region--center"
         >
-          <LabAlertCard alert={centerAlert} onDismiss={dismissAlert} />
+          <LabAlertCard alert={centerAlert} key={centerAlert.id} onDismiss={dismissAlert} />
         </div>
       ) : null}
     </LabAlertContext.Provider>

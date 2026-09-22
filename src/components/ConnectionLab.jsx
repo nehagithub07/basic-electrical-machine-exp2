@@ -61,6 +61,8 @@ const getNextGuideHighlightTerminalIds = (instance, guideEndpointHighlightActive
   return getNextRequiredConnectionPair(instance) ?? []
 }
 
+
+
 const ConnectionLab = ({
   aiGuideActive = false,
   autoConnectRequest,

@@ -72,7 +72,7 @@ const VerificationPanel = ({ observations, onVerificationChange, onVerificationR
   return (
     <div className="verification-panel" id="verification-panel" aria-label="Calculated current verification" ref={panelRef}>
       <div className="verification-panel__toolbar">
-        <h3>THEORETICAL VERIFICATION</h3>
+        <h3>Verification for</h3>
         <select aria-label="Select reading to verify" disabled={!plotted} onChange={(event) => setReadingId(event.target.value)} value={readingId}>
           <option value="">Select reading</option>
           {observations.map((row) => <option key={row.id} value={row.id}>Reading {row.id} — {row.voltage.toFixed(1)} V</option>)}

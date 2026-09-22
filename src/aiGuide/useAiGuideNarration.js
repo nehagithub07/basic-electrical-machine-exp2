@@ -36,6 +36,7 @@ export const useAiGuideNarration = ({
   const isActiveRef = useRef(false)
   const currentPlaybackRef = useRef(null)
   const runIdRef = useRef(0)
+  const sequenceIdRef = useRef(0)
 
   const stopCurrentPlayback = useCallback(() => {
     const currentPlayback = currentPlaybackRef.current
@@ -48,13 +49,18 @@ export const useAiGuideNarration = ({
     currentPlayback.stop()
   }, [])
 
-  const stop = useCallback(() => {
-    isActiveRef.current = false
+  const pause = useCallback(() => {
+    sequenceIdRef.current += 1
     runIdRef.current += 1
     stopCurrentPlayback()
     setActiveStepId(null)
-    setIsPlaying(false)
   }, [stopCurrentPlayback])
+
+  const stop = useCallback(() => {
+    isActiveRef.current = false
+    pause()
+    setIsPlaying(false)
+  }, [pause])
 
   const speakText = useCallback((text) => new Promise((resolve, reject) => {
     if (!canUseSpeechSynthesis()) {
@@ -155,22 +161,25 @@ export const useAiGuideNarration = ({
     })
   }), [])
 
-  const playStep = useCallback(async (step) => {
+  const playStep = useCallback(async (step, runId) => {
     if (isConfiguredAudioSource(step.audio)) {
       try {
         await playAudio(step.audio)
         return
       } catch (error) {
+        if (runIdRef.current !== runId || !isActiveRef.current) return
         if (!step.text) {
           throw error
         }
       }
     }
 
-    await speakText(step.text)
+    if (runIdRef.current === runId && isActiveRef.current) await speakText(step.text)
   }, [playAudio, speakText])
 
-  const playStepById = useCallback(async (stepId) => {
+  const playStepById = useCallback(async (stepId, sequenceId) => {
+    if (sequenceId === undefined) sequenceIdRef.current += 1
+    else if (sequenceId !== sequenceIdRef.current) return false
     if (guideConfig.steps.length === 0) {
       onError?.(new Error('AI Guide has no configured steps.'))
       return
@@ -192,8 +201,8 @@ export const useAiGuideNarration = ({
     setActiveStepId(step.id)
 
     try {
-      await playStep(step)
-      const completed = runIdRef.current === runId
+      await playStep(step, runId)
+      const completed = runIdRef.current === runId && isActiveRef.current
 
       if (completed) {
         setActiveStepId(null)
@@ -215,6 +224,7 @@ export const useAiGuideNarration = ({
       return false
     }
 
+    sequenceIdRef.current += 1
     const runId = runIdRef.current + 1
     runIdRef.current = runId
     stopCurrentPlayback()
@@ -251,6 +261,7 @@ export const useAiGuideNarration = ({
       return fallbackText ? playText(fallbackText, { activeStepId: playbackStepId }) : false
     }
 
+    sequenceIdRef.current += 1
     const runId = runIdRef.current + 1
     runIdRef.current = runId
     stopCurrentPlayback()
@@ -282,24 +293,26 @@ export const useAiGuideNarration = ({
 
   const playStepsById = useCallback(async (stepIds) => {
     if (!Array.isArray(stepIds) || !isActiveRef.current) {
-      return
+      return false
     }
 
+    const sequenceId = ++sequenceIdRef.current
     for (const stepId of stepIds) {
-      if (!isActiveRef.current) {
-        return
+      if (!isActiveRef.current || sequenceId !== sequenceIdRef.current) {
+        return false
       }
 
-      const completed = await playStepById(stepId)
+      const completed = await playStepById(stepId, sequenceId)
 
-      if (!completed) {
-        return
+      if (!completed || sequenceId !== sequenceIdRef.current) {
+        return false
       }
     }
+    return true
   }, [playStepById])
 
-  const start = useCallback(() => {
-    stopCurrentPlayback()
+  const start = useCallback((initialStepId = 1) => {
+    pause()
 
     if (guideConfig.steps.length === 0) {
       isActiveRef.current = false
@@ -312,23 +325,17 @@ export const useAiGuideNarration = ({
     isActiveRef.current = true
     setIsPlaying(true)
     onStart?.(guideConfig)
-    playStepById(1)
-  }, [guideConfig, onError, onStart, playStepById, stopCurrentPlayback])
+    return playStepsById([initialStepId])
+  }, [guideConfig, onError, onStart, playStepsById, pause])
 
   const finish = useCallback(() => {
     isActiveRef.current = false
-    runIdRef.current += 1
-    stopCurrentPlayback()
-    setActiveStepId(null)
+    pause()
     setIsPlaying(false)
     onFinish?.(guideConfig)
-  }, [guideConfig, onFinish, stopCurrentPlayback])
+  }, [guideConfig, onFinish, pause])
 
-  useEffect(() => addExclusiveAudioListener(AI_GUIDE_AUDIO_SOURCE_ID, () => {
-    runIdRef.current += 1
-    stopCurrentPlayback()
-    setActiveStepId(null)
-  }), [stopCurrentPlayback])
+  useEffect(() => addExclusiveAudioListener(AI_GUIDE_AUDIO_SOURCE_ID, pause), [pause])
 
   useEffect(() => stop, [stop])
 
@@ -341,6 +348,7 @@ export const useAiGuideNarration = ({
     playStepById,
     playStepsById,
     playText,
+    pause,
     start,
     stop,
   }

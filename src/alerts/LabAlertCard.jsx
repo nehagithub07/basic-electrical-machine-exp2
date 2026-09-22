@@ -30,6 +30,7 @@ const LabAlertCard = ({ alert, onDismiss }) => {
     confirmLabel = 'OK',
     description,
     duration,
+    guideNarration,
     icon,
     id,
     onConfirm,
@@ -47,7 +48,8 @@ const LabAlertCard = ({ alert, onDismiss }) => {
   const followUpAudio = alert.followUpAudio ?? alert.audioAfter
   const audioSpeech = alert.audioSpeech ?? alert.speech
   const waitsForAudio = !requiresConfirmation && (
-    isConfiguredAudioSource(audioSource)
+    Boolean(guideNarration)
+    || isConfiguredAudioSource(audioSource)
     || isConfiguredAudioSource(followUpAudio)
     || hasSpeechText(audioSpeech)
   )
@@ -82,6 +84,16 @@ const LabAlertCard = ({ alert, onDismiss }) => {
       onDismiss(id)
     }, EXIT_DURATION)
   }, [alert, id, isClosing, onDismiss])
+
+  useEffect(() => {
+    if (!guideNarration) return undefined
+    let mounted = true
+    const handleSettled = () => {
+      if (mounted) setAudioPlaybackComplete(true)
+    }
+    Promise.resolve(guideNarration).then(handleSettled, handleSettled)
+    return () => { mounted = false }
+  }, [guideNarration])
 
   useEffect(() => {
     if (!waitsForAudio) {
@@ -137,8 +149,8 @@ const LabAlertCard = ({ alert, onDismiss }) => {
 
   const handleConfirm = () => {
     if (isClosing) return
+    if (onConfirm?.(alert) === false) return
     dismiss('confirm', false)
-    onConfirm?.(alert)
   }
 
   const handleOk = () => {
@@ -159,8 +171,8 @@ const LabAlertCard = ({ alert, onDismiss }) => {
   return (
     <article
       aria-modal={requiresConfirmation && alert.critical ? true : undefined}
-      aria-describedby={description ? descriptionId : undefined}
-      aria-labelledby={titleId}
+      aria-describedby={title && description ? descriptionId : undefined}
+      aria-labelledby={title ? titleId : descriptionId}
       className={`lab-alert-card lab-alert-card--${type} ${isClosing ? 'lab-alert-card--closing' : ''}`}
       data-placement={placement}
       role={role}
@@ -176,10 +188,7 @@ const LabAlertCard = ({ alert, onDismiss }) => {
         <span className="lab-alert-card__icon" aria-hidden="true">{icon}</span>
 
         <div className="lab-alert-card__content">
-          <div className="lab-alert-card__meta">
-            <span>{type.toUpperCase()}</span>
-          </div>
-          <h2 id={titleId}>{title}</h2>
+          {title ? <h2 id={titleId}>{title}</h2> : null}
           {description ? <p id={descriptionId}>{description}</p> : null}
         </div>
 

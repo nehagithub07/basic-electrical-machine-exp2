@@ -960,9 +960,9 @@ tr:nth-child(even) {
     <div class="section">
       <h2>Summary</h2>
       <h3>Aim</h3>
-      <p style="text-align: justify;">To verify Kirchhoff’s Current Law by measuring the total current entering and leaving a junction in a resistive DC circuit.</p>
+      <p style="text-align: justify;">To verify Kirchhoff’s Current Law by measuring that the total current entering the junction is equal to the total current leaving it in a resistive DC circuit.</p>
       <h3>Simulation Summary</h3>
-      <p style="text-align: justify;">The circuit was connected, and the connections were verified successfully. The resistance values were selected, and the DC supply voltage was varied to measure the branch currents at different voltage values. The ammeter readings were recorded, and the current–voltage graph was plotted using the measured readings.</p>
+      <p style="text-align: justify;">The guided walkthrough familiarised the user with the simulation's interface. The circuit was connected, and the connections were verified successfully. The resistance values were selected, and the DC supply voltage was varied to measure the branch currents at different voltage values. The ammeter readings were recorded, and the measured currents were used to verify Kirchhoff’s Current Law (KCL) by confirming that the total current entering a junction is equal to the total current leaving the junction. Along with the KCL verification, the current v/s voltage graph was also plotted using the measured readings.</p>
 
       <h3>Components and Key Parameters</h3>
       <ul class="two-column-list">
@@ -1022,7 +1022,7 @@ tr:nth-child(even) {
 
         <div class="results-card">
           <h3>Conclusion</h3>
-          <p style="text-align: justify;">For each recorded voltage value, the total current I<sub>1</sub>  was found to be equal to the sum of branch currents I<sub>2</sub> and I<sub>3</sub>. Hence, Kirchhoff’s Current Law was verified for the given resistive DC circuit.</p>
+          <p style="text-align: justify;">For each recorded voltage value, the total current I<sub>1</sub> was found to be equal to the sum of branch currents I<sub>2</sub> and I<sub>3</sub>. Moreover, the theoretically calculated currents were found to be the same as the recorded readings. Hence, Kirchhoff’s Current Law was successfully verified for the given resistive DC circuit.</p>
         </div>
       </div>
     </div>
@@ -1130,7 +1130,7 @@ tr:nth-child(even) {
   `
 }
 
-export const generateKclReport = ({ observations, resistances, sessionStart, verification }) => {
+export const prepareKclReport = ({ observations, resistances, sessionStart, verification }) => {
   const baseHref = new URL(import.meta.env.BASE_URL, window.location.origin).href
   const iitLogoSrc = new URL('../assets/IIT Logo.png', import.meta.url).href
   const virtualLabsLogoSrc = new URL('../assets/image.png', import.meta.url).href
@@ -1145,17 +1145,29 @@ export const generateKclReport = ({ observations, resistances, sessionStart, ver
   })
   const reportBlob = new Blob([reportHtml], { type: 'text/html' })
   const reportUrl = URL.createObjectURL(reportBlob)
-  const reportWindow = window.open(reportUrl, '_blank')
-
-  if (!reportWindow) {
+  let disposed = false
+  const dispose = () => {
+    if (disposed) return
+    disposed = true
     URL.revokeObjectURL(reportUrl)
-    return false
   }
 
-  window.setTimeout(() => {
-    URL.revokeObjectURL(reportUrl)
-  }, 60000)
-  reportWindow.focus()
+  return {
+    dispose,
+    open: () => {
+      if (disposed) return false
+      const reportWindow = window.open(reportUrl, '_blank')
+      if (!reportWindow) return false
+      window.setTimeout(dispose, 60000)
+      reportWindow.focus()
+      return true
+    },
+  }
+}
 
-  return true
+export const generateKclReport = (options) => {
+  const report = prepareKclReport(options)
+  const opened = report.open()
+  if (!opened) report.dispose()
+  return opened
 }

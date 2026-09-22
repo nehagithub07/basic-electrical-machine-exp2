@@ -105,7 +105,7 @@ const instructionSteps = [
   },
   {
     number: 7,
-    text: 'Repeat Steps 5 and 6 to record up to five readings. At least three readings are needed to plot the graph.',
+    text: 'Repeat Steps 5 and 6 to record up to five readings.',
   },
   {
     number: 8,

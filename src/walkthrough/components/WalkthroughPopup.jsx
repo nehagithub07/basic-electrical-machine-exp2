@@ -111,6 +111,7 @@ const WalkthroughPopup = ({
   currentStep,
   isReportStep,
   onClose,
+  onComplete,
   onNext,
   onPrevious,
   onSkip,
@@ -126,7 +127,7 @@ const WalkthroughPopup = ({
   const descriptionId = `walkthrough-description-${activeStep.id}`
   const progressPercent = (currentStep / totalSteps) * 100
   const primaryActionLabel = canGoNext ? 'Next' : 'Finish'
-  const handlePrimaryAction = canGoNext ? onNext : onClose
+  const handlePrimaryAction = canGoNext ? onNext : onComplete
   const showSecondaryAction = canGoNext
   const secondaryActionLabel = isReportStep ? 'Exit' : 'Skip'
   const handleSecondaryAction = isReportStep ? onClose : onSkip

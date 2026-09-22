@@ -30,38 +30,64 @@ const getElementRect = (element) => {
 }
 
 const WalkthroughProvider = ({
-  autoPlayAudio = false,
+  autoPlayAudio = true,
   children,
   config = defaultWalkthroughConfig,
   locale,
 }) => {
   const walkthroughConfig = useMemo(
-    () => loadWalkthroughConfig(config, locale ?? config?.defaultLocale),
+    () => loadWalkthroughConfig(
+      config,
+      locale ?? config?.defaultLocale,
+    ),
     [config, locale],
   )
+
   const [isOpen, setIsOpen] = useState(false)
+  const [hasCompleted, setHasCompleted] = useState(false)
   const [currentStepIndex, setCurrentStepIndex] = useState(0)
   const [isPositioningTarget, setIsPositioningTarget] = useState(false)
   const [targetRect, setTargetRect] = useState(null)
 
   const totalSteps = walkthroughConfig.steps.length
-  const activeStep = isOpen ? walkthroughConfig.steps[currentStepIndex] : null
+
+  const activeStep = isOpen
+    ? walkthroughConfig.steps[currentStepIndex]
+    : null
+
   const activeTargetSelector = activeStep?.target
   const currentStep = currentStepIndex + 1
   const canGoPrevious = currentStepIndex > 0
   const canGoNext = currentStepIndex < totalSteps - 1
+
   const reportStepIndex = useMemo(() => {
     const generateReportIndex = walkthroughConfig.steps.findIndex(
       (step) => step.target === '#generate-report-button',
     )
 
-    return generateReportIndex >= 0 ? generateReportIndex : Math.max(totalSteps - 1, 0)
+    return generateReportIndex >= 0
+      ? generateReportIndex
+      : Math.max(totalSteps - 1, 0)
   }, [totalSteps, walkthroughConfig.steps])
-  const isReportStep = Boolean(activeStep && currentStepIndex === reportStepIndex)
+
+  const isReportStep = Boolean(
+    activeStep && currentStepIndex === reportStepIndex,
+  )
+
+  /*
+   * Walkthrough audio plays automatically by default.
+   *
+   * Individual steps can still explicitly disable autoplay:
+   *
+   * {
+   *   "autoplayAudio": false
+   * }
+   *
+   * Otherwise audio will autoplay whenever the walkthrough
+   * opens or moves to another step.
+   */
   const autoPlayAudioForStep = Boolean(
-    activeStep?.autoplayAudio
-    ?? walkthroughConfig.audio?.autoplay
-    ?? autoPlayAudio
+    activeStep?.autoplayAudio ?? autoPlayAudio,
   )
 
   const readActiveTarget = useCallback(() => {
@@ -85,19 +111,31 @@ const WalkthroughProvider = ({
 
     setTargetRect(null)
     setIsPositioningTarget(true)
-    setCurrentStepIndex(clamp(stepIndex, 0, totalSteps - 1))
+    setCurrentStepIndex(
+      clamp(stepIndex, 0, totalSteps - 1),
+    )
   }, [totalSteps])
 
   const start = useCallback((stepIndex = 0) => {
+    if (totalSteps === 0) {
+      return
+    }
+
     moveToStep(stepIndex)
+    setHasCompleted(false)
     setIsOpen(true)
-  }, [moveToStep])
+  }, [moveToStep, totalSteps])
 
   const close = useCallback(() => {
     setIsOpen(false)
     setIsPositioningTarget(false)
     setTargetRect(null)
   }, [])
+
+  const complete = useCallback(() => {
+    setHasCompleted(true)
+    close()
+  }, [close])
 
   const next = useCallback(() => {
     moveToStep(currentStepIndex + 1)
@@ -119,6 +157,10 @@ const WalkthroughProvider = ({
     moveToStep(stepIndex)
   }, [moveToStep])
 
+  /*
+   * Scroll the currently active walkthrough target into view
+   * and calculate its position for the overlay.
+   */
   useEffect(() => {
     if (!isOpen || !activeTargetSelector) {
       return undefined
@@ -133,6 +175,7 @@ const WalkthroughProvider = ({
     })
 
     let secondAnimationFrame = null
+
     const animationFrame = window.requestAnimationFrame(() => {
       secondAnimationFrame = window.requestAnimationFrame(() => {
         readActiveTarget()
@@ -142,12 +185,21 @@ const WalkthroughProvider = ({
 
     return () => {
       window.cancelAnimationFrame(animationFrame)
+
       if (secondAnimationFrame) {
         window.cancelAnimationFrame(secondAnimationFrame)
       }
     }
-  }, [activeTargetSelector, isOpen, readActiveTarget])
+  }, [
+    activeTargetSelector,
+    isOpen,
+    readActiveTarget,
+  ])
 
+  /*
+   * Keep the walkthrough target position updated whenever
+   * the viewport changes.
+   */
   useEffect(() => {
     if (!isOpen || isPositioningTarget) {
       return undefined
@@ -160,26 +212,67 @@ const WalkthroughProvider = ({
         window.cancelAnimationFrame(animationFrame)
       }
 
-      animationFrame = window.requestAnimationFrame(readActiveTarget)
+      animationFrame = window.requestAnimationFrame(
+        readActiveTarget,
+      )
     }
 
-    window.addEventListener('resize', scheduleRefresh)
-    window.addEventListener('scroll', scheduleRefresh, true)
-    window.visualViewport?.addEventListener('resize', scheduleRefresh)
-    window.visualViewport?.addEventListener('scroll', scheduleRefresh)
+    window.addEventListener(
+      'resize',
+      scheduleRefresh,
+    )
+
+    window.addEventListener(
+      'scroll',
+      scheduleRefresh,
+      true,
+    )
+
+    window.visualViewport?.addEventListener(
+      'resize',
+      scheduleRefresh,
+    )
+
+    window.visualViewport?.addEventListener(
+      'scroll',
+      scheduleRefresh,
+    )
 
     return () => {
       if (animationFrame) {
         window.cancelAnimationFrame(animationFrame)
       }
 
-      window.removeEventListener('resize', scheduleRefresh)
-      window.removeEventListener('scroll', scheduleRefresh, true)
-      window.visualViewport?.removeEventListener('resize', scheduleRefresh)
-      window.visualViewport?.removeEventListener('scroll', scheduleRefresh)
-    }
-  }, [isOpen, isPositioningTarget, readActiveTarget])
+      window.removeEventListener(
+        'resize',
+        scheduleRefresh,
+      )
 
+      window.removeEventListener(
+        'scroll',
+        scheduleRefresh,
+        true,
+      )
+
+      window.visualViewport?.removeEventListener(
+        'resize',
+        scheduleRefresh,
+      )
+
+      window.visualViewport?.removeEventListener(
+        'scroll',
+        scheduleRefresh,
+      )
+    }
+  }, [
+    isOpen,
+    isPositioningTarget,
+    readActiveTarget,
+  ])
+
+  /*
+   * Prevent background scrolling while walkthrough is active.
+   */
   useEffect(() => {
     if (!isOpen) {
       return undefined
@@ -189,21 +282,43 @@ const WalkthroughProvider = ({
       capture: true,
       passive: false,
     }
+
     const preventBackgroundScroll = (event) => {
       if (event.cancelable) {
         event.preventDefault()
       }
     }
 
-    window.addEventListener('wheel', preventBackgroundScroll, listenerOptions)
-    window.addEventListener('touchmove', preventBackgroundScroll, listenerOptions)
+    window.addEventListener(
+      'wheel',
+      preventBackgroundScroll,
+      listenerOptions,
+    )
+
+    window.addEventListener(
+      'touchmove',
+      preventBackgroundScroll,
+      listenerOptions,
+    )
 
     return () => {
-      window.removeEventListener('wheel', preventBackgroundScroll, listenerOptions)
-      window.removeEventListener('touchmove', preventBackgroundScroll, listenerOptions)
+      window.removeEventListener(
+        'wheel',
+        preventBackgroundScroll,
+        listenerOptions,
+      )
+
+      window.removeEventListener(
+        'touchmove',
+        preventBackgroundScroll,
+        listenerOptions,
+      )
     }
   }, [isOpen])
 
+  /*
+   * Highlight the currently active walkthrough target.
+   */
   useEffect(() => {
     if (!isOpen || !activeTargetSelector) {
       return undefined
@@ -220,8 +335,14 @@ const WalkthroughProvider = ({
     return () => {
       target.classList.remove('walkthrough-active-target')
     }
-  }, [activeTargetSelector, isOpen])
+  }, [
+    activeTargetSelector,
+    isOpen,
+  ])
 
+  /*
+   * Keyboard walkthrough navigation.
+   */
   useEffect(() => {
     if (!isOpen) {
       return undefined
@@ -234,22 +355,43 @@ const WalkthroughProvider = ({
         return
       }
 
-      if (event.key === 'ArrowRight' && canGoNext) {
+      if (
+        event.key === 'ArrowRight'
+        && canGoNext
+      ) {
         event.preventDefault()
         next()
         return
       }
 
-      if (event.key === 'ArrowLeft' && canGoPrevious) {
+      if (
+        event.key === 'ArrowLeft'
+        && canGoPrevious
+      ) {
         event.preventDefault()
         previous()
       }
     }
 
-    window.addEventListener('keydown', handleKeyDown)
+    window.addEventListener(
+      'keydown',
+      handleKeyDown,
+    )
 
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [canGoNext, canGoPrevious, close, isOpen, next, previous])
+    return () => {
+      window.removeEventListener(
+        'keydown',
+        handleKeyDown,
+      )
+    }
+  }, [
+    canGoNext,
+    canGoPrevious,
+    close,
+    isOpen,
+    next,
+    previous,
+  ])
 
   const contextValue = useMemo(() => ({
     activeStep,
@@ -257,6 +399,8 @@ const WalkthroughProvider = ({
     canGoNext,
     canGoPrevious,
     close,
+    complete,
+    hasCompleted,
     config: walkthroughConfig,
     currentStep,
     currentStepIndex,
@@ -278,9 +422,11 @@ const WalkthroughProvider = ({
     canGoNext,
     canGoPrevious,
     close,
+    complete,
     currentStep,
     currentStepIndex,
     goToStep,
+    hasCompleted,
     isOpen,
     isPositioningTarget,
     isReportStep,
@@ -296,6 +442,7 @@ const WalkthroughProvider = ({
   return (
     <WalkthroughContext.Provider value={contextValue}>
       {children}
+
       <WalkthroughOverlay />
     </WalkthroughContext.Provider>
   )

@@ -3,7 +3,7 @@
   "defaultLocale": "en",
   "locales": ["en"],
   "audio": {
-    "autoplay": true
+    "autoplay": false
   },
   "steps": [
     {
