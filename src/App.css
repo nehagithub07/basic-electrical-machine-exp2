@@ -1911,6 +1911,12 @@ input:focus-visible {
 }
 
 @media print {
+  #app-scale p,
+  #app-scale li {
+    text-align: justify;
+    text-align-last: left;
+  }
+
   html,
   body,
   #root {

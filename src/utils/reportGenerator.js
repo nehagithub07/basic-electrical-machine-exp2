@@ -1,8 +1,6 @@
 import pdfScriptUrl from 'jspdf/dist/jspdf.umd.min.js?url'
-import regularFontUrl from '../assets/fonts/Inter-Report-Regular.ttf?url'
-import boldFontUrl from '../assets/fonts/Inter-Report-Bold.ttf?url'
 import { getReportPageScale } from './reportPagination.js'
-import { createReportPdf, readReportPdfContent } from './reportPdf.js'
+import { createReportPdf, renderReportCanvas } from './reportPdf.js'
 
 const GRAPH_VIEWBOX = {
   height: 410,
@@ -392,6 +390,8 @@ h3 {
 }
 p {
   margin: 0 0 8px;
+  text-align: justify;
+  text-align-last: left;
 }
 li {
   margin-bottom: 4px;
@@ -799,71 +799,80 @@ tr:nth-child(even) {
   transform: translateY(-2px);
   box-shadow: 0 6px 14px rgba(31, 45, 61, 0.12);
 }
-@media (max-width: 768px) {
+@media screen and (max-width: 768px) {
   body {
     padding: 20px 14px 30px;
   }
-  .report-page {
+  #report-print-frame .report-page {
     margin-bottom: 18px;
     padding: 20px 18px;
     border-radius: 16px;
   }
-  .header-row {
+  #report-print-frame .header-row {
     grid-template-columns: 1fr;
     gap: 14px;
     text-align: center;
   }
-  .report-title-block {
+  #report-print-frame .report-title-block {
     padding-bottom: 12px;
   }
-  .report-logo,
-  .report-logo--virtual-labs,
-  .report-logo--iit {
+  #report-print-frame .report-logo,
+  #report-print-frame .report-logo--virtual-labs,
+  #report-print-frame .report-logo--iit {
     max-height: 72px;
     justify-self: center;
   }
-  .two-column-list {
+  #report-print-frame .two-column-list {
     column-count: 1;
     column-gap: 0;
   }
-  .compact-table th,
-  .compact-table td {
+  #report-print-frame .compact-table th,
+  #report-print-frame .compact-table td {
     padding: 9px 8px;
     font-size: 13px;
   }
   .report-actions {
     justify-content: center;
   }
-  .report-graph-card #report-graph {
+  #report-print-frame .report-graph-card #report-graph {
     min-height: 300px;
   }
 }
-.report-output .report-document { width: 960px; font-size: 14px; line-height: 1.25; }
-.report-output .report-page { width: 100%; margin: 0; padding: 6px 0; border: none; border-radius: 0; box-shadow: none; break-before: auto; break-after: auto; break-inside: auto; page-break-before: auto; page-break-after: auto; page-break-inside: auto; }
-.report-output .section { padding: 10px 12px; margin-bottom: 8px; }
+/* Exports use a hidden copy so the visible report never changes size or position. */
+.report-export-stage { position: fixed; left: -10000px; top: 0; width: 1000px; height: 0; overflow: hidden; visibility: hidden; pointer-events: none; }
+.report-output .report-document { display: flow-root; width: 1000px; padding: 6px; font-size: 14px; line-height: 1.25; }
+.report-output .report-page { width: 100%; margin: 0 0 8px; padding: 8px 12px; break-before: auto; break-after: auto; break-inside: auto; page-break-before: auto; page-break-after: auto; page-break-inside: auto; }
+.report-output .report-page:last-child { margin-bottom: 0; }
+.report-output .section { padding: 8px 10px; margin-bottom: 6px; }
+.report-output .section:last-child { margin-bottom: 0; }
 .report-output .section > h2:first-child { margin-bottom: 6px; padding-bottom: 5px; }
-.report-output h2 { font-size: 17px; }
+.report-output h2 { font-size: 18px; }
 .report-output h3 { font-size: 14px; margin-bottom: 4px; }
 .report-output p { margin-bottom: 5px; }
 .report-output .header-row { grid-template-columns: 150px minmax(0, 1fr) 86px; gap: 12px; margin-bottom: 8px; }
+.report-output .report-title-block { padding-bottom: 6px; }
 .report-output .report-title-block h1 { font-size: 24px; }
-.report-output .report-logo { max-height: 60px; }
-.report-output .report-logo--virtual-labs { max-width: 150px; justify-self: start; }
-.report-output .report-logo--iit { max-width: 70px; justify-self: end; }
-.report-output .report-experiment-title { margin-bottom: 7px; font-size: 20px; }
+.report-output .report-logo { max-height: 54px; }
+.report-output .report-logo--virtual-labs { max-width: 150px; }
+.report-output .report-logo--iit { max-width: 70px; }
 .report-output .report-overview-top { margin-bottom: 6px; }
+.report-output .badge, .report-output .report-stamp { padding: 5px 8px; font-size: 12px; }
+.report-output .report-experiment-label { margin-bottom: 4px; font-size: 11px; }
+.report-output .report-experiment-title { margin-bottom: 6px; font-size: 20px; }
 .report-output .info-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 6px; }
-.report-output .info-card { padding: 6px 8px; }
-.report-output .two-column-list { column-count: 2; column-gap: 24px; margin-top: 6px; }
-.report-output li { margin-bottom: 2px; }
-.report-output .results-stack { gap: 8px; }
-.report-output .results-card { padding: 8px; gap: 5px; }
-.report-output th, .report-output td { padding: 5px 7px; }
+.report-output .info-card { padding: 6px 8px; gap: 2px; font-size: 12px; }
+.report-output .two-column-list { margin-top: 6px; column-gap: 24px; }
+.report-output li { margin-bottom: 2px; font-size: 13px; }
+.report-output .results-stack { gap: 6px; }
+.report-output .results-card { padding: 7px; gap: 4px; }
+.report-output .compact-table th, .report-output .compact-table td { padding: 3px 6px; font-size: 12px; }
 .report-output .verification-report__table { margin-top: 0; }
-.report-output .verification-report__table caption { padding-top: 4px; }
-.report-output .report-graph-card #report-graph { height: 230px; min-height: 0; padding: 0; }
-.report-output .report-graph__svg, .report-output .report-graph__image { display: block; width: 100%; height: 230px; object-fit: contain; }
-.report-output .table-shell { overflow: visible; }
+.report-output .verification-report__table th, .report-output .verification-report__table td { padding: 3px 6px; }
+.report-output .verification-report__status { padding: 2px 5px; }
+.report-output .report-graph-card #report-graph { height: 210px; min-height: 0; padding: 0; }
+.report-output .report-graph__svg { width: 100%; height: 210px; }
+.report-output .report-graph__tick-label, .report-output .report-graph__series-label { font-size: 18px; }
+.report-output .report-graph__axis-title { font-size: 21px; }
 @page { size: A4 portrait; margin: 8mm; }
 @media print {
   *, *::before, *::after {
@@ -871,14 +880,26 @@ tr:nth-child(even) {
     -webkit-print-color-adjust: exact !important;
   }
   html, body { width: 194mm; min-height: 0; margin: 0; padding: 0; background: #ffffff; }
-  .report-actions { display: none !important; }
-  #report-print-frame { position: relative; width: 194mm; height: var(--report-print-height); }
-  .report-output .report-document {
+  body > :not(#report-print-stage) { display: none !important; }
+  #report-print-stage {
+    display: block;
+    position: relative;
+    left: 0;
+    visibility: visible;
+    width: 194mm;
+    height: var(--report-print-height);
+    max-height: 281mm;
+    overflow: hidden;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  #report-print-stage .report-document {
     position: absolute;
     top: 0;
-    left: 0;
+    left: calc((194mm - var(--report-print-width)) / 2);
     margin: 0;
-    zoom: var(--report-print-scale, 1);
+    transform: scale(var(--report-print-scale, 1));
+    transform-origin: top left;
   }
 }
 
@@ -1003,17 +1024,13 @@ tr:nth-child(even) {
   <script>
     var getReportPageScale = ${getReportPageScale.toString()};
     var createReportPdf = ${createReportPdf.toString()};
-    var readReportPdfContent = ${readReportPdfContent.toString()};
-    var reportGraph = ${JSON.stringify({ observations, maxCurrent: getNiceMaxCurrent(observations) }).replaceAll('<', '\\u003c')};
+    var renderReportCanvas = ${renderReportCanvas.toString()};
     var reportAssets = ${JSON.stringify({
       script: new URL(pdfScriptUrl, baseHref).href,
-      regularFont: new URL(regularFontUrl, baseHref).href,
-      boldFont: new URL(boldFontUrl, baseHref).href,
-      virtualLabsLogo: virtualLabsLogoSrc,
-      iitLogo: iitLogoSrc,
     }).replaceAll('<', '\\u003c')};
     var pdfAssetsPromise;
     var downloadInProgress = false;
+    var reportExportCount = 0;
 
     function waitForReportAssets() {
       var images = Array.from(document.querySelectorAll('#report-document img'));
@@ -1029,29 +1046,70 @@ tr:nth-child(even) {
       ]);
     }
 
+    function createReportOutput() {
+      var stage = document.createElement('div');
+      stage.className = 'report-export-stage report-output';
+      stage.setAttribute('aria-hidden', 'true');
+      var report = document.getElementById('report-document').cloneNode(true);
+      report.removeAttribute('id');
+      // Keep the copy's graph markers and clipping paths independent of the preview.
+      var suffix = '-export-' + (++reportExportCount);
+      report.querySelectorAll('svg [id]').forEach(function(definition) {
+        var originalId = definition.id;
+        definition.id = originalId + suffix;
+        report.querySelectorAll('svg [marker-end], svg [clip-path]').forEach(function(element) {
+          ['marker-end', 'clip-path'].forEach(function(attribute) {
+            var value = element.getAttribute(attribute);
+            if (value) element.setAttribute(attribute, value.replaceAll('url(#' + originalId + ')', 'url(#' + definition.id + ')'));
+          });
+        });
+      });
+      stage.appendChild(report);
+      document.body.appendChild(stage);
+      return stage;
+    }
+
     function fitReportForPrint() {
-      document.body.classList.add('report-output');
-      var report = document.getElementById('report-document');
-      report.style.zoom = '1';
+      var stage = document.getElementById('report-print-stage') || createReportOutput();
+      stage.id = 'report-print-stage';
+      var report = stage.querySelector('.report-document');
+      // The report's base URL points to app assets; printed SVG references must
+      // point to this report document instead of that base URL.
+      report.querySelectorAll('svg [marker-end], svg [clip-path]').forEach(function(element) {
+        ['marker-end', 'clip-path'].forEach(function(attribute) {
+          var value = element.getAttribute(attribute);
+          if (value) element.setAttribute(attribute, value.replace('url(#', 'url(' + document.URL.split('#')[0] + '#'));
+        });
+      });
+      // Measure the full, unscaled document, including repeated beforeprint events.
+      report.style.transform = 'none';
       var width = Math.max(report.scrollWidth, report.getBoundingClientRect().width);
       var height = Math.max(report.scrollHeight, report.getBoundingClientRect().height);
       // A4 with 8 mm margins; reserve two pixels for browser rounding.
       var scale = getReportPageScale(width, height, 194 * 96 / 25.4 - 2, 281 * 96 / 25.4 - 2);
       document.documentElement.style.setProperty('--report-print-scale', scale);
+      document.documentElement.style.setProperty('--report-print-width', (width * scale) + 'px');
       document.documentElement.style.setProperty('--report-print-height', (height * scale) + 'px');
-      report.style.removeProperty('zoom');
+      report.style.removeProperty('transform');
     }
 
     function restoreReportLayout() {
-      document.body.classList.remove('report-output');
+      var stage = document.getElementById('report-print-stage');
+      if (stage) stage.remove();
       document.documentElement.style.removeProperty('--report-print-scale');
+      document.documentElement.style.removeProperty('--report-print-width');
       document.documentElement.style.removeProperty('--report-print-height');
     }
 
     function printReport() {
       return waitForReportAssets().then(function() {
         fitReportForPrint();
-        window.print();
+        try {
+          window.print();
+        } catch (error) {
+          restoreReportLayout();
+          throw error;
+        }
       });
     }
 
@@ -1060,33 +1118,13 @@ tr:nth-child(even) {
 
     function loadPdfAssets() {
       if (pdfAssetsPromise) return pdfAssetsPromise;
-      var scriptReady = window.jspdf ? Promise.resolve() : new Promise(function(resolve, reject) {
+      pdfAssetsPromise = (window.jspdf ? Promise.resolve() : new Promise(function(resolve, reject) {
         var script = document.createElement('script');
         script.src = reportAssets.script;
         script.onload = resolve;
         script.onerror = function() { script.remove(); reject(new Error('Unable to load the PDF renderer.')); };
         document.head.appendChild(script);
-      });
-      var readAsset = async function(url, asFont) {
-        var response = await fetch(url);
-        if (!response.ok) throw new Error('Unable to load report asset: ' + url);
-        var bytes = new Uint8Array(await response.arrayBuffer());
-        if (!asFont) return bytes;
-        var binary = '';
-        for (var offset = 0; offset < bytes.length; offset += 8192) {
-          binary += String.fromCharCode.apply(null, bytes.subarray(offset, offset + 8192));
-        }
-        return btoa(binary);
-      };
-      pdfAssetsPromise = Promise.all([
-        scriptReady,
-        readAsset(reportAssets.regularFont, true),
-        readAsset(reportAssets.boldFont, true),
-        readAsset(reportAssets.virtualLabsLogo, false),
-        readAsset(reportAssets.iitLogo, false)
-      ]).then(function(values) {
-        return { regularFont: values[1], boldFont: values[2], virtualLabsLogo: values[3], iitLogo: values[4] };
-      }).catch(function(error) {
+      })).catch(function(error) {
         pdfAssetsPromise = null;
         throw error;
       });
@@ -1098,15 +1136,19 @@ tr:nth-child(even) {
       downloadInProgress = true;
       var buttons = Array.from(document.querySelectorAll('.report-actions button'));
       buttons.forEach(function(button) { button.disabled = true; });
+      var stage;
       try {
-        var assets = await loadPdfAssets();
-        var content = readReportPdfContent(document.getElementById('report-document'), reportGraph);
-        var pdf = createReportPdf(window.jspdf.jsPDF, content, assets);
+        await loadPdfAssets();
+        await waitForReportAssets();
+        stage = createReportOutput();
+        var capture = await renderReportCanvas(stage.querySelector('.report-document'));
+        var pdf = createReportPdf(window.jspdf.jsPDF, capture);
         if (pdf.internal.getNumberOfPages() !== 1) throw new Error('Report did not fit on one page.');
         pdf.save('KCL Simulation Report.pdf');
       } catch {
         alert("Unable to download the report automatically. Please use PRINT and select Save as PDF.");
       } finally {
+        if (stage) stage.remove();
         downloadInProgress = false;
         buttons.forEach(function(button) { button.disabled = false; });
       }

@@ -7,18 +7,18 @@ const TABLE_ROWS = Array.from({ length: MAX_ROWS })
 const FORMULAS = [
   {
     symbol: 'R',
-    expression: <>R (kΩ) = R<sub>1</sub> + (R<sub>2</sub> × R<sub>3</sub>) / (R<sub>2</sub> + R<sub>3</sub>)</>,
+    expression: <>R = R<sub>1</sub> + (R<sub>2</sub> × R<sub>3</sub>) / (R<sub>2</sub> + R<sub>3</sub>)</>,
     description: 'Equivalent resistance of R1 in series with parallel R2 and R3.',
   },
-  { symbol: 'I1', expression: <>I<sub>1</sub> (mA) = V (V) / R (kΩ)</>, description: 'Main current through R1.' },
+  { symbol: 'I1', expression: <>I<sub>1</sub> = V / R  </>, description: 'Main current through R1.' },
   {
     symbol: 'I2',
-    expression: <>I<sub>2</sub> (mA) = I<sub>1</sub> (mA) × R<sub>3</sub> / (R<sub>2</sub> + R<sub>3</sub>)</>,
+    expression: <>I<sub>2</sub>   = I<sub>1</sub> × R<sub>3</sub> / (R<sub>2</sub> + R<sub>3</sub>)</>,
     description: 'Branch current through R2.',
   },
   {
     symbol: 'I3',
-    expression: <>I<sub>3</sub> (mA) = I<sub>1</sub> (mA) × R<sub>2</sub> / (R<sub>2</sub> + R<sub>3</sub>)</>,
+    expression: <>I<sub>3</sub>  = I<sub>1</sub> × R<sub>2</sub> / (R<sub>2</sub> + R<sub>3</sub>)</>,
     description: 'Branch current through R3.',
   },
 ]
@@ -70,7 +70,7 @@ const ObservationTable = ({ canGenerateReport = false, observations, onGenerateR
               </div>
             ))}
           </dl>
-          <p className="formula-panel__note">Use resistance in kΩ and current in mA. KCL verification: I<sub>1</sub> = I<sub>2</sub> + I<sub>3</sub></p>
+          <p className="formula-panel__note">KCL verification: I<sub>1</sub> = I<sub>2</sub> + I<sub>3</sub></p>
         </aside>
       )}
 

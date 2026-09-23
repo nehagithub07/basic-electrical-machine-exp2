@@ -2,7 +2,7 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import VerificationPanel from '../src/components/VerificationPanel.jsx'
 import { calculateReadings } from '../src/utils/circuitMath.js'
-import { getExpectedAnswers, VERIFICATION_FIELDS } from '../src/utils/verification.js'
+import { getExpectedAnswers, getValueFeedback, verifyAnswers, VERIFICATION_FIELDS } from '../src/utils/verification.js'
 
 const observations = [
   { id: 1, voltage: 6, r1: 1000, r2: 1000, r3: 1000, totalResistance: 1500, i1: 4, i2: 2, i3: 2 },
@@ -59,6 +59,52 @@ describe('VerificationPanel wheel protection', () => {
 })
 
 describe('VerificationPanel existing behavior', () => {
+  it('accepts manually truncated currents and records successful theoretical verification', () => {
+    const reading = { id: 1, voltage: 1, r1: 1000, r2: 1000, r3: 1000 }
+    Object.assign(reading, calculateReadings(reading))
+    const onVerificationResult = vi.fn()
+    const onVerificationChange = vi.fn()
+    render(<VerificationPanel observations={[reading]} onVerificationResult={onVerificationResult} onVerificationChange={onVerificationChange} plotted />)
+    selectReading(1)
+    for (const [name, value] of Object.entries(getExpectedAnswers(reading))) {
+      const manualValue = Math.floor(value * 100) / 100
+      fireEvent.change(screen.getByRole('spinbutton', { name: VERIFICATION_FIELDS[name].label }), { target: { value: manualValue.toFixed(2) } })
+    }
+    expect(screen.getByRole('spinbutton', { name: 'Calculated I1' }).value).toBe('0.66')
+    fireEvent.click(screen.getByRole('button', { name: 'Verify' }))
+    expect(onVerificationResult).toHaveBeenLastCalledWith('verificationCorrect')
+    expect(onVerificationChange).toHaveBeenLastCalledWith(expect.objectContaining({
+      result: expect.objectContaining({ correct: true }),
+    }))
+  })
+
+  it.each([
+    ['0.66', 0.67, 'Matches'],
+    ['0.68', 0.67, 'Matches'],
+    ['0.66', 0.674, 'Matches'],
+    ['0.68', 0.6666666667, 'Matches'],
+    ['0.65', 0.67, 'Check calculation'],
+    ['0.69', 0.67, 'Check calculation'],
+    ['0.72', 2 / 3, 'Check calculation'],
+    ['-0.01', 0, 'Enter a non-negative number'],
+    ['NaN', 0.67, 'Enter a non-negative number'],
+  ])('checks %s against %s with a one-hundredth rounding allowance', (value, expected, feedback) => {
+    expect(getValueFeedback(value, expected)).toBe(feedback)
+  })
+
+  it('allows accumulated current rounding while still rejecting incorrect, missing and out-of-range answers', () => {
+    const reading = { voltage: 1, r1: 1000, r2: 1000, r3: 1000 }
+    Object.assign(reading, calculateReadings(reading))
+    const expected = getExpectedAnswers(reading)
+    const answers = Object.fromEntries(Object.entries(expected).map(([name, value]) => [name, value.toFixed(2)]))
+    Object.assign(answers, { i1Result: '0.68', i2Result: '0.32', i3Result: '0.32' })
+    expect(verifyAnswers(answers, expected)).toBe('verificationCorrect')
+    expect(verifyAnswers({ ...answers, i2Result: '0.31' }, expected)).toBe('verificationIncorrect')
+    expect(verifyAnswers({ ...answers, voltage: '0.99' }, expected)).toBe('verificationIncorrect')
+    expect(verifyAnswers({ ...answers, resistance: '' }, expected)).toBe('verificationMissingOne')
+    expect(verifyAnswers({ ...answers, resistance: '', voltage: '' }, expected)).toBe('verificationMissingMultiple')
+  })
+
   it('accepts two-decimal answers for repeating currents and keeps units beside every field', () => {
     const reading = { id: 1, voltage: 1, r1: 1000, r2: 1000, r3: 1000 }
     Object.assign(reading, calculateReadings(reading))

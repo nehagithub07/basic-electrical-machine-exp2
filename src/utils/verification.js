@@ -23,8 +23,11 @@ export const isWithinVerificationRange = (name, value) => {
 
 export const EMPTY_ANSWERS = Object.fromEntries(Object.keys(VERIFICATION_FIELDS).map((key) => [key, '']))
 export const isMissingValue = (value) => value == null || String(value).trim() === ''
-// Each displayed answer is rounded to two decimals; allow half a final digit.
-const tolerance = (value) => Math.max(Math.abs(value) * 0.001, 0.005) + 1e-9
+// Accept one last-place digit of calculator rounding against the displayed value.
+const roundedAnswer = (value) => Number(value.toFixed(2))
+const ANSWER_TOLERANCE = 0.01 + 1e-9
+// KCL combines three answers, so include each answer's display-rounding error.
+const tolerance = (value) => ANSWER_TOLERANCE + Math.abs(value - roundedAnswer(value))
 
 export const getExpectedAnswers = (reading) => reading ? ({
   equivalentResistance: reading.totalResistance / 1000,
@@ -47,7 +50,7 @@ export const getValueFeedback = (value, expected, submitted = false) => {
   if (isMissingValue(value)) return submitted ? 'Required' : ''
   const number = Number(value)
   if (!Number.isFinite(number) || number < 0) return 'Enter a non-negative number'
-  return Math.abs(number - expected) <= tolerance(expected) ? 'Matches' : 'Check calculation'
+  return Math.abs(number - roundedAnswer(expected)) <= ANSWER_TOLERANCE ? 'Matches' : 'Check calculation'
 }
 
 export const verifyAnswers = (answers, expected) => {

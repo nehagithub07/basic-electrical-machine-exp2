@@ -8,7 +8,7 @@ const alertAudioModules = import.meta.glob('../audios/*', {
   query: '?url',
 })
 
-const audioOnlyStepIds = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 23, 26, 32])
+const audioOnlyStepIds = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 23, 32])
 
 const STEP_TITLES = {
   1: 'Welcome to the AI Guide',
