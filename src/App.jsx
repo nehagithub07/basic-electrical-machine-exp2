@@ -11,6 +11,7 @@ import { useWalkthrough } from './walkthrough/useWalkthrough.js'
 import { ALERT_AUDIO, ALERT_AUDIO_PLACEHOLDER, EXPERIMENT_ALERTS, getInstructionStep } from './alerts/experimentStepAlerts.js'
 import { useLabAlerts } from './alerts/useLabAlerts.js'
 import { useAiGuideNarration } from './aiGuide/useAiGuideNarration.js'
+import { getConnectionFeedback } from './utils/jsPlumbWiring.js'
  
 import { calculateReadings } from './utils/circuitMath.js'
 import { prepareKclReport } from './utils/reportGenerator.js'
@@ -59,12 +60,6 @@ const getAiGuideConnectionStepId = (terminalIds) => {
   const pairKey = getTerminalPairKeyFromIds(terminalIds)
 
   return pairKey ? AI_GUIDE_CONNECTION_STEP_BY_PAIR[pairKey] : null
-}
-
-const isAiGuideConnectionStep = (stepId) => {
-  const numericStepId = Number(stepId)
-
-  return numericStepId >= 3 && numericStepId <= 10
 }
 
 const getActiveInstructionStep = ({
@@ -153,7 +148,6 @@ const App = () => {
   const [resetRequest, setResetRequest] = useState(0)
   const [connectionsReadyForCheck, setConnectionsReadyForCheck] = useState(false)
   const [connectionsVerified, setConnectionsVerified] = useState(false)
-  const [connectionGuidanceStarted, setConnectionGuidanceStarted] = useState(false)
   const [resistanceAdjusted, setResistanceAdjusted] = useState(getInitialResistanceAdjusted)
   const [voltageAdjusted, setVoltageAdjusted] = useState(false)
   const [sessionStart, setSessionStart] = useState(() => Date.now())
@@ -225,35 +219,34 @@ const App = () => {
   )
 
   const {
-    activeStepId: activeAiGuideStepId,
     isPlaying: aiGuidePlaying,
     playStepsById: playAiGuideSteps,
     start: startAiGuide,
     stop: stopAiGuide,
     pause: pauseAiGuide,
+    silence: silenceAiGuide,
+    highlightedStepId,
     finish: finishAiGuide,
   } = useAiGuideNarration()
 
   const announceStep = useCallback((preset, { nextSteps = [], ...overrides } = {}) => {
-    setStatus(preset.description)
-    if ([preset.guideStepId, ...nextSteps].some(isAiGuideConnectionStep)) {
-      setConnectionGuidanceStarted(true)
-    }
+    setStatus(overrides.description ?? preset.description)
     const narration = aiGuidePlaying
       ? playAiGuideSteps([preset.guideStepId, ...nextSteps])
       : null
 
-    if (!preset.audioOnly) {
+    if (!preset.audioOnly || overrides.audioOnly === false) {
       showStepAlert(preset, {
         audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : preset.audio,
         audioSpeech: aiGuidePlaying ? null : preset.audioSpeech,
         guideNarration: narration,
+        onStopNarration: aiGuidePlaying ? silenceAiGuide : undefined,
         replaceExisting: true,
         ...overrides,
       })
     }
     return narration ?? Promise.resolve(true)
-  }, [aiGuidePlaying, playAiGuideSteps, showStepAlert])
+  }, [aiGuidePlaying, playAiGuideSteps, showStepAlert, silenceAiGuide])
 
   const getResumeStepId = useCallback(() => {
     if (canGenerateReport) return 37
@@ -278,7 +271,6 @@ const App = () => {
     const hasStartedExperiment = connectionsVerified || connectionsReadyForCheck
       || lastConnectionInstructionAudioKeyRef.current !== null
     const stepId = walkthroughCompleted || hasStartedExperiment ? getResumeStepId() : 1
-    setConnectionGuidanceStarted(isAiGuideConnectionStep(stepId))
     const narration = startAiGuide(stepId)
     const preset = Object.values(EXPERIMENT_ALERTS).find((entry) => entry.guideStepId === stepId)
       ?? getInstructionStep(stepId)
@@ -288,24 +280,12 @@ const App = () => {
         audio: ALERT_AUDIO_PLACEHOLDER,
         audioSpeech: null,
         guideNarration: narration,
+        onStopNarration: silenceAiGuide,
         replaceExisting: true,
       })
     }
   }, [aiGuidePlaying, clearAlerts, connectionsReadyForCheck, connectionsVerified,
-    getResumeStepId, showStepAlert, startAiGuide, stopAiGuide, walkthroughCompleted])
-useEffect(() => {
-  if (
-    aiGuidePlaying
-    && !walkthroughOpen
-    && isAiGuideConnectionStep(activeAiGuideStepId)
-  ) {
-    setConnectionGuidanceStarted(true)
-  }
-}, [
-  activeAiGuideStepId,
-  aiGuidePlaying,
-  walkthroughOpen,
-])
+    getResumeStepId, showStepAlert, silenceAiGuide, startAiGuide, stopAiGuide, walkthroughCompleted])
   useEffect(() => {
     if (walkthroughOpen) {
       if (!walkthroughWasOpenRef.current) {
@@ -347,27 +327,18 @@ useEffect(() => {
 
   const handleR1Change = useCallback((nextResistance) => {
     setR1(nextResistance)
-
-    if (nextResistance !== r1) {
-      markResistanceAdjusted('r1')
-    }
-  }, [markResistanceAdjusted, r1])
+    markResistanceAdjusted('r1')
+  }, [markResistanceAdjusted])
 
   const handleR2Change = useCallback((nextResistance) => {
     setR2(nextResistance)
-
-    if (nextResistance !== r2) {
-      markResistanceAdjusted('r2')
-    }
-  }, [markResistanceAdjusted, r2])
+    markResistanceAdjusted('r2')
+  }, [markResistanceAdjusted])
 
   const handleR3Change = useCallback((nextResistance) => {
     setR3(nextResistance)
-
-    if (nextResistance !== r3) {
-      markResistanceAdjusted('r3')
-    }
-  }, [markResistanceAdjusted, r3])
+    markResistanceAdjusted('r3')
+  }, [markResistanceAdjusted])
 
   // const recordObservation = () => {
   //   if (!connectionsVerified) {
@@ -486,7 +457,6 @@ useEffect(() => {
     setCheckRequest(0)
     setConnectionsReadyForCheck(false)
     setConnectionsVerified(false)
-    setConnectionGuidanceStarted(aiGuidePlaying)
     setResistanceAdjusted(getInitialResistanceAdjusted())
     setVoltageAdjusted(false)
     setResetRequest((current) => current + 1)
@@ -508,6 +478,12 @@ useEffect(() => {
   }
 
    const handlePrint = () => {
+     if (aiGuidePlaying) {
+       announceStep(EXPERIMENT_ALERTS.print).then((completed) => {
+         if (completed) window.print()
+       })
+       return
+     }
      const audio = new Audio(ALERT_AUDIO.print)
    
      audio.play()
@@ -604,15 +580,20 @@ useEffect(() => {
     setConnectionsReadyForCheck(false)
     setResistanceAdjusted(getInitialResistanceAdjusted())
     allConnectionsAlertShownRef.current = false
-    if (result.hasInvalidConnection) {
-      playConnectionCorrection(result)
-      return
-    }
+    const preset = result.hasInvalidConnection
+      ? (result.invalidConnectionCount > 1
+          ? EXPERIMENT_ALERTS.multipleWrongConnections
+          : EXPERIMENT_ALERTS.incorrectNodeConnection)
+      : EXPERIMENT_ALERTS.requiredConnectionsFirst
     const correctionStep = getAiGuideConnectionStepId(result.nextRequiredConnection)
-    announceStep(EXPERIMENT_ALERTS.requiredConnectionsFirst, {
+    announceStep(preset, {
+      audioOnly: false,
+      title: result.hasInvalidConnection ? 'Wrong Connection' : 'Missing Connections',
+      description: getConnectionFeedback(result),
+      duration: 15000,
       nextSteps: correctionStep ? [correctionStep] : [],
     })
-  }, [announceStep, playConnectionCorrection])
+  }, [announceStep])
 
   const handleCheck = () => {
     if (autoConnecting || connectionsVerified) return
@@ -672,7 +653,7 @@ useEffect(() => {
       announceStep(EXPERIMENT_ALERTS.voltageSet)
     }
   }
-}, [announceStep, powerOn, voltage])
+}, [announceStep, powerOn])
   const scaledWidth = Math.ceil(BASE_WIDTH * scale)
   const scaledHeight = Math.ceil(CONTENT_HEIGHT * scale)
 
@@ -694,7 +675,7 @@ useEffect(() => {
         >
           <main className="simulation-shell" id="walkthrough-demo-experiment">
             <HeaderBoard />
-            <WalkthroughStartButton highlighted={aiGuidePlaying && String(activeAiGuideStepId) === '1'} variant="side-tab" />
+            <WalkthroughStartButton highlighted={aiGuidePlaying && !walkthroughOpen && highlightedStepId === '1'} variant="side-tab" />
             <span className="sr-only" role="status" aria-live="polite">{status}</span>
 
             <section className="workspace-grid">
@@ -744,8 +725,10 @@ useEffect(() => {
                        aiGuidePlaying
                        && !walkthroughOpen
                        && !connectionsVerified
-                       && connectionGuidanceStarted
+                       && Number(highlightedStepId) >= 3
+                       && Number(highlightedStepId) <= 10
                      }
+                     guideConnectionStepId={highlightedStepId}
                      key={`connection-lab-${resetRequest}`}
                   autoConnectRequest={autoConnectRequest}
                   checkRequest={checkRequest}
@@ -781,7 +764,7 @@ useEffect(() => {
           />
 
           <footer className="app-footer" aria-label="Copyright">
-            &copy; 2026 Virtual Labs IIT Roorkee
+            &copy; 2026 Virtual Labs | IIT Roorkee
           </footer>
         </div>
       </div>

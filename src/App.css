@@ -223,6 +223,7 @@
 }
  
 .action-button {
+  cursor: pointer;
   position: relative;
   z-index: 1;
   display: flex;
@@ -674,7 +675,7 @@
 .power-supply {
   position: relative;
   z-index: auto;
-  left: 15px;
+  left: 0;
   width: 280px;
   height: 205px;
   flex: 0 0 auto;
@@ -1191,7 +1192,7 @@
   z-index: 1;
   display: grid;
   min-height: 0;
-  grid-template-columns: 42% 58%;
+  grid-template-columns: minmax(0, 54fr) minmax(0, 46fr);
   gap: 14px;
   padding: 6px 24px 24px;
 }
@@ -1213,9 +1214,10 @@
   box-shadow: var(--verification-panel-shadow);
 }
 
-.verification-panel__toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.verification-panel__toolbar { display: flex; align-items: center; justify-content: flex-start; gap: 14px; }
 .verification-panel__toolbar select {
-  max-width: 170px;
+  width: 200px;
+  flex: 0 0 200px;
   height: 36px;
   padding: 6px 8px;
   border: 1px solid var(--verification-control-border);
@@ -1229,12 +1231,10 @@
   box-shadow: 0 1px 2px rgba(62, 42, 31, 0.04);
   transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
 }
-.verification-panel__toolbar select {
-  position: relative;
-  right: 280px;
-}
 .verification-panel h3 {
-  margin: 0 0 4px;
+  margin: 0;
+  flex: 0 0 auto;
+  white-space: nowrap;
   color: var(--verification-text);
   font-size: 15px;
   font-weight: 650;
@@ -1373,10 +1373,6 @@
   cursor: not-allowed;
   box-shadow: inset 0 0 0 1px var(--verification-border);
 }
-
-.verification-panel__actions span { font-size: 11px; font-weight: 600; white-space: normal; }
-.verification-panel__actions .is-correct { color: #237446; }
-.verification-panel__actions .is-wrong { color: #ae3e35; }
 
 @media (prefers-reduced-motion: reduce) {
   .verification-panel__input,
@@ -1910,21 +1906,21 @@ input:focus-visible {
 }
 
 @page {
-  size: 15in 16.75in;
-  margin: 0;
+  size: A4 portrait;
+  margin: 6mm;
 }
 
 @media print {
   html,
   body,
   #root {
-    width: 1440px !important;
-    height: 1608px !important;
-    min-width: 1440px !important;
-    min-height: 1608px !important;
+    width: 198mm !important;
+    height: auto !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
-    overflow: hidden !important;
+    overflow: visible !important;
     scrollbar-gutter: auto !important;
     background: #2b170d !important;
   }
@@ -1937,17 +1933,16 @@ input:focus-visible {
   }
 
   #app-wrapper,
-  #app-viewport,
-  #app-scale {
-    width: 1440px !important;
-    height: 1608px !important;
-    min-width: 1440px !important;
-    min-height: 1608px !important;
-    max-width: 1440px !important;
-    max-height: 1608px !important;
+  #app-viewport {
+    width: 198mm !important;
+    height: 861.08px !important;
+    min-width: 0 !important;
+    min-height: 0 !important;
+    max-width: none !important;
+    max-height: none !important;
     margin: 0 !important;
     padding: 0 !important;
-    overflow: hidden !important;
+    overflow: visible !important;
   }
 
   #app-wrapper {
@@ -1963,9 +1958,12 @@ input:focus-visible {
     position: absolute !important;
     top: 0 !important;
     left: 0 !important;
+    width: 1440px !important;
+    height: 1672px !important;
     transform: none !important;
     transform-origin: top left !important;
-    zoom: 1 !important;
+    /* Fit all 1440 × 1672 pixels, including the footer, within one A4 page. */
+    zoom: 0.515 !important;
   }
 
   .simulation-shell {
@@ -1982,11 +1980,6 @@ input:focus-visible {
     overflow: hidden !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
-  }
-
-  .graph-panel__body {
-    margin: 6px 24px 24px !important;
-    overflow: hidden !important;
   }
 
   .graph-panel__chart {
@@ -2020,7 +2013,6 @@ input:focus-visible {
   .lab-alert-spotlight,
   .action-instructions-panel,
   .connection-lab .jtk-overlay,
-  .app-footer,
   [role="tooltip"],
   .tooltip,
   .tippy-box {

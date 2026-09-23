@@ -30,9 +30,7 @@ const areTerminalIdsEqual = (currentIds, nextIds) => (
 )
 
 const getNextRequiredConnectionPair = (instance) => (
-  DEFAULT_AUTO_CONNECTIONS.find(([sourceId, targetId]) => (
-    !hasConnectionBetween(instance, sourceId, targetId)
-  )) ?? null
+  getConnectionStatus(instance).missingConnections[0] ?? null
 )
 
 const areConnectionPairsEqual = (firstPair, secondPair) => (
@@ -53,12 +51,14 @@ const getExpectedConnectionPairForLatestConnection = (instance, latestPair) => (
   )) ?? null
 )
 
-const getNextGuideHighlightTerminalIds = (instance, guideEndpointHighlightActive, isLocked) => {
+const getNextGuideHighlightTerminalIds = (instance, guideEndpointHighlightActive, isLocked, guideConnectionStepId) => {
   if (!guideEndpointHighlightActive || isLocked || !instance) {
     return []
   }
 
-  return getNextRequiredConnectionPair(instance) ?? []
+  const pair = DEFAULT_AUTO_CONNECTIONS[Number(guideConnectionStepId) - 3]
+  // A wire change must never advance the highlight ahead of the narration.
+  return pair && !hasConnectionBetween(instance, pair[0], pair[1]) ? pair : []
 }
 
 
@@ -68,6 +68,7 @@ const ConnectionLab = ({
   autoConnectRequest,
   checkRequest,
   guideEndpointHighlightActive = false,
+  guideConnectionStepId = null,
   onConnectionChange,
   onCheckConnections,
   powerOn,
@@ -243,6 +244,7 @@ const ConnectionLab = ({
       instanceRef.current,
       guideEndpointHighlightActive,
       isLocked,
+      guideConnectionStepId,
     )
 
     setConnectedTerminalIds((currentIds) => (
@@ -251,7 +253,7 @@ const ConnectionLab = ({
     setGuideHighlightedTerminalIds((currentIds) => (
       areTerminalIdsEqual(currentIds, nextIds) ? currentIds : nextIds
     ))
-  }, [connectionRevision, guideEndpointHighlightActive, isLocked])
+  }, [connectionRevision, guideEndpointHighlightActive, guideConnectionStepId, isLocked])
 
   useEffect(() => {
     const instance = instanceRef.current

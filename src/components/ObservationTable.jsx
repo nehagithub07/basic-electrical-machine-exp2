@@ -1,25 +1,24 @@
 import { useState } from 'react'
 import SectionCard from './SectionCard.jsx'
 import { FormulaIcon, PdfIcon } from './Icons.jsx'
-import { formatCurrent } from '../utils/circuitMath.js'
 
 const MAX_ROWS = 5
 const TABLE_ROWS = Array.from({ length: MAX_ROWS })
 const FORMULAS = [
   {
     symbol: 'R',
-    expression: <>R = R<sub>1</sub> + (R<sub>2</sub> × R<sub>3</sub>) / (R<sub>2</sub> + R<sub>3</sub>)</>,
+    expression: <>R (kΩ) = R<sub>1</sub> + (R<sub>2</sub> × R<sub>3</sub>) / (R<sub>2</sub> + R<sub>3</sub>)</>,
     description: 'Equivalent resistance of R1 in series with parallel R2 and R3.',
   },
-  { symbol: 'I1', expression: <>I<sub>1</sub> = V / R</>, description: 'Main current through R1.' },
+  { symbol: 'I1', expression: <>I<sub>1</sub> (mA) = V (V) / R (kΩ)</>, description: 'Main current through R1.' },
   {
     symbol: 'I2',
-    expression: <>I<sub>2</sub> = I<sub>1</sub> × R<sub>3</sub> / (R<sub>2</sub> + R<sub>3</sub>)</>,
+    expression: <>I<sub>2</sub> (mA) = I<sub>1</sub> (mA) × R<sub>3</sub> / (R<sub>2</sub> + R<sub>3</sub>)</>,
     description: 'Branch current through R2.',
   },
   {
     symbol: 'I3',
-    expression: <>I<sub>3</sub> = I<sub>1</sub> × R<sub>2</sub> / (R<sub>2</sub> + R<sub>3</sub>)</>,
+    expression: <>I<sub>3</sub> (mA) = I<sub>1</sub> (mA) × R<sub>2</sub> / (R<sub>2</sub> + R<sub>3</sub>)</>,
     description: 'Branch current through R3.',
   },
 ]
@@ -44,8 +43,8 @@ const ObservationTable = ({ canGenerateReport = false, observations, onGenerateR
               const row = observations[index]
               return (
                 <tr key={row?.id ?? `empty-${index}`}>
-                  <td>{row?.id ?? ''}</td><td>{row ? row.voltage.toFixed(1) : ''}</td>
-                  <td>{row ? formatCurrent(row.i1) : ''}</td><td>{row ? formatCurrent(row.i2) : ''}</td><td>{row ? formatCurrent(row.i3) : ''}</td>
+                  <td>{row?.id ?? ''}</td><td>{row ? row.voltage.toFixed(2) : ''}</td>
+                  <td>{row ? row.i1.toFixed(2) : ''}</td><td>{row ? row.i2.toFixed(2) : ''}</td><td>{row ? row.i3.toFixed(2) : ''}</td>
                 </tr>
               )
             })}
@@ -59,7 +58,7 @@ const ObservationTable = ({ canGenerateReport = false, observations, onGenerateR
           <div className="formula-panel__header">
             <div className="formula-panel__title">
               <span className="formula-panel__title-icon"><FormulaIcon /></span>
-              <span><h3 id="formula-panel-title">Equations</h3><small>Theoretical formulas used in this experiment</small></span>
+              <span><h3 id="formula-panel-title">Equations</h3></span>
             </div>
             <button aria-label="Close equations" className="formula-panel__close" onClick={() => setEquationsOpen(false)} type="button">×</button>
           </div>
@@ -71,7 +70,7 @@ const ObservationTable = ({ canGenerateReport = false, observations, onGenerateR
               </div>
             ))}
           </dl>
-          <p className="formula-panel__note">KCL verification: I<sub>1</sub> = I<sub>2</sub> + I<sub>3</sub></p>
+          <p className="formula-panel__note">Use resistance in kΩ and current in mA. KCL verification: I<sub>1</sub> = I<sub>2</sub> + I<sub>3</sub></p>
         </aside>
       )}
 

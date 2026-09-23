@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import VerificationPanel from '../src/components/VerificationPanel.jsx'
+import { calculateReadings } from '../src/utils/circuitMath.js'
+import { getExpectedAnswers, VERIFICATION_FIELDS } from '../src/utils/verification.js'
 
 const observations = [
   { id: 1, voltage: 6, r1: 1000, r2: 1000, r3: 1000, totalResistance: 1500, i1: 4, i2: 2, i3: 2 },
@@ -57,6 +59,36 @@ describe('VerificationPanel wheel protection', () => {
 })
 
 describe('VerificationPanel existing behavior', () => {
+  it('accepts two-decimal answers for repeating currents and keeps units beside every field', () => {
+    const reading = { id: 1, voltage: 1, r1: 1000, r2: 1000, r3: 1000 }
+    Object.assign(reading, calculateReadings(reading))
+    const onVerificationResult = vi.fn()
+    render(<VerificationPanel observations={[reading]} onVerificationResult={onVerificationResult} plotted />)
+    selectReading(1)
+    for (const [name, value] of Object.entries(getExpectedAnswers(reading))) {
+      const { label, unit } = VERIFICATION_FIELDS[name]
+      const input = screen.getByRole('spinbutton', { name: label })
+      expect(input.closest('label').textContent).toContain(unit)
+      fireEvent.change(input, { target: { value: value.toFixed(2) } })
+    }
+    fireEvent.click(screen.getByRole('button', { name: 'Verify' }))
+    expect(onVerificationResult).toHaveBeenLastCalledWith('verificationCorrect')
+    const input = screen.getByRole('spinbutton', { name: 'Calculated I1' })
+    fireEvent.change(input, { target: { value: '0.72' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Verify' }))
+    expect(onVerificationResult).toHaveBeenLastCalledWith('verificationIncorrect')
+  })
+
+  it('formats a completed input to two decimals without interrupting typing', () => {
+    render(<VerificationPanel observations={observations} plotted />)
+    selectReading(1)
+    const input = screen.getByRole('spinbutton', { name: 'Equivalent resistance' })
+    fireEvent.change(input, { target: { value: '1.567' } })
+    expect(input.value).toBe('1.567')
+    fireEvent.blur(input)
+    expect(input.value).toBe('1.57')
+  })
+
   it('enables answers and verification only after plotting and selecting a reading', () => {
     const { rerender } = render(<VerificationPanel observations={observations} plotted={false} />)
     const select = screen.getByRole('combobox', { name: 'Select reading to verify' })
@@ -109,7 +141,8 @@ describe('VerificationPanel existing behavior', () => {
       voltage: 6,
       result: expect.objectContaining({ correct: true }),
     }))
-    expect(screen.getByRole('status').textContent).toContain('has been verified successfully')
+    expect(screen.queryByRole('status')).toBe(null)
+    expect(screen.getByRole('spinbutton', { name: 'Equivalent resistance' }).value).toBe('1.50')
   })
 
   it('retains independent decimal drafts when switching readings', () => {

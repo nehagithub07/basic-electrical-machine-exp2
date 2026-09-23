@@ -202,18 +202,75 @@ export const isValidConnectionPair = (firstId, secondId) => (
 
 export const getConnectionStatus = (instance) => {
   const connections = getAllConnections(instance)
-  const validation = validateOldExperimentConnections(instance)
-  const invalidConnections = connections.filter((connection) => {
+  const pairs = connections.map((connection) => {
     const { sourceId, targetId } = getConnectionEndpointIds(connection)
-
-    return !isValidConnectionPair(sourceId, targetId)
+    return [sourceId, targetId]
   })
+  const existingKeys = new Set(pairs.map((pair) => getTerminalPairKey(...pair)))
+  // Choose the complete wiring that preserves the most existing connections.
+  // Ammeters may exchange branches, but both leads must use the same branch.
+  const candidates = []
+  for (const a1 of AMMETER_BRANCH_CONNECTIONS.A1) {
+    for (const a2 of AMMETER_BRANCH_CONNECTIONS.A2) {
+      for (const a3 of AMMETER_BRANCH_CONNECTIONS.A3) {
+        if (new Set([a1.currentKey, a2.currentKey, a3.currentKey]).size !== 3) continue
+        candidates.push([
+          ...DEFAULT_AUTO_CONNECTIONS.slice(0, 2),
+          ...[a1, a2, a3].flatMap((branch) => [
+            [branch.positiveTerminal, branch.circuitPositiveTerminal],
+            [branch.negativeTerminal, branch.circuitNegativeTerminal],
+          ]),
+        ])
+      }
+    }
+  }
+  const score = (candidate) => candidate.filter((pair) => existingKeys.has(getTerminalPairKey(...pair))).length
+  const expectedConnections = candidates.reduce((best, candidate) => score(candidate) > score(best) ? candidate : best)
+  const expectedKeys = new Set(expectedConnections.map((pair) => getTerminalPairKey(...pair)))
+  const seen = new Set()
+  const invalidConnections = pairs.filter((pair) => {
+    const key = getTerminalPairKey(...pair)
+    const invalid = !expectedKeys.has(key) || seen.has(key)
+    seen.add(key)
+    return invalid
+  })
+  const missingConnections = expectedConnections.filter((pair) => !existingKeys.has(getTerminalPairKey(...pair)))
 
   return {
-    ...validation,
+    isCorrect: missingConnections.length === 0 && invalidConnections.length === 0,
+    matchedCount: score(expectedConnections),
+    totalConnections: connections.length,
     hasInvalidConnection: invalidConnections.length > 0,
     invalidConnectionCount: invalidConnections.length,
+    invalidConnections,
+    missingConnections,
+    expectedConnections,
   }
+}
+
+export const getConnectionFeedback = (result) => {
+  const formatPair = ([source, target]) => `Terminal ${getTerminalNumber(source)} → terminal ${getTerminalNumber(target)}`
+  const invalid = result.invalidConnections ?? []
+  const missing = result.missingConnections ?? (result.nextRequiredConnection ? [result.nextRequiredConnection] : [])
+  const lines = []
+  if (result.hasInvalidConnection) {
+    lines.push(invalid.length
+      ? `Wrong connections:\n${invalid.map(formatPair).join('\n')}`
+      : 'Some connections are wrong.')
+    lines.push('Click the terminal number label to remove each wrong wire.')
+  } else {
+    const count = result.matchedCount ?? 0
+    lines.push(count > 0
+      ? `${count} connection${count === 1 ? ' is' : 's are'} correct. The circuit is incomplete.`
+      : 'No connections have been made yet.')
+  }
+  if (missing.length) {
+    lines.push(`Next missing connections (${missing.length} remaining):\n${missing.slice(0, 3).map(formatPair).join('\n')}`)
+  } else if (result.hasInvalidConnection) {
+    lines.push(`Keep these correct connections and remove extra wires:\n${(result.expectedConnections ?? DEFAULT_AUTO_CONNECTIONS).map(formatPair).join('\n')}`)
+  }
+  lines.push('Click Check again after correcting the wiring.')
+  return lines.join('\n\n')
 }
 
 export const deleteConnectionsForTerminal = (instance, terminalId) => {

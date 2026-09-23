@@ -33,6 +33,7 @@ export const useAiGuideNarration = ({
   )
   const [isPlaying, setIsPlaying] = useState(false)
   const [activeStepId, setActiveStepId] = useState(null)
+  const [highlightedStepId, setHighlightedStepId] = useState(null)
   const isActiveRef = useRef(false)
   const currentPlaybackRef = useRef(null)
   const runIdRef = useRef(0)
@@ -49,12 +50,18 @@ export const useAiGuideNarration = ({
     currentPlayback.stop()
   }, [])
 
-  const pause = useCallback(() => {
+  // Dismissing an alert stops its narration, but keeps the next action highlighted.
+  const silence = useCallback(() => {
     sequenceIdRef.current += 1
     runIdRef.current += 1
     stopCurrentPlayback()
     setActiveStepId(null)
   }, [stopCurrentPlayback])
+
+  const pause = useCallback(() => {
+    silence()
+    setHighlightedStepId(null)
+  }, [silence])
 
   const stop = useCallback(() => {
     isActiveRef.current = false
@@ -199,6 +206,10 @@ export const useAiGuideNarration = ({
     runIdRef.current = runId
     stopCurrentPlayback()
     setActiveStepId(step.id)
+    // Reveal terminals only after their own instruction has been spoken.
+    // In particular, the walkthrough-complete introduction is not a wiring step.
+    const waitsForInstruction = step.id === '1' || (Number(step.id) >= 3 && Number(step.id) <= 10)
+    setHighlightedStepId(waitsForInstruction ? null : step.id)
 
     try {
       await playStep(step, runId)
@@ -206,12 +217,14 @@ export const useAiGuideNarration = ({
 
       if (completed) {
         setActiveStepId(null)
+        setHighlightedStepId(step.id)
       }
 
       return completed
     } catch (error) {
       if (runIdRef.current === runId) {
         setActiveStepId(null)
+        setHighlightedStepId(step.id)
         onError?.(error)
       }
 
@@ -229,6 +242,7 @@ export const useAiGuideNarration = ({
     runIdRef.current = runId
     stopCurrentPlayback()
     setActiveStepId(playbackStepId)
+    setHighlightedStepId(playbackStepId)
 
     try {
       await speakText(text)
@@ -266,6 +280,7 @@ export const useAiGuideNarration = ({
     runIdRef.current = runId
     stopCurrentPlayback()
     setActiveStepId(playbackStepId)
+    setHighlightedStepId(playbackStepId)
 
     try {
       await playAudio(audioSource)
@@ -342,6 +357,7 @@ export const useAiGuideNarration = ({
   return {
     config: guideConfig,
     activeStepId,
+    highlightedStepId,
     finish,
     isPlaying,
     playAudioSource,
@@ -349,6 +365,7 @@ export const useAiGuideNarration = ({
     playStepsById,
     playText,
     pause,
+    silence,
     start,
     stop,
   }

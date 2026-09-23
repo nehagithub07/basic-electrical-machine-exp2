@@ -59,6 +59,10 @@ const LabAlertCard = ({ alert, onDismiss }) => {
   const showProgressTimer = hasProgressTimer && (!waitsForAudio || audioPlaybackComplete)
   const titleId = `lab-alert-title-${id}`
   const descriptionId = `lab-alert-description-${id}`
+  const displayedDescription = description?.replace(
+    /^(?:Connections Verified|Resistance Values Selected Successfully|Duplicate Readings|Report Generated):\s*/,
+    '',
+  )
   const role = requiresConfirmation ? 'alertdialog' : type === 'error' || type === 'warning' ? 'alert' : 'status'
   const showNarration = Boolean(alert.audioNarration || alert.narration || onNarration)
   const showTutorialControls = Boolean(tutorialMode || onNext || onPrevious)
@@ -73,6 +77,7 @@ const LabAlertCard = ({ alert, onDismiss }) => {
       id,
       reason,
     })
+    if (reason !== 'timeout') alert.onStopNarration?.()
 
     setIsClosing(true)
 
@@ -185,33 +190,37 @@ const LabAlertCard = ({ alert, onDismiss }) => {
       <div className="lab-alert-card__glow" aria-hidden="true" />
 
       <div className="lab-alert-card__main">
-        <span className="lab-alert-card__icon" aria-hidden="true">{icon}</span>
-
-        <div className="lab-alert-card__content">
+        <div className="lab-alert-card__header">
+          <span className="lab-alert-card__icon" aria-hidden="true">{icon}</span>
           {title ? <h2 id={titleId}>{title}</h2> : null}
-          {description ? <p id={descriptionId}>{description}</p> : null}
-        </div>
 
-        <div className="lab-alert-card__tools">
-          {showNarration ? (
+          <div className="lab-alert-card__tools">
+            {showNarration ? (
+              <button
+                aria-label="Play alert narration"
+                className="lab-alert-card__icon-button"
+                onClick={handleNarration}
+                type="button"
+              >
+                🔊
+              </button>
+            ) : null}
             <button
-              aria-label="Play alert narration"
+              aria-label="Close alert"
               className="lab-alert-card__icon-button"
-              onClick={handleNarration}
+              onClick={() => dismiss('close')}
               type="button"
             >
-              🔊
+              ×
             </button>
-          ) : null}
-          <button
-            aria-label="Close alert"
-            className="lab-alert-card__icon-button"
-            onClick={() => dismiss('close')}
-            type="button"
-          >
-            ×
-          </button>
+          </div>
         </div>
+
+        {description ? (
+          <div className="lab-alert-card__content" id={descriptionId}>
+            {displayedDescription.split(/\n\s*\n/).map((paragraph, index) => <p key={index}>{paragraph}</p>)}
+          </div>
+        ) : null}
       </div>
 
       <div className="lab-alert-card__actions">

@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { EXPERIMENT_ALERTS } from '../alerts/experimentStepAlerts.js'
-import { EMPTY_ANSWERS, getExpectedAnswers, verifyAnswers } from '../utils/verification.js'
+import { EMPTY_ANSWERS, VERIFICATION_FIELDS, getExpectedAnswers, isWithinVerificationRange, verifyAnswers } from '../utils/verification.js'
+
+const formatAnswer = (value) => value !== '' && Number.isFinite(Number(value)) ? Number(value).toFixed(2) : value
 
 const VerificationInput = ({ disabled, label, name, onChange, unit, value }) => (
   <label className="verification-panel__input-wrap">
@@ -10,10 +12,17 @@ const VerificationInput = ({ disabled, label, name, onChange, unit, value }) => 
       className="verification-panel__input"
       disabled={disabled}
       inputMode="decimal"
-      min="0"
+      min={VERIFICATION_FIELDS[name].min}
+      max={VERIFICATION_FIELDS[name].max}
+      placeholder={`${VERIFICATION_FIELDS[name].min}–${VERIFICATION_FIELDS[name].max}`}
+      title={`Enter ${VERIFICATION_FIELDS[name].min} to ${VERIFICATION_FIELDS[name].max} ${unit}`}
       name={name}
-      onChange={onChange}
-      step="any"
+      onChange={(event) => onChange(event.target.value)}
+      onBlur={() => {
+        const formatted = formatAnswer(value)
+        if (formatted !== value) onChange(formatted)
+      }}
+      step="0.01"
       type="number"
       value={value}
     />
@@ -28,7 +37,7 @@ const VerificationPanel = ({ observations, onVerificationChange, onVerificationR
   const [readingId, setReadingId] = useState('')
   const [drafts, setDrafts] = useState({})
   const reading = observations.find((row) => String(row.id) === readingId)
-  const { answers, result } = drafts[readingId] ?? EMPTY_DRAFT
+  const { answers } = drafts[readingId] ?? EMPTY_DRAFT
   const expected = getExpectedAnswers(reading)
 
   useEffect(() => {
@@ -50,6 +59,7 @@ const VerificationPanel = ({ observations, onVerificationChange, onVerificationR
   }, [])
 
   const updateAnswer = (name, value) => {
+    if (!reading || (value !== '' && !isWithinVerificationRange(name, value))) return
     const nextAnswers = { ...answers, [name]: value }
     setDrafts((current) => ({ ...current, [readingId]: { answers: nextAnswers, result: null } }))
     // Keep report eligibility tied to the latest submitted values for this reading.
@@ -57,15 +67,16 @@ const VerificationPanel = ({ observations, onVerificationChange, onVerificationR
   }
 
   const field = (name, label, unit) => (
-    <VerificationInput disabled={!plotted || !reading} label={label} name={name} onChange={(event) => updateAnswer(name, event.target.value)} unit={unit} value={answers[name]} />
+    <VerificationInput disabled={!plotted || !reading} label={label} name={name} onChange={(value) => updateAnswer(name, value)} unit={unit ?? VERIFICATION_FIELDS[name].unit} value={answers[name]} />
   )
 
   const verify = () => {
     if (!reading || !plotted) return
-    const outcome = verifyAnswers(answers, expected)
+    const formattedAnswers = Object.fromEntries(Object.entries(answers).map(([name, value]) => [name, formatAnswer(value)]))
+    const outcome = verifyAnswers(formattedAnswers, expected)
     const nextResult = { correct: outcome === 'verificationCorrect', message: EXPERIMENT_ALERTS[outcome].description }
-    setDrafts((current) => ({ ...current, [readingId]: { answers, result: nextResult } }))
-    onVerificationChange?.({ answers, expected, readingId: reading.id, result: nextResult, voltage: reading.voltage })
+    setDrafts((current) => ({ ...current, [readingId]: { answers: formattedAnswers, result: nextResult } }))
+    onVerificationChange?.({ answers: formattedAnswers, expected, readingId: reading.id, result: nextResult, voltage: reading.voltage })
     onVerificationResult?.(outcome)
   }
 
@@ -75,7 +86,7 @@ const VerificationPanel = ({ observations, onVerificationChange, onVerificationR
         <h3>Verification for</h3>
         <select aria-label="Select reading to verify" disabled={!plotted} onChange={(event) => setReadingId(event.target.value)} value={readingId}>
           <option value="">Select reading</option>
-          {observations.map((row) => <option key={row.id} value={row.id}>Reading {row.id} — {row.voltage.toFixed(1)} V</option>)}
+          {observations.map((row) => <option key={row.id} value={row.id}>Reading {row.id} — {row.voltage.toFixed(2)} V</option>)}
         </select>
       </div>
       <div className="verification-panel__equation verification-panel__equation--total">
@@ -90,7 +101,7 @@ const VerificationPanel = ({ observations, onVerificationChange, onVerificationR
       <div className="verification-panel__equation">
         <strong>I<sub>3</sub></strong><span>= I<sub>1</sub> {field('i1ForI3', 'I1 value for I3')} ×</span><span className="verification-panel__fraction"><span>R<sub>2</sub> {field('r2Numerator', 'R2 numerator for I3')}</span><span>R<sub>2</sub> {field('r2ForI3', 'R2 denominator for I3')} + R<sub>3</sub> {field('r3ForI3', 'R3 denominator for I3')}</span></span><span>=</span>{field('i3Result', 'Calculated I3', 'mA')}
       </div>
-      <div className="verification-panel__actions"><button disabled={!plotted || !reading} id="verify-button" onClick={verify} type="button">Verify</button>{result && <span className={result.correct ? 'is-correct' : 'is-wrong'} role="status">{result.message}</span>}</div>
+      <div className="verification-panel__actions"><button disabled={!plotted || !reading} id="verify-button" onClick={verify} type="button">Verify</button></div>
     </div>
   )
 }

@@ -35,7 +35,7 @@ const WalkthroughOverlay = () => {
           transition={{ duration: 0.18 }}
         >
           <div aria-hidden="true" className="walkthrough-interaction-shield" />
-          <Spotlight rect={isPositioningTarget ? null : targetRect} />
+          <Spotlight rect={isPositioningTarget ? null : targetRect} padding={activeStep.spotlightPadding} />
           <AnimatePresence mode="wait">
             {!isPositioningTarget && targetRect ? (
               <WalkthroughPopup

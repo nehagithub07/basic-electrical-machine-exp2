@@ -18,9 +18,11 @@
 .lab-alert-region--center {
   inset: 0;
   z-index: 970;
-  display: grid;
-  place-items: center;
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(12px, 3vw, 24px);
+  overflow-y: auto;
 }
 
 .lab-alert-interaction-shield {
@@ -37,9 +39,11 @@
   --alert-accent-strong: rgba(77, 184, 255, 0.72);
   position: relative;
   width: 100%;
-  overflow: hidden;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: visible;
   border: 1px solid color-mix(in srgb, var(--alert-accent) 68%, #f6d49a);
-  border-radius: 16px;
+  border-radius: 20px;
   pointer-events: auto;
   background:
     linear-gradient(135deg, rgba(93, 50, 24, 0.78), rgba(35, 22, 17, 0.92) 48%, rgba(18, 13, 12, 0.94)),
@@ -47,10 +51,10 @@
   backdrop-filter: blur(16px) saturate(1.25);
   box-shadow:
     inset 0 1px 0 rgba(255, 241, 204, 0.28),
-    inset 0 -16px 24px rgba(0, 0, 0, 0.2),
+    inset 0 -8px 18px rgba(0, 0, 0, 0.12),
     0 0 0 1px rgba(255, 228, 174, 0.12),
-    0 0 26px var(--alert-accent-soft),
-    0 18px 46px rgba(21, 10, 4, 0.45);
+    0 0 18px var(--alert-accent-soft),
+    0 20px 56px rgba(21, 10, 4, 0.42);
   isolation: isolate;
 }
 
@@ -59,7 +63,9 @@
 }
 
 .lab-alert-card[data-placement="center"] {
-  width: min(460px, calc(100vw - 34px));
+  width: min(640px, 100%);
+  flex: 0 0 auto;
+  margin-block: auto;
   animation: lab-alert-center-in 240ms cubic-bezier(0.2, 0.85, 0.25, 1.12) both;
 }
 
@@ -78,14 +84,12 @@
   --alert-accent: #ffb339;
   --alert-accent-soft: rgba(255, 179, 57, 0.3);
   --alert-accent-strong: rgba(255, 179, 57, 0.78);
-  animation: lab-alert-warning-pulse 1450ms ease-in-out infinite alternate;
 }
 
 .lab-alert-card--error {
   --alert-accent: #ff5d50;
   --alert-accent-soft: rgba(255, 93, 80, 0.32);
   --alert-accent-strong: rgba(255, 93, 80, 0.78);
-  animation: lab-alert-error-pulse 1250ms ease-in-out infinite alternate;
 }
 
 .lab-alert-card--info {
@@ -95,27 +99,19 @@
 }
 
 .lab-alert-card--warning[data-placement="top-right"] {
-  animation:
-    lab-alert-toast-in 230ms cubic-bezier(0.2, 0.85, 0.25, 1.12) both,
-    lab-alert-warning-pulse 1450ms ease-in-out 260ms infinite alternate;
+  animation: lab-alert-toast-in 230ms ease-out both;
 }
 
 .lab-alert-card--warning[data-placement="center"] {
-  animation:
-    lab-alert-center-in 240ms cubic-bezier(0.2, 0.85, 0.25, 1.12) both,
-    lab-alert-warning-pulse 1450ms ease-in-out 270ms infinite alternate;
+  animation: lab-alert-center-in 240ms ease-out both;
 }
 
 .lab-alert-card--error[data-placement="top-right"] {
-  animation:
-    lab-alert-toast-in 230ms cubic-bezier(0.2, 0.85, 0.25, 1.12) both,
-    lab-alert-error-pulse 1250ms ease-in-out 260ms infinite alternate;
+  animation: lab-alert-toast-in 230ms ease-out both;
 }
 
 .lab-alert-card--error[data-placement="center"] {
-  animation:
-    lab-alert-center-in 240ms cubic-bezier(0.2, 0.85, 0.25, 1.12) both,
-    lab-alert-error-pulse 1250ms ease-in-out 270ms infinite alternate;
+  animation: lab-alert-center-in 240ms ease-out both;
 }
 
 .lab-alert-card--closing[data-placement="top-right"],
@@ -125,7 +121,7 @@
 
 .lab-alert-card__glow {
   position: absolute;
-  inset: -1px;
+  inset: 0;
   z-index: -1;
   border-radius: inherit;
   background:
@@ -137,10 +133,14 @@
 
 .lab-alert-card__main {
   position: relative;
+  padding: 24px 26px 22px;
+}
+
+.lab-alert-card__header {
   display: grid;
-  grid-template-columns: 46px minmax(0, 1fr) auto;
-  gap: 13px;
-  padding: 16px 15px 17px;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
 }
 
 .lab-alert-card__icon {
@@ -157,12 +157,14 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.32),
     0 0 18px var(--alert-accent-soft),
     0 5px 10px rgba(19, 9, 4, 0.38);
-  font-size: 22px;
+  font-size: 23px;
   line-height: 1;
 }
 
 .lab-alert-card__content {
   min-width: 0;
+  margin-top: 16px;
+  overflow-wrap: anywhere;
 }
 
 .lab-alert-card__meta {
@@ -189,32 +191,39 @@
 
 .lab-alert-card h2 {
   margin: 0;
+  overflow-wrap: anywhere;
   color: #fff8ea;
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 900;
-  line-height: 1.15;
+  line-height: 1.25;
   letter-spacing: 0;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.42);
 }
 
 .lab-alert-card p {
-  margin: 6px 0 0;
-  color: rgba(255, 246, 226, 0.84);
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.35;
-  text-align: justify;
+  margin: 0;
+  color: rgba(255, 246, 226, 0.94);
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.55;
+  text-align: left;
+  white-space: pre-line;
+}
+
+.lab-alert-card p + p {
+  margin-top: 12px;
 }
 
 .lab-alert-card__tools {
   display: flex;
+  grid-column: 3;
   gap: 6px;
 }
 
 .lab-alert-card__icon-button {
   display: grid;
-  width: 30px;
-  height: 30px;
+  width: 36px;
+  height: 36px;
   place-items: center;
   border: 1px solid rgba(255, 231, 184, 0.28);
   border-radius: 8px;
@@ -242,26 +251,32 @@
 
 .lab-alert-card__actions {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 9px;
-  padding: 0 15px 16px 74px;
+  padding: 14px 26px 18px;
+  border-top: 1px solid rgba(255, 230, 184, 0.14);
+  border-radius: 0 0 20px 20px;
+  background: rgba(25, 14, 10, 0.24);
 }
 
 .lab-alert-card__button {
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 44px;
+  min-width: 92px;
+  padding: 0 22px;
   border: 1px solid rgba(255, 230, 184, 0.28);
   border-radius: 8px;
   color: #fff8ea;
   background: rgba(42, 23, 13, 0.62);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 900;
   transition: transform 150ms ease, filter 150ms ease;
 }
 
 .lab-alert-card__button--primary {
+  min-width: 104px;
   border-color: color-mix(in srgb, var(--alert-accent) 76%, #ffe5aa);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--alert-accent) 58%, #91501e), #4a2411);
@@ -283,6 +298,11 @@
   cursor: not-allowed;
   filter: grayscale(0.3);
   opacity: 0.55;
+}
+
+.lab-alert-card button:focus-visible {
+  outline: 2px solid #fff0ce;
+  outline-offset: 3px;
 }
 
 .lab-alert-card__timer {
@@ -444,14 +464,20 @@
   }
 
   .lab-alert-region--center {
-    align-items: start;
-    padding-top: 62px;
+    padding: 16px;
+  }
+
+  .lab-alert-card[data-placement="center"] {
+    width: 100%;
   }
 
   .lab-alert-card__main {
+    padding: 18px;
+  }
+
+  .lab-alert-card__header {
     grid-template-columns: 40px minmax(0, 1fr) auto;
     gap: 10px;
-    padding: 14px 13px 16px;
   }
 
   .lab-alert-card__icon {
@@ -462,16 +488,24 @@
   }
 
   .lab-alert-card h2 {
-    font-size: 16px;
+    font-size: 18px;
   }
 
   .lab-alert-card p {
-    font-size: 12px;
+    font-size: 15px;
   }
 
   .lab-alert-card__actions {
-    padding-left: 63px;
+    padding: 12px 18px 18px;
   }
+}
+
+@media (max-height: 500px) {
+  .lab-alert-card__main { padding: 14px 20px; }
+  .lab-alert-card__content { margin-top: 10px; }
+  .lab-alert-card p { font-size: 14px; line-height: 1.4; }
+  .lab-alert-card p + p { margin-top: 8px; }
+  .lab-alert-card__actions { padding: 10px 20px 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

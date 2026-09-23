@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useReducer, useRef } from 'react'
 
 import { LabAlertContext } from './LabAlertContext.js'
 import LabAlertCard from './LabAlertCard.jsx'
-import LabAlertSpotlight from './LabAlertSpotlight.jsx'
 import { addExclusiveAudioListener, dispatchExclusiveAudioStart } from '../utils/audioCoordinator.js'
 import './labAlerts.css'
 
@@ -11,6 +10,13 @@ const DEFAULT_DURATIONS = {
   info: 4200,
   success: 3800,
   warning: 5600,
+}
+
+const DEFAULT_TITLES = {
+  error: 'Unable to Continue',
+  info: 'Experiment Guidance',
+  success: 'Success',
+  warning: 'Action Required',
 }
 
 const DEFAULT_ICONS = {
@@ -415,7 +421,7 @@ const LabAlertProvider = ({ children }) => {
       id,
       placement,
       requiresConfirmation,
-      title: alert.title ?? '',
+      title: alert.title?.trim() || DEFAULT_TITLES[type],
       type,
     }
   }, [])
@@ -487,7 +493,6 @@ const LabAlertProvider = ({ children }) => {
 
   const { centerAlert, topRightAlerts } = alertState
 
-  const spotlightAlert = centerAlert ?? topRightAlerts.at(-1)
   const hasCriticalAlert = Boolean(centerAlert?.critical)
 
   const contextValue = useMemo(() => ({
@@ -500,8 +505,6 @@ const LabAlertProvider = ({ children }) => {
   return (
     <LabAlertContext.Provider value={contextValue}>
       {children}
-
-      <LabAlertSpotlight target={spotlightAlert?.target} type={spotlightAlert?.type ?? 'info'} />
 
       {hasCriticalAlert ? <div aria-hidden="true" className="lab-alert-interaction-shield" /> : null}
 

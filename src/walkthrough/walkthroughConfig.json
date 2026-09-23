@@ -37,7 +37,7 @@
         "en": "AI Guide Button"
       },
       "description": {
-        "en": "To use this feature, click on the “AI Guide” button. The AI guide will assist you in performing the simulation accurately at each step."
+        "en": "The AI guide will assist you in performing the simulation accurately at each step."
       },
       "audio": "./walkthrough-audios/AI Guide Button.wav",
       "placement": "right"
@@ -141,6 +141,7 @@
     {
       "id": 12,
       "target": "#ammeter-bank",
+      "spotlightPadding": 0,
       "title": {
         "en": "DC Ammeters"
       },
@@ -196,7 +197,7 @@
       "description": {
         "en": "In this section, the recorded reading will be selected for theoretical verification, and the required resistance and current values will be calculated to verify KCL. In addition, after recording the observations, a current v/s voltage graph will be displayed using the measured readings for analysis."
       },
-      "audio": "./walkthrough-audios/graph.wav",
+      "audio": "./walkthrough-audios/Theoretical Verification.wav",
       "placement": "top"
     },
     {
@@ -208,7 +209,7 @@
       "description": {
         "en": " The Report button generates a summarised report of the simulation. After completing the observation table, graph and theoretical verification, generate the report. The report will include the time taken to complete the simulation, key parameters, recorded readings, graph, user-calculated results and conclusion."
       },
-      "audio": "./walkthrough-audios/Generate Report.wav",
+      "audio": "./walkthrough-audios/Generate Report .wav",
       "placement": "top"
     }
   ]

@@ -1,16 +1,16 @@
 const SPOTLIGHT_PADDING = 12
 const round = (value) => Math.round(value)
 
-const getSpotlightBox = (rect) => {
+const getSpotlightBox = (rect, padding) => {
   if (!rect) {
     return null
   }
 
   return {
-    height: round(Math.max(rect.height + SPOTLIGHT_PADDING * 2, 28)),
-    left: round(rect.left - SPOTLIGHT_PADDING),
-    top: round(rect.top - SPOTLIGHT_PADDING),
-    width: round(Math.max(rect.width + SPOTLIGHT_PADDING * 2, 28)),
+    height: round(Math.max(rect.height + padding * 2, 28)),
+    left: round(rect.left - padding),
+    top: round(rect.top - padding),
+    width: round(Math.max(rect.width + padding * 2, 28)),
   }
 }
 
@@ -72,8 +72,8 @@ const getBoxStyle = (box) => ({
   width: box.width,
 })
 
-const Spotlight = ({ rect }) => {
-  const spotlightBox = getSpotlightBox(rect)
+const Spotlight = ({ rect, padding = SPOTLIGHT_PADDING }) => {
+  const spotlightBox = getSpotlightBox(rect, padding)
   const dimPanels = getDimPanels(spotlightBox)
 
   return (

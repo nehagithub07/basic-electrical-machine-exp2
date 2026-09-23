@@ -10,6 +10,35 @@ const alertAudioModules = import.meta.glob('../audios/*', {
 
 const audioOnlyStepIds = new Set([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 23, 26, 32])
 
+const STEP_TITLES = {
+  1: 'Welcome to the AI Guide',
+  2: 'Walkthrough Complete',
+  11: 'Connections Complete',
+  12: 'Wrong Connection',
+  13: 'Wrong Connection',
+  14: 'Missing Connections',
+  15: 'Auto Connect Complete',
+  18: 'Check Connections First',
+  19: 'Connections Verified',
+  20: 'Set Resistance Values',
+  21: 'Resistance Values Selected',
+  22: 'Power Supply On',
+  23: 'Voltage Selected',
+  24: 'Reading Added',
+  25: 'Duplicate Reading',
+  26: 'Second Reading Added',
+  28: 'Five Readings Recorded',
+  29: 'Reading Limit Reached',
+  30: 'Graph Plotted',
+  31: 'Simulation Reset',
+  32: 'Print Simulation',
+  34: 'Missing Values',
+  35: 'Missing Value',
+  36: 'Incorrect Calculations',
+  37: 'KCL Verified',
+  38: 'Report Generated',
+}
+
 const getAlertAudio = (audio) => {
   if (!audio || audio === ALERT_AUDIO_PLACEHOLDER) {
     return ALERT_AUDIO_PLACEHOLDER
@@ -34,7 +63,7 @@ export const getInstructionStep = (guideStepId) => {
     audioSpeech: step.text,
     description: step.text,
     guideStepId: step.id,
-    title: '',
+    title: STEP_TITLES[step.id] ?? 'Connection Instructions',
   }
 }
 
