@@ -1,6 +1,8 @@
-import canvasScriptUrl from 'html2canvas/dist/html2canvas.min.js?url'
 import pdfScriptUrl from 'jspdf/dist/jspdf.umd.min.js?url'
-import { renderReportTemplate } from './reportTemplate.js'
+import regularFontUrl from '../assets/fonts/Inter-Report-Regular.ttf?url'
+import boldFontUrl from '../assets/fonts/Inter-Report-Bold.ttf?url'
+import { getReportPageScale } from './reportPagination.js'
+import { createReportPdf, readReportPdfContent } from './reportPdf.js'
 
 const GRAPH_VIEWBOX = {
   height: 410,
@@ -23,15 +25,33 @@ const GRAPH_SERIES = [
   { className: 'i3', color: '#3f8f43', key: 'i3', labelIndex: '3', labelOffset: -2 },
 ]
 
+const escapeHtml = (value) => String(value)
+  .replace(/&/g, '&amp;')
+  .replace(/</g, '&lt;')
+  .replace(/>/g, '&gt;')
+  .replace(/"/g, '&quot;')
+  .replace(/'/g, '&#39;')
+
 const toNumber = (value) => {
   const number = Number(value)
 
   return Number.isFinite(number) ? number : 0
 }
 
-const formatNumber = (value, fractionDigits = 2) => toNumber(value).toFixed(fractionDigits)
+const formatNumber = (value, fractionDigits = 3) => toNumber(value).toFixed(fractionDigits)
 
-const formatCurrentTick = (value) => formatNumber(value)
+const formatResistance = (value) => {
+  const resistance = toNumber(value) / 1000
+  return Number.isInteger(resistance) ? String(resistance) : formatNumber(resistance, 1)
+}
+
+const formatCurrentTick = (value) => {
+  if (value === 0) {
+    return '0'
+  }
+
+  return formatNumber(value, 2)
+}
 
 const getNiceMaxCurrent = (observations) => {
   const maxCurrent = observations.reduce(
@@ -121,7 +141,7 @@ const createReportGraphSvg = (observations) => {
       <g>
         <line class="report-graph__grid report-graph__grid--vertical" x1="${x}" x2="${x}" y1="${GRAPH_CHART.top}" y2="${chartBottom}" />
         <line class="report-graph__tick" x1="${x}" x2="${x}" y1="${chartBottom}" y2="${chartBottom + 7}" />
-        <text class="report-graph__tick-label" text-anchor="middle" x="${x}" y="${chartBottom + 27}">${formatNumber(tick)}</text>
+        <text class="report-graph__tick-label" text-anchor="middle" x="${x}" y="${chartBottom + 27}">${tick}</text>
       </g>
     `
   }).join('')
@@ -181,15 +201,15 @@ const createReportGraphSvg = (observations) => {
             .report-graph__grid { stroke: rgba(117, 88, 62, 0.2); stroke-width: 0.8; }
             .report-graph__grid--horizontal { stroke-dasharray: 4 8; }
             .report-graph__tick { stroke: rgba(74, 43, 31, 0.38); stroke-linecap: round; stroke-width: 1; }
-            .report-graph__tick-label { fill: #6a4b34; font-size: 18px; font-weight: 700; }
-            .report-graph__tick-label--y { font-size: 17px; }
-            .report-graph__axis-title { fill: #38271c; font-size: 20px; font-weight: 800; }
+            .report-graph__tick-label { fill: #6a4b34; font-size: 13px; font-weight: 700; }
+            .report-graph__tick-label--y { font-size: 12px; }
+            .report-graph__axis-title { fill: #38271c; font-size: 15px; font-weight: 800; }
             .report-graph__line { fill: none; stroke-linecap: round; stroke-linejoin: round; stroke-width: 2.2; }
             .report-graph__line--i1, .report-graph__point--i1 { stroke: #c83f35; }
             .report-graph__line--i2, .report-graph__point--i2 { stroke: #1579a8; }
             .report-graph__line--i3, .report-graph__point--i3 { stroke: #3f8f43; }
             .report-graph__point { fill: #ffffff; stroke-width: 1.6; }
-            .report-graph__series-label { dominant-baseline: middle; font-size: 18px; font-weight: 800; paint-order: stroke; stroke: #fffdf8; stroke-linejoin: round; stroke-width: 5px; }
+            .report-graph__series-label { dominant-baseline: middle; font-size: 13px; font-weight: 800; paint-order: stroke; stroke: #fffdf8; stroke-linejoin: round; stroke-width: 5px; }
             .report-graph__series-label--i1 { fill: #c83f35; }
             .report-graph__series-label--i2 { fill: #1579a8; }
             .report-graph__series-label--i3 { fill: #3f8f43; }
@@ -248,42 +268,854 @@ const createObservationRows = (observations) => (
     return `
       <tr>
         <td>${index + 1}</td>
-        <td>${formatNumber(row.voltage)}</td>
-        <td>${formatNumber(row.i1)}</td>
-        <td>${formatNumber(row.i2)}</td>
-        <td>${formatNumber(row.i3)}</td>
+        <td>${formatNumber(row.voltage, 2)}</td>
+        <td>${formatNumber(row.i1, 2)}</td>
+        <td>${formatNumber(row.i2, 2)}</td>
+        <td>${formatNumber(row.i3, 2)}</td>
       </tr>
     `
   }).join('')
 )
 
-export const createReportHtml = ({
-  baseHref, iitLogoSrc, virtualLabsLogoSrc, observations, resistances, sessionStart, verification,
+const createVerificationMarkup = (verification) => {
+  const verifications = Array.isArray(verification) ? verification : Object.values(verification ?? {})
+
+  if (!verifications.length) {
+    return '<p class="verification-empty">The theoretical verification has not yet been submitted.</p>'
+  }
+
+  const formatValue = (value) => (
+    value == null || String(value).trim() === '' || !Number.isFinite(Number(value))
+      ? '—' : formatNumber(value, 2)
+  )
+  const rows = [...verifications].sort((a, b) => a.readingId - b.readingId).map((entry, index) => {
+    const status = entry.result == null ? 'Pending' : entry.result.correct ? 'Verified' : 'Not verified'
+    const statusClass = entry.result == null ? 'is-pending' : entry.result.correct ? 'is-correct' : 'is-wrong'
+    return `<tr>
+      <td>${index + 1}</td>
+      <td scope="row">Reading ${escapeHtml(entry.readingId)} (${formatValue(entry.voltage)} V)</td>
+      <td>${formatValue(entry.answers?.equivalentResistance)} </td>
+      <td>${formatValue(entry.answers?.i1Result)}</td>
+      <td>${formatValue(entry.answers?.i2Result)}</td>
+      <td>${formatValue(entry.answers?.i3Result)}</td>
+      <td><span class="verification-report__status ${statusClass}">${status}</span></td>
+    </tr>`
+  }).join('')
+
+  return `<div class="table-shell"><table class="verification-report__table" aria-label="Theoretical verification">
+    <thead><tr><th scope="col">S.No</th><th scope="col">Verified Reading</th><th scope="col">R (kΩ)</th><th scope="col">I<sub>1</sub> (mA)</th><th scope="col">I<sub>2</sub> (mA)</th><th scope="col">I<sub>3</sub> (mA)</th><th scope="col">Status</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table></div>`
+}
+
+const createReportHtml = ({
+  baseHref,
+  iitLogoSrc,
+  observations,
+  resistances,
+  sessionStart,
+  verification,
+  virtualLabsLogoSrc,
 }) => {
   const reportDate = new Date()
-  const first = observations[0] ?? {}
-  return renderReportTemplate({
-    baseHref,
-    iitLogoSrc,
-    virtualLabsLogoSrc,
-    observations,
-    verification,
-    resistances: {
-      r1: toNumber(resistances?.r1 ?? first.r1),
-      r2: toNumber(resistances?.r2 ?? first.r2),
-      r3: toNumber(resistances?.r3 ?? first.r3),
-    },
-    observationRows: createObservationRows(observations),
-    graphSvg: createReportGraphSvg(observations),
-    reportDateText: reportDate.toLocaleDateString('en-GB'),
-    startTimeText: new Date(sessionStart).toLocaleTimeString(),
-    endTimeText: reportDate.toLocaleTimeString(),
-    durationText: getSessionDurationText(sessionStart, reportDate.getTime()),
-    assets: {
-      canvas: new URL(canvasScriptUrl, window.location.href).href,
-      pdf: new URL(pdfScriptUrl, window.location.href).href,
-    },
+  const sessionEnd = reportDate.getTime()
+  const reportDateText = reportDate.toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
   })
+  const startTimeText = new Date(sessionStart).toLocaleTimeString()
+  const endTimeText = reportDate.toLocaleTimeString()
+  const durationText = getSessionDurationText(sessionStart, sessionEnd)
+  const firstObservation = observations[0] ?? {}
+  const r1 = toNumber(resistances?.r1 ?? firstObservation.r1)
+  const r2 = toNumber(resistances?.r2 ?? firstObservation.r2)
+  const r3 = toNumber(resistances?.r3 ?? firstObservation.r3)
+  const observationRows = createObservationRows(observations)
+  const graphSvg = createReportGraphSvg(observations)
+  const verificationMarkup = createVerificationMarkup(verification)
+
+  const css = `
+body {
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  background: linear-gradient(180deg, #eef4fb 0%, #f7f9fc 100%);
+  color: #1f2d3d;
+  margin: 0;
+  padding: 18px 14px 30px;
+  font-size: 14px;
+  line-height: 1.42;
+  overflow-wrap: break-word;
+}
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+.report-page {
+  width: min(100%, 960px);
+  margin: 0 auto 18px;
+  padding: 22px 26px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  border: 1px solid #d3ddea;
+  box-shadow: 0 12px 28px rgba(23, 50, 77, 0.1);
+  break-inside: avoid-page;
+  page-break-inside: avoid;
+  overflow: visible;
+  background-clip: padding-box;
+}
+.report-page:last-of-type {
+  margin-bottom: 0;
+}
+h1,
+h2,
+h3 {
+  color: #1f2d3d;
+  margin-top: 0;
+  font-weight: 700;
+}
+h1 {
+  font-size: 28px;
+  margin: 0;
+  padding: 0;
+  line-height: 1.15;
+}
+h2 {
+  font-size: 20px;
+  margin-bottom: 12px;
+  color: #243b53;
+}
+h3 {
+  font-size: 15px;
+  margin-bottom: 7px;
+  color: #2d4b68;
+}
+p {
+  margin: 0 0 8px;
+}
+li {
+  margin-bottom: 4px;
+  text-align: justify;
+}
+.section {
+  background: linear-gradient(180deg, #f9fbfe 0%, #f4f7fb 100%);
+  padding: 16px 18px;
+  margin-bottom: 14px;
+  border-radius: 12px;
+  border: none;
+  box-shadow: none;
+  break-inside: auto;
+  page-break-inside: auto;
+  background-clip: padding-box;
+}
+.section:last-child {
+  margin-bottom: 0;
+}
+.section > h2:first-child {
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e1e9f3;
+}
+.label {
+  font-weight: 600;
+  color: #1f2d3d;
+}
+ul {
+  padding-left: 20px;
+  margin: 7px 0 0;
+}
+.two-column-list {
+  column-count: 2;
+  column-gap: 32px;
+  list-style-position: inside;
+  margin-top: 10px;
+}
+.report-overview-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.report-stamp {
+  margin: 0;
+  padding: 7px 11px;
+  border-radius: 999px;
+  background: #ffffff;
+  border: none;
+  color: #50657c;
+  font-size: 13px;
+  font-weight: 600;
+}
+.report-experiment-label {
+  margin: 0 0 6px;
+  font-size: 12px;
+  letter-spacing: 0;
+  text-transform: uppercase;
+  color: #60778f;
+  font-weight: 700;
+}
+.report-experiment-title {
+  margin: 0 0 14px;
+  font-size: 22px;
+  line-height: 1.3;
+  font-weight: 700;
+  color: #16324b;
+}
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+.info-card {
+  background: #fff;
+  border: none;
+  border-radius: 9px;
+  padding: 10px 12px;
+  box-shadow: none;
+  font-size: 13px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 4px;
+}
+.table-shell {
+  display: block;
+  width: 100%;
+  align-self: stretch;
+  overflow-x: auto;
+  overflow-y: visible;
+  border: none;
+  border-radius: 12px;
+  max-width: 100%;
+  background: #ffffff;
+  box-shadow: none;
+}
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 0;
+  box-shadow: none;
+  background-color: white;
+  table-layout: auto;
+}
+th,
+td {
+  border: 1px solid #d9e2ec;
+  padding: 9px 10px;
+  text-align: center;
+  font-size: 13px;
+  vertical-align: middle;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+th {
+  background: linear-gradient(135deg, #2f7bfa 0%, #1f62d0 100%);
+  border-color: #c6d7ec;
+  border-bottom-color: #b4cae5;
+  color: white;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+thead {
+  display: table-header-group;
+}
+tbody {
+  display: table-row-group;
+}
+tr {
+  break-inside: avoid-page;
+  page-break-inside: avoid;
+}
+tr:nth-child(even) {
+  background-color: #f8fbff;
+}
+.results-stack {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+.results-card {
+  background: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: none;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  overflow: visible;
+  background-clip: padding-box;
+}
+.results-card h3 {
+  margin: 0;
+  text-align: left;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+.results-card--table {
+  break-inside: auto;
+  page-break-inside: auto;
+}
+.results-card--graph {
+  break-inside: avoid-page;
+  page-break-inside: avoid;
+}
+.compact-table {
+  margin-top: 0;
+}
+.compact-table th,
+.compact-table td {
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.graph {
+  text-align: center;
+  margin-top: 0;
+}
+.report-graph-card {
+  padding: 14px;
+}
+.report-graph-card #report-graph {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+  min-height: 340px;
+  padding: 8px 0 0;
+  background: linear-gradient(180deg, #f8fbfe 0%, #eef5fb 100%);
+  border: none;
+  border-radius: 12px;
+  overflow: visible;
+  background-clip: padding-box;
+  box-shadow: none;
+}
+.report-graph-card #report-graph > * {
+  max-width: 100%;
+}
+.report-graph-card #report-graph em {
+  color: #5e738c;
+  font-style: normal;
+  font-weight: 600;
+}
+.report-graph__image {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+.report-graph__svg {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+.verification-report__status { display: inline-block; padding: 4px 8px; border-radius: 6px; font-weight: 700; }
+.verification-report__status.is-correct { color: #17633b; background: #e8f7ee; }
+.verification-report__status.is-wrong { color: #92372f; background: #fff0ee; }
+.verification-report__status.is-pending { color: #526579; background: #edf2f7; }
+.verification-report__table { table-layout: fixed; margin-top: 12px; }
+.verification-report__table caption { caption-side: bottom; padding-top: 8px; color: #66788a; font-size: 11px; text-align: left; }
+.verification-report__table th, .verification-report__table td { padding: 7px 8px; font-size: 11px; font-variant-numeric: tabular-nums; }
+.verification-report__table thead th:first-child { width: 6%; }
+.verification-report__table thead th:nth-child(2) { width: 26%; }
+.verification-report__table thead th:last-child { width: 24%; }
+.verification-report__table tbody th { color: #233a50; background: #f8fafc; border-color: #d9e2ec; text-align: left; font-weight: 600; }
+.verification-empty { color: #66788a; font-style: italic; }
+.report-graph__plot-bg {
+  fill: #fffdf8;
+  stroke: rgba(112, 82, 55, 0.28);
+  stroke-width: 1;
+}
+.report-graph__band:nth-of-type(odd) {
+  fill: rgba(51, 124, 102, 0.035);
+}
+.report-graph__band:nth-of-type(even) {
+  fill: rgba(210, 78, 58, 0.025);
+}
+.report-graph__axis {
+  fill: none;
+  stroke: #563927;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.4;
+}
+.report-graph__svg marker path {
+  fill: #563927;
+}
+.report-graph__grid {
+  stroke: rgba(117, 88, 62, 0.2);
+  stroke-width: 0.8;
+}
+.report-graph__grid--horizontal {
+  stroke-dasharray: 4 8;
+}
+.report-graph__tick {
+  stroke: rgba(74, 43, 31, 0.38);
+  stroke-linecap: round;
+  stroke-width: 1;
+}
+.report-graph__tick-label {
+  fill: #6a4b34;
+  font-size: 13px;
+  font-weight: 700;
+}
+.report-graph__tick-label--y {
+  font-size: 12px;
+}
+.report-graph__axis-title {
+  fill: #38271c;
+  font-size: 15px;
+  font-weight: 800;
+}
+.report-graph__line {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.2;
+}
+.report-graph__line--i1,
+.report-graph__point--i1 {
+  stroke: #c83f35;
+}
+.report-graph__line--i2,
+.report-graph__point--i2 {
+  stroke: #1579a8;
+}
+.report-graph__line--i3,
+.report-graph__point--i3 {
+  stroke: #3f8f43;
+}
+.report-graph__point {
+  fill: #ffffff;
+  stroke-width: 1.6;
+}
+.report-graph__series-label {
+  dominant-baseline: middle;
+  font-size: 13px;
+  font-weight: 800;
+  paint-order: stroke;
+  stroke: #fffdf8;
+  stroke-linejoin: round;
+  stroke-width: 5px;
+}
+.report-graph__series-label--i1 {
+  fill: #c83f35;
+}
+.report-graph__series-label--i2 {
+  fill: #1579a8;
+}
+.report-graph__series-label--i3 {
+  fill: #3f8f43;
+}
+.report-graph__series-label-sub {
+  baseline-shift: sub;
+  font-size: 72%;
+}
+.header-row {
+  display: grid;
+  grid-template-columns: 190px minmax(0, 1fr) 108px;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  break-inside: avoid-page;
+  page-break-inside: avoid;
+}
+.report-title-block {
+  text-align: center;
+  margin: 0;
+  padding-bottom: 10px;
+  border-bottom: 3px solid #2f7bfa;
+  min-width: 0;
+}
+.report-title-block h1 {
+  font-size: 25px;
+}
+.report-subtitle {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: #5c6f84;
+}
+.badge {
+  margin: 0;
+  padding: 7px 12px;
+  border-radius: 20px;
+  background: #e8f1ff;
+  color: #1f62d0;
+  font-weight: 600;
+  font-size: 12px;
+}
+.report-logo {
+  height: auto;
+  width: auto;
+  max-width: 108px;
+  max-height: 84px;
+  object-fit: contain;
+  flex-shrink: 0;
+  justify-self: center;
+}
+.report-logo--virtual-labs {
+  max-width: 190px;
+  max-height: 86px;
+  justify-self: start;
+}
+.report-logo--iit {
+  max-width: 88px;
+  max-height: 88px;
+  justify-self: end;
+}
+.report-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: min(100%, 960px);
+  margin: 20px auto 0;
+}
+.print-btn,
+.download-btn {
+  padding: 12px 24px;
+  font-size: 15px;
+  border: none;
+  border-radius: 30px;
+  color: white;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.print-btn {
+  background: linear-gradient(to right, #2f7bfa, #1f62d0);
+}
+.download-btn {
+  background: linear-gradient(to right, #28a745, #1f8d38);
+}
+.print-btn:hover,
+.download-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(31, 45, 61, 0.12);
+}
+@media (max-width: 768px) {
+  body {
+    padding: 20px 14px 30px;
+  }
+  .report-page {
+    margin-bottom: 18px;
+    padding: 20px 18px;
+    border-radius: 16px;
+  }
+  .header-row {
+    grid-template-columns: 1fr;
+    gap: 14px;
+    text-align: center;
+  }
+  .report-title-block {
+    padding-bottom: 12px;
+  }
+  .report-logo,
+  .report-logo--virtual-labs,
+  .report-logo--iit {
+    max-height: 72px;
+    justify-self: center;
+  }
+  .two-column-list {
+    column-count: 1;
+    column-gap: 0;
+  }
+  .compact-table th,
+  .compact-table td {
+    padding: 9px 8px;
+    font-size: 13px;
+  }
+  .report-actions {
+    justify-content: center;
+  }
+  .report-graph-card #report-graph {
+    min-height: 300px;
+  }
+}
+.report-output .report-document { width: 960px; font-size: 14px; line-height: 1.25; }
+.report-output .report-page { width: 100%; margin: 0; padding: 6px 0; border: none; border-radius: 0; box-shadow: none; break-before: auto; break-after: auto; break-inside: auto; page-break-before: auto; page-break-after: auto; page-break-inside: auto; }
+.report-output .section { padding: 10px 12px; margin-bottom: 8px; }
+.report-output .section > h2:first-child { margin-bottom: 6px; padding-bottom: 5px; }
+.report-output h2 { font-size: 17px; }
+.report-output h3 { font-size: 14px; margin-bottom: 4px; }
+.report-output p { margin-bottom: 5px; }
+.report-output .header-row { grid-template-columns: 150px minmax(0, 1fr) 86px; gap: 12px; margin-bottom: 8px; }
+.report-output .report-title-block h1 { font-size: 24px; }
+.report-output .report-logo { max-height: 60px; }
+.report-output .report-logo--virtual-labs { max-width: 150px; justify-self: start; }
+.report-output .report-logo--iit { max-width: 70px; justify-self: end; }
+.report-output .report-experiment-title { margin-bottom: 7px; font-size: 20px; }
+.report-output .report-overview-top { margin-bottom: 6px; }
+.report-output .info-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 6px; }
+.report-output .info-card { padding: 6px 8px; }
+.report-output .two-column-list { column-count: 2; column-gap: 24px; margin-top: 6px; }
+.report-output li { margin-bottom: 2px; }
+.report-output .results-stack { gap: 8px; }
+.report-output .results-card { padding: 8px; gap: 5px; }
+.report-output th, .report-output td { padding: 5px 7px; }
+.report-output .verification-report__table { margin-top: 0; }
+.report-output .verification-report__table caption { padding-top: 4px; }
+.report-output .report-graph-card #report-graph { height: 230px; min-height: 0; padding: 0; }
+.report-output .report-graph__svg, .report-output .report-graph__image { display: block; width: 100%; height: 230px; object-fit: contain; }
+.report-output .table-shell { overflow: visible; }
+@page { size: A4 portrait; margin: 8mm; }
+@media print {
+  *, *::before, *::after {
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+  html, body { width: 194mm; min-height: 0; margin: 0; padding: 0; background: #ffffff; }
+  .report-actions { display: none !important; }
+  #report-print-frame { position: relative; width: 194mm; height: var(--report-print-height); }
+  .report-output .report-document {
+    position: absolute;
+    top: 0;
+    left: 0;
+    margin: 0;
+    zoom: var(--report-print-scale, 1);
+  }
+}
+
+  `
+
+  return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kirchhoff Current Law Simulation Report</title>
+  <base href="${escapeHtml(baseHref)}">
+  <style>${css}</style>
+</head>
+<body id="report-root">
+  <div id="report-print-frame">
+  <main class="report-document" id="report-document">
+  <div class="report-page report-page--overview">
+    <div class="header-row">
+      <img src="${escapeHtml(virtualLabsLogoSrc)}" class="report-logo report-logo--virtual-labs" alt="Virtual Labs logo">
+      <div class="report-title-block">
+        <h1>Virtual Labs Simulation Report</h1>
+
+      </div>
+      <img src="${escapeHtml(iitLogoSrc)}" class="report-logo report-logo--iit" alt="Indian Institute of Technology Roorkee logo">
+    </div>
+
+    <div class="section report-overview">
+      <div class="report-overview-top">
+        <p class="badge">AI Enhanced Basic Electrical Science Lab</p>
+        <p class="report-stamp">Generated on ${escapeHtml(reportDateText)}</p>
+      </div>
+      <p class="report-experiment-label">Experiment Title</p>
+      <p class="report-experiment-title">To Verify Kirchhoff's Current Law</p>
+      <div class="info-grid">
+        <div class="info-card"><span class="label">Start Time:</span>${escapeHtml(startTimeText)}</div>
+        <div class="info-card"><span class="label">End Time:</span>${escapeHtml(endTimeText)}</div>
+        <div class="info-card"><span class="label">Total Time Spent:</span>${escapeHtml(durationText)}</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Summary</h2>
+      <h3>Aim</h3>
+      <p style="text-align: justify;">To verify Kirchhoff’s Current Law by measuring that the total current entering the junction is equal to the total current leaving it in a resistive DC circuit.
+</p>
+      <h3>Simulation Summary</h3>
+      <p style="text-align: justify;">The guided walkthrough familiarised the user with the simulation's interface. The circuit was connected, and the connections were verified successfully. The resistance values were selected, and the DC supply voltage was varied to measure the branch currents at different voltage values. The ammeter readings were recorded, and the measured currents were used to verify Kirchhoff’s Current Law (KCL) by confirming that the total current entering a junction is equal to the total current leaving the junction. Along with the KCL verification, the current v/s voltage graph was also plotted using the measured readings.</p>
+
+      <h3>Components and Key Parameters</h3>
+      <ul class="two-column-list">
+        <li>DC power supply: 15 V</li>
+        <li>DC Ammeter A<sub>1</sub> for total current I<sub>1</sub>: 0 - 10 mA</li>
+        <li>DC Ammeter A<sub>2</sub> for branch current I<sub>2</sub>: 0 - 10 mA</li>
+        <li>DC Ammeter A<sub>3</sub> for branch current I<sub>3</sub>: 0 - 10 mA</li>
+        <li>R<sub>1</sub>: ${formatResistance(r1)} k&Omega;</li>
+        <li>R<sub>2</sub>: ${formatResistance(r2)} k&Omega;</li>
+        <li>R<sub>3</sub>: ${formatResistance(r3)} k&Omega;</li>
+        <li>Connecting leads</li>
+      </ul>
+
+    </div>
+  </div>
+
+  <div class="report-page report-page--results">
+    <div class="section results-section">
+      <h2>Results</h2>
+      <div class="results-stack">
+        <div class="results-card results-card--table">
+          <h3>Observation Table</h3>
+          <div class="table-shell">
+            <table class="compact-table">
+              <thead>
+                <tr>
+                  <th>S.No.</th>
+                  <th>Voltage (V)</th>
+                  <th>I<sub>1</sub> (mA)</th>
+                  <th>I<sub>2</sub> (mA)</th>
+                  <th>I<sub>3</sub> (mA)</th>
+                </tr>
+              </thead>
+              <tbody>${observationRows}</tbody>
+            </table>
+          </div>
+        </div>
+
+
+      </div>
+    </div>
+  </div>
+
+  <div class="report-page report-page--graph">
+    <div class="section results-section">
+      <h2>GRAPH AND THEORETICAL VERIFICATION</h2>
+      <div class="results-stack">
+        <div class="graph report-graph-card results-card results-card--graph">
+          <h3 style="text-align: center;">Current v/s Voltage Graph</h3>
+          <div id="report-graph">${graphSvg}</div>
+        </div>
+
+        <div class="results-card verification-report-card">
+          <h3>Theoretical Verification</h3>
+          ${verificationMarkup}
+        </div>
+
+        <div class="results-card">
+          <h3>Conclusion</h3>
+          <p style="text-align: justify;">For each recorded voltage value, the total current I<sub>1</sub> was found to be equal to the sum of branch currents I<sub>2</sub> and I<sub>3</sub>. Moreover, the theoretically calculated currents were found to be the same as the recorded readings. Hence, Kirchhoff’s Current Law was successfully verified for the given resistive DC circuit.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  </main>
+  </div>
+
+  <div class="report-actions">
+    <button class="print-btn" type="button" onclick="printReport()">PRINT</button>
+    <button class="download-btn" type="button" onclick="downloadReport()">DOWNLOAD REPORT</button>
+  </div>
+
+  <script>
+    var getReportPageScale = ${getReportPageScale.toString()};
+    var createReportPdf = ${createReportPdf.toString()};
+    var readReportPdfContent = ${readReportPdfContent.toString()};
+    var reportGraph = ${JSON.stringify({ observations, maxCurrent: getNiceMaxCurrent(observations) }).replaceAll('<', '\\u003c')};
+    var reportAssets = ${JSON.stringify({
+      script: new URL(pdfScriptUrl, baseHref).href,
+      regularFont: new URL(regularFontUrl, baseHref).href,
+      boldFont: new URL(boldFontUrl, baseHref).href,
+      virtualLabsLogo: virtualLabsLogoSrc,
+      iitLogo: iitLogoSrc,
+    }).replaceAll('<', '\\u003c')};
+    var pdfAssetsPromise;
+    var downloadInProgress = false;
+
+    function waitForReportAssets() {
+      var images = Array.from(document.querySelectorAll('#report-document img'));
+      return Promise.all([
+        document.fonts ? document.fonts.ready : Promise.resolve(),
+        ...images.map(function(image) {
+          if (image.complete) return Promise.resolve();
+          return new Promise(function(resolve) {
+            image.addEventListener('load', resolve, { once: true });
+            image.addEventListener('error', resolve, { once: true });
+          });
+        })
+      ]);
+    }
+
+    function fitReportForPrint() {
+      document.body.classList.add('report-output');
+      var report = document.getElementById('report-document');
+      report.style.zoom = '1';
+      var width = Math.max(report.scrollWidth, report.getBoundingClientRect().width);
+      var height = Math.max(report.scrollHeight, report.getBoundingClientRect().height);
+      // A4 with 8 mm margins; reserve two pixels for browser rounding.
+      var scale = getReportPageScale(width, height, 194 * 96 / 25.4 - 2, 281 * 96 / 25.4 - 2);
+      document.documentElement.style.setProperty('--report-print-scale', scale);
+      document.documentElement.style.setProperty('--report-print-height', (height * scale) + 'px');
+      report.style.removeProperty('zoom');
+    }
+
+    function restoreReportLayout() {
+      document.body.classList.remove('report-output');
+      document.documentElement.style.removeProperty('--report-print-scale');
+      document.documentElement.style.removeProperty('--report-print-height');
+    }
+
+    function printReport() {
+      return waitForReportAssets().then(function() {
+        fitReportForPrint();
+        window.print();
+      });
+    }
+
+    window.addEventListener('beforeprint', fitReportForPrint);
+    window.addEventListener('afterprint', restoreReportLayout);
+
+    function loadPdfAssets() {
+      if (pdfAssetsPromise) return pdfAssetsPromise;
+      var scriptReady = window.jspdf ? Promise.resolve() : new Promise(function(resolve, reject) {
+        var script = document.createElement('script');
+        script.src = reportAssets.script;
+        script.onload = resolve;
+        script.onerror = function() { script.remove(); reject(new Error('Unable to load the PDF renderer.')); };
+        document.head.appendChild(script);
+      });
+      var readAsset = async function(url, asFont) {
+        var response = await fetch(url);
+        if (!response.ok) throw new Error('Unable to load report asset: ' + url);
+        var bytes = new Uint8Array(await response.arrayBuffer());
+        if (!asFont) return bytes;
+        var binary = '';
+        for (var offset = 0; offset < bytes.length; offset += 8192) {
+          binary += String.fromCharCode.apply(null, bytes.subarray(offset, offset + 8192));
+        }
+        return btoa(binary);
+      };
+      pdfAssetsPromise = Promise.all([
+        scriptReady,
+        readAsset(reportAssets.regularFont, true),
+        readAsset(reportAssets.boldFont, true),
+        readAsset(reportAssets.virtualLabsLogo, false),
+        readAsset(reportAssets.iitLogo, false)
+      ]).then(function(values) {
+        return { regularFont: values[1], boldFont: values[2], virtualLabsLogo: values[3], iitLogo: values[4] };
+      }).catch(function(error) {
+        pdfAssetsPromise = null;
+        throw error;
+      });
+      return pdfAssetsPromise;
+    }
+
+    async function downloadReport() {
+      if (downloadInProgress) return;
+      downloadInProgress = true;
+      var buttons = Array.from(document.querySelectorAll('.report-actions button'));
+      buttons.forEach(function(button) { button.disabled = true; });
+      try {
+        var assets = await loadPdfAssets();
+        var content = readReportPdfContent(document.getElementById('report-document'), reportGraph);
+        var pdf = createReportPdf(window.jspdf.jsPDF, content, assets);
+        if (pdf.internal.getNumberOfPages() !== 1) throw new Error('Report did not fit on one page.');
+        pdf.save('KCL Simulation Report.pdf');
+      } catch {
+        alert("Unable to download the report automatically. Please use PRINT and select Save as PDF.");
+      } finally {
+        downloadInProgress = false;
+        buttons.forEach(function(button) { button.disabled = false; });
+      }
+    }
+
+  </script>
+</body>
+</html>
+  `
 }
 
 export const prepareKclReport = ({ observations, resistances, sessionStart, verification }) => {

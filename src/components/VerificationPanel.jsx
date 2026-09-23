@@ -15,7 +15,7 @@ const VerificationInput = ({ disabled, label, name, onChange, unit, value }) => 
       min={VERIFICATION_FIELDS[name].min}
       max={VERIFICATION_FIELDS[name].max}
       placeholder={`${VERIFICATION_FIELDS[name].min}–${VERIFICATION_FIELDS[name].max}`}
-      title={`Enter ${VERIFICATION_FIELDS[name].min} to ${VERIFICATION_FIELDS[name].max} ${unit}`}
+      title={`Enter ${VERIFICATION_FIELDS[name].min} to ${VERIFICATION_FIELDS[name].max} ${unit}, up to 2 decimal places`}
       name={name}
       onChange={(event) => onChange(event.target.value)}
       onBlur={() => {
@@ -59,7 +59,8 @@ const VerificationPanel = ({ observations, onVerificationChange, onVerificationR
   }, [])
 
   const updateAnswer = (name, value) => {
-    if (!reading || (value !== '' && !isWithinVerificationRange(name, value))) return
+    if (!reading || !/^\d*(?:\.\d{0,2})?$/.test(value)
+      || (value !== '' && !isWithinVerificationRange(name, value))) return
     const nextAnswers = { ...answers, [name]: value }
     setDrafts((current) => ({ ...current, [readingId]: { answers: nextAnswers, result: null } }))
     // Keep report eligibility tied to the latest submitted values for this reading.

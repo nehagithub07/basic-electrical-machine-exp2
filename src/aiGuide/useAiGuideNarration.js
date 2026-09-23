@@ -6,20 +6,6 @@ import { addExclusiveAudioListener, dispatchExclusiveAudioStart } from '../utils
 
 const AI_GUIDE_AUDIO_SOURCE_ID = 'ai-guide'
 
-const canUseSpeechSynthesis = () => (
-  typeof window !== 'undefined'
-  && typeof window.speechSynthesis !== 'undefined'
-  && typeof window.SpeechSynthesisUtterance !== 'undefined'
-)
-
-const getSpeechLang = (locale) => {
-  if (!locale) {
-    return 'en-US'
-  }
-
-  return locale.includes('-') ? locale : `${locale}-US`
-}
-
 export const useAiGuideNarration = ({
   config = defaultAiGuideConfig,
   locale,
@@ -69,59 +55,6 @@ export const useAiGuideNarration = ({
     setIsPlaying(false)
   }, [pause])
 
-  const speakText = useCallback((text) => new Promise((resolve, reject) => {
-    if (!canUseSpeechSynthesis()) {
-      reject(new Error('Speech synthesis is not available in this browser.'))
-      return
-    }
-
-    dispatchExclusiveAudioStart(AI_GUIDE_AUDIO_SOURCE_ID)
-    window.speechSynthesis.cancel()
-
-    const utterance = new SpeechSynthesisUtterance(text)
-    let settled = false
-
-    const settle = (callback) => {
-      if (settled) {
-        return
-      }
-
-      settled = true
-      utterance.onend = null
-      utterance.onerror = null
-
-      if (currentPlaybackRef.current?.utterance === utterance) {
-        currentPlaybackRef.current = null
-      }
-
-      callback()
-    }
-
-    utterance.lang = getSpeechLang(guideConfig.locale)
-    utterance.rate = 0.95
-    utterance.pitch = 1
-
-    utterance.onend = () => settle(resolve)
-    utterance.onerror = (event) => {
-      if (event.error === 'canceled' || event.error === 'interrupted') {
-        settle(resolve)
-        return
-      }
-
-      settle(() => reject(new Error(`Speech synthesis failed: ${event.error}`)))
-    }
-
-    currentPlaybackRef.current = {
-      stop: () => {
-        settle(resolve)
-        window.speechSynthesis.cancel()
-      },
-      utterance,
-    }
-
-    window.speechSynthesis.speak(utterance)
-  }), [guideConfig.locale])
-
   const playAudio = useCallback((audioSource) => new Promise((resolve, reject) => {
     const audio = new Audio(audioSource)
     let settled = false
@@ -168,22 +101,6 @@ export const useAiGuideNarration = ({
     })
   }), [])
 
-  const playStep = useCallback(async (step, runId) => {
-    if (isConfiguredAudioSource(step.audio)) {
-      try {
-        await playAudio(step.audio)
-        return
-      } catch (error) {
-        if (runIdRef.current !== runId || !isActiveRef.current) return
-        if (!step.text) {
-          throw error
-        }
-      }
-    }
-
-    if (runIdRef.current === runId && isActiveRef.current) await speakText(step.text)
-  }, [playAudio, speakText])
-
   const playStepById = useCallback(async (stepId, sequenceId) => {
     if (sequenceId === undefined) sequenceIdRef.current += 1
     else if (sequenceId !== sequenceIdRef.current) return false
@@ -212,7 +129,7 @@ export const useAiGuideNarration = ({
     setHighlightedStepId(waitsForInstruction ? null : step.id)
 
     try {
-      await playStep(step, runId)
+      if (isConfiguredAudioSource(step.audio)) await playAudio(step.audio)
       const completed = runIdRef.current === runId && isActiveRef.current
 
       if (completed) {
@@ -230,49 +147,18 @@ export const useAiGuideNarration = ({
 
       return false
     }
-  }, [guideConfig.steps, onError, playStep, stopCurrentPlayback])
-
-  const playText = useCallback(async (text, { activeStepId: playbackStepId = null } = {}) => {
-    if (!text || !isActiveRef.current) {
-      return false
-    }
-
-    sequenceIdRef.current += 1
-    const runId = runIdRef.current + 1
-    runIdRef.current = runId
-    stopCurrentPlayback()
-    setActiveStepId(playbackStepId)
-    setHighlightedStepId(playbackStepId)
-
-    try {
-      await speakText(text)
-      const completed = runIdRef.current === runId
-
-      if (completed) {
-        setActiveStepId(null)
-      }
-
-      return completed
-    } catch (error) {
-      if (runIdRef.current === runId) {
-        setActiveStepId(null)
-        onError?.(error)
-      }
-
-      return false
-    }
-  }, [onError, speakText, stopCurrentPlayback])
+  }, [guideConfig.steps, onError, playAudio, stopCurrentPlayback])
 
   const playAudioSource = useCallback(async (
     audioSource,
-    { activeStepId: playbackStepId = null, fallbackText = '' } = {},
+    { activeStepId: playbackStepId = null } = {},
   ) => {
     if (!isActiveRef.current) {
       return false
     }
 
     if (!isConfiguredAudioSource(audioSource)) {
-      return fallbackText ? playText(fallbackText, { activeStepId: playbackStepId }) : false
+      return false
     }
 
     sequenceIdRef.current += 1
@@ -295,16 +181,12 @@ export const useAiGuideNarration = ({
       if (runIdRef.current === runId) {
         setActiveStepId(null)
 
-        if (fallbackText) {
-          return playText(fallbackText, { activeStepId: playbackStepId })
-        }
-
         onError?.(error)
       }
 
       return false
     }
-  }, [onError, playAudio, playText, stopCurrentPlayback])
+  }, [onError, playAudio, stopCurrentPlayback])
 
   const playStepsById = useCallback(async (stepIds) => {
     if (!Array.isArray(stepIds) || !isActiveRef.current) {
@@ -363,7 +245,6 @@ export const useAiGuideNarration = ({
     playAudioSource,
     playStepById,
     playStepsById,
-    playText,
     pause,
     silence,
     start,

@@ -8,10 +8,6 @@ const isConfiguredAudioSource = (audioSource) => (
   typeof audioSource === 'string' && audioSource.trim() !== '' && audioSource.trim() !== '#'
 )
 
-const hasSpeechText = (speechText) => (
-  typeof speechText === 'string' && speechText.trim() !== ''
-)
-
 const dispatchLabAlertEvent = (eventName, detail) => {
   if (typeof window === 'undefined') {
     return
@@ -46,12 +42,10 @@ const LabAlertCard = ({ alert, onDismiss }) => {
   } = alert
   const audioSource = alert.audio ?? alert.audioSource
   const followUpAudio = alert.followUpAudio ?? alert.audioAfter
-  const audioSpeech = alert.audioSpeech ?? alert.speech
   const waitsForAudio = !requiresConfirmation && (
     Boolean(guideNarration)
     || isConfiguredAudioSource(audioSource)
     || isConfiguredAudioSource(followUpAudio)
-    || hasSpeechText(audioSpeech)
   )
   const [audioPlaybackComplete, setAudioPlaybackComplete] = useState(!waitsForAudio)
   const hasProgressTimer = !requiresConfirmation && Number.isFinite(duration) && duration > 0
@@ -122,12 +116,11 @@ const LabAlertCard = ({ alert, onDismiss }) => {
       followUpAudio,
       id,
       sound: alert.sound ?? type,
-      speech: audioSpeech,
       stepNumber,
       title,
       type,
     })
-  }, [alert.sound, audioSource, audioSpeech, followUpAudio, id, stepNumber, title, type])
+  }, [alert.sound, audioSource, followUpAudio, id, stepNumber, title, type])
 
   useEffect(() => {
     if (!hasProgressTimer || (waitsForAudio && !audioPlaybackComplete)) {

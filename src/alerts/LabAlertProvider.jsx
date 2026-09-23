@@ -35,20 +35,6 @@ const isConfiguredAudioSource = (audioSource) => (
   typeof audioSource === 'string' && audioSource.trim() !== '' && audioSource.trim() !== '#'
 )
 
-const hasSpeechText = (speechText) => (
-  typeof speechText === 'string' && speechText.trim() !== ''
-)
-
-const canUseSpeechSynthesis = () => (
-  typeof window !== 'undefined'
-  && typeof window.speechSynthesis !== 'undefined'
-  && typeof window.SpeechSynthesisUtterance !== 'undefined'
-)
-
-const getSpeechLang = () => (
-  typeof navigator !== 'undefined' && navigator.language ? navigator.language : 'en-US'
-)
-
 const dispatchLabAlertEvent = (eventName, detail) => {
   if (typeof window === 'undefined') {
     return
@@ -150,12 +136,10 @@ const LabAlertProvider = ({ children }) => {
       const audioSource = event.detail?.audio
       const alertId = event.detail?.id
       const followUpAudio = event.detail?.followUpAudio
-      const speechText = event.detail?.speech
 
       if (
         !isConfiguredAudioSource(audioSource)
         && !isConfiguredAudioSource(followUpAudio)
-        && !hasSpeechText(speechText)
       ) {
         return
       }
@@ -170,7 +154,6 @@ const LabAlertProvider = ({ children }) => {
         segmentStop: null,
         stop: null,
         stopped: false,
-        utterance: null,
       }
       let settled = false
 
@@ -182,7 +165,6 @@ const LabAlertProvider = ({ children }) => {
         settled = true
         playback.segmentStop = null
         playback.audio = null
-        playback.utterance = null
 
         if (alertAudioRef.current === playback) {
           alertAudioRef.current = null
@@ -251,66 +233,6 @@ const LabAlertProvider = ({ children }) => {
         })
       })
 
-      const playSpeechText = (text) => new Promise((resolve, reject) => {
-        const normalizedText = typeof text === 'string' ? text.trim() : ''
-
-        if (!normalizedText || playback.stopped || !canUseSpeechSynthesis()) {
-          resolve()
-          return
-        }
-
-        window.speechSynthesis.cancel()
-
-        const utterance = new SpeechSynthesisUtterance(normalizedText)
-        let segmentSettled = false
-
-        function cleanup() {
-          utterance.onend = null
-          utterance.onerror = null
-        }
-
-        function settleSegment(callback) {
-          if (segmentSettled) {
-            return
-          }
-
-          segmentSettled = true
-          cleanup()
-
-          if (playback.utterance === utterance) {
-            playback.utterance = null
-          }
-
-          if (playback.segmentStop === stopSegment) {
-            playback.segmentStop = null
-          }
-
-          callback()
-        }
-
-        function stopSegment() {
-          settleSegment(resolve)
-          window.speechSynthesis.cancel()
-        }
-
-        utterance.lang = getSpeechLang()
-        utterance.rate = 0.95
-        utterance.pitch = 1
-        utterance.onend = () => settleSegment(resolve)
-        utterance.onerror = (speechEvent) => {
-          if (speechEvent.error === 'canceled' || speechEvent.error === 'interrupted') {
-            settleSegment(resolve)
-            return
-          }
-
-          settleSegment(() => reject(new Error(`Alert speech failed: ${speechEvent.error}`)))
-        }
-
-        playback.utterance = utterance
-        playback.segmentStop = stopSegment
-        window.speechSynthesis.speak(utterance)
-      })
-
       playback.finish = finishPlayback
       playback.stop = (reason = 'stopped') => {
         if (playback.stopped) {
@@ -325,28 +247,11 @@ const LabAlertProvider = ({ children }) => {
 
       const playAlertSound = async () => {
         try {
-          let needsSpeech = !isConfiguredAudioSource(audioSource)
-          try {
-            await playAudioSource(audioSource)
-          } catch {
-            needsSpeech = true
-          }
-
-          if (playback.stopped) {
-            return
-          }
+          await playAudioSource(audioSource)
+          if (playback.stopped) return
 
           await playAudioSource(followUpAudio)
-
-          if (playback.stopped) {
-            return
-          }
-
-          if (needsSpeech) await playSpeechText(speechText)
-
-          if (playback.stopped) {
-            return
-          }
+          if (playback.stopped) return
 
           finishPlayback('ended')
         } catch {

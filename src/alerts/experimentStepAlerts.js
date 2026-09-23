@@ -49,7 +49,6 @@ const getAlertAudio = (audio) => {
 }
 
 // The guide and alerts use the same exact script and recording for each event.
-// audioSpeech is fallback metadata; a recording and synthesized speech must not both play.
 export const getInstructionStep = (guideStepId) => {
   const step = aiGuideConfig.steps.find((entry) => entry.id === Number(guideStepId))
 
@@ -60,7 +59,6 @@ export const getInstructionStep = (guideStepId) => {
   return {
     audio: getAlertAudio(step.audio),
     audioOnly: audioOnlyStepIds.has(step.id),
-    audioSpeech: step.text,
     description: step.text,
     guideStepId: step.id,
     title: STEP_TITLES[step.id] ?? 'Connection Instructions',

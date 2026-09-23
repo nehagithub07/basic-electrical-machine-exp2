@@ -1907,20 +1907,20 @@ input:focus-visible {
 
 @page {
   size: A4 portrait;
-  margin: 6mm;
+  margin: 8mm;
 }
 
 @media print {
   html,
   body,
   #root {
-    width: 198mm !important;
+    width: 194mm !important;
     height: auto !important;
     min-width: 0 !important;
     min-height: 0 !important;
     margin: 0 !important;
     padding: 0 !important;
-    overflow: visible !important;
+    overflow: hidden !important;
     scrollbar-gutter: auto !important;
     background: #2b170d !important;
   }
@@ -1934,15 +1934,15 @@ input:focus-visible {
 
   #app-wrapper,
   #app-viewport {
-    width: 198mm !important;
-    height: 861.08px !important;
+    width: 194mm !important;
+    height: 849.376px !important;
     min-width: 0 !important;
     min-height: 0 !important;
     max-width: none !important;
     max-height: none !important;
     margin: 0 !important;
     padding: 0 !important;
-    overflow: visible !important;
+    overflow: hidden !important;
   }
 
   #app-wrapper {
@@ -1962,8 +1962,8 @@ input:focus-visible {
     height: 1672px !important;
     transform: none !important;
     transform-origin: top left !important;
-    /* Fit all 1440 × 1672 pixels, including the footer, within one A4 page. */
-    zoom: 0.515 !important;
+    /* 1440 × 1672, including the footer, fits inside one A4 page. */
+    zoom: 0.508 !important;
   }
 
   .simulation-shell {
@@ -1980,6 +1980,10 @@ input:focus-visible {
     overflow: hidden !important;
     break-inside: avoid !important;
     page-break-inside: avoid !important;
+  }
+
+  .graph-panel__body {
+    overflow: hidden !important;
   }
 
   .graph-panel__chart {

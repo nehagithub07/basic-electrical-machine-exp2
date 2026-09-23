@@ -238,7 +238,6 @@ const App = () => {
     if (!preset.audioOnly || overrides.audioOnly === false) {
       showStepAlert(preset, {
         audio: aiGuidePlaying ? ALERT_AUDIO_PLACEHOLDER : preset.audio,
-        audioSpeech: aiGuidePlaying ? null : preset.audioSpeech,
         guideNarration: narration,
         onStopNarration: aiGuidePlaying ? silenceAiGuide : undefined,
         replaceExisting: true,
@@ -278,7 +277,6 @@ const App = () => {
     if (!preset.audioOnly) {
       showStepAlert(preset, {
         audio: ALERT_AUDIO_PLACEHOLDER,
-        audioSpeech: null,
         guideNarration: narration,
         onStopNarration: silenceAiGuide,
         replaceExisting: true,

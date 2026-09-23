@@ -83,10 +83,27 @@ describe('VerificationPanel existing behavior', () => {
     render(<VerificationPanel observations={observations} plotted />)
     selectReading(1)
     const input = screen.getByRole('spinbutton', { name: 'Equivalent resistance' })
-    fireEvent.change(input, { target: { value: '1.567' } })
-    expect(input.value).toBe('1.567')
+    fireEvent.change(input, { target: { value: '1.5' } })
+    expect(input.value).toBe('1.5')
     fireEvent.blur(input)
-    expect(input.value).toBe('1.57')
+    expect(input.value).toBe('1.50')
+  })
+
+  it('rejects excess decimals, exponent notation, and out-of-range edits in every field', () => {
+    render(<VerificationPanel observations={observations} plotted />)
+    selectReading(1)
+    for (const input of screen.getAllByRole('spinbutton')) {
+      fireEvent.change(input, { target: { value: '1.23' } })
+      expect(input.value).toBe('1.23')
+      for (const value of ['1.234', '2.999', '1e0', '-0.01', String(Number(input.max) + 0.01), String(Number(input.min) - 0.01)]) {
+        fireEvent.change(input, { target: { value } })
+        expect(input.value).toBe('1.23')
+      }
+      for (const value of [input.min, input.max, '']) {
+        fireEvent.change(input, { target: { value } })
+        expect(input.value).toBe(value)
+      }
+    }
   })
 
   it('enables answers and verification only after plotting and selecting a reading', () => {
