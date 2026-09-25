@@ -20,8 +20,8 @@
     },
     {
       "id": 4,
-      "text": "Let's move on to the next connection. Connect terminal 2 to terminal 10.",
-      "audio": "./audios/Let's move on to the next connection.wav"
+      "text": "Connect terminal 2 to terminal 10.",
+      "audio": "./audios/Connect terminal 2 to terminal 10.wav"
     },
     {
       "id": 5,
