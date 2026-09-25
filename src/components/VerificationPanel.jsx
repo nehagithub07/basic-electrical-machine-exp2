@@ -1,20 +1,22 @@
 import { useEffect, useRef, useState } from 'react'
 import { EXPERIMENT_ALERTS } from '../alerts/experimentStepAlerts.js'
-import { EMPTY_ANSWERS, VERIFICATION_FIELDS, getExpectedAnswers, isWithinVerificationRange, verifyAnswers } from '../utils/verification.js'
+import { EMPTY_ANSWERS, VERIFICATION_FIELDS, getExpectedAnswers, getValueFeedback, isWithinVerificationRange, verifyAnswers } from '../utils/verification.js'
 
 const formatAnswer = (value) => value !== '' && Number.isFinite(Number(value)) ? Number(value).toFixed(2) : value
 
-const VerificationInput = ({ disabled, label, name, onChange, unit, value }) => (
+const VerificationInput = ({ disabled, feedback, label, name, onChange, unit, value }) => (
   <label className="verification-panel__input-wrap">
     <span className="sr-only">{label}</span>
     <input
       aria-label={label}
-      className="verification-panel__input"
+      aria-describedby={feedback ? `verification-feedback-${name}` : undefined}
+      aria-invalid={feedback ? feedback !== 'Matches' : undefined}
+      className={`verification-panel__input${feedback ? ` verification-panel__input--${feedback === 'Matches' ? 'correct' : 'incorrect'}` : ''}`}
       disabled={disabled}
       inputMode="decimal"
       min={VERIFICATION_FIELDS[name].min}
       max={VERIFICATION_FIELDS[name].max}
-      placeholder={`${VERIFICATION_FIELDS[name].min}–${VERIFICATION_FIELDS[name].max}`}
+      placeholder={disabled ? '' : `${VERIFICATION_FIELDS[name].min}–${VERIFICATION_FIELDS[name].max}`}
       title={`Enter ${VERIFICATION_FIELDS[name].min} to ${VERIFICATION_FIELDS[name].max} ${unit}, up to 2 decimal places`}
       name={name}
       onChange={(event) => onChange(event.target.value)}
@@ -26,6 +28,7 @@ const VerificationInput = ({ disabled, label, name, onChange, unit, value }) => 
       type="number"
       value={value}
     />
+    {feedback && <span className="sr-only" id={`verification-feedback-${name}`}>{feedback === 'Matches' ? 'Correct value' : feedback}</span>}
     {unit && <span className="verification-panel__unit">{unit}</span>}
   </label>
 )
@@ -37,7 +40,7 @@ const VerificationPanel = ({ observations, onVerificationChange, onVerificationR
   const [readingId, setReadingId] = useState('')
   const [drafts, setDrafts] = useState({})
   const reading = observations.find((row) => String(row.id) === readingId)
-  const { answers } = drafts[readingId] ?? EMPTY_DRAFT
+  const { answers, result } = drafts[readingId] ?? EMPTY_DRAFT
   const expected = getExpectedAnswers(reading)
 
   useEffect(() => {
@@ -68,7 +71,7 @@ const VerificationPanel = ({ observations, onVerificationChange, onVerificationR
   }
 
   const field = (name, label, unit) => (
-    <VerificationInput disabled={!plotted || !reading} label={label} name={name} onChange={(value) => updateAnswer(name, value)} unit={unit ?? VERIFICATION_FIELDS[name].unit} value={answers[name]} />
+    <VerificationInput disabled={!plotted || !reading} feedback={result ? getValueFeedback(answers[name], expected[name], true) : ''} label={label} name={name} onChange={(value) => updateAnswer(name, value)} unit={unit ?? VERIFICATION_FIELDS[name].unit} value={answers[name]} />
   )
 
   const verify = () => {
@@ -86,7 +89,7 @@ const VerificationPanel = ({ observations, onVerificationChange, onVerificationR
       <div className="verification-panel__toolbar">
         <h3>Verification for</h3>
         <select aria-label="Select reading to verify" disabled={!plotted} onChange={(event) => setReadingId(event.target.value)} value={readingId}>
-          <option value="">Select reading</option>
+          <option value="">{plotted ? 'Select reading' : ''}</option>
           {observations.map((row) => <option key={row.id} value={row.id}>Reading {row.id} — {row.voltage.toFixed(2)} V</option>)}
         </select>
       </div>

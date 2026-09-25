@@ -76,7 +76,7 @@ const buttons = [
 const instructionSteps = [
   {
     number: 1,
-    text: 'Make connections as per the instructions given below by drag and drop the wire from terminals.',
+    text: 'Make connections as per the instructions given below by drag and drop the wire from the terminals, or use Autoconnect to make the connections automatically.',
     substeps: [
       'Connect power supply to the circuit (1-9, 2-10).',
       'Connect ammeters (3-11, 4-12), (5-13, 6-14) and (7-15, 8-16).',
@@ -85,7 +85,7 @@ const instructionSteps = [
   },
   {
     number: 2,
-    text: "Check manual connections by clicking 'CHECK'. Auto Connect verifies and locks the circuit automatically.",
+    text: 'Check the manual connections by clicking the ‘CHECK’ button. Autoconnect will automatically verify the connections.',
   },
   {
     number: 3,
@@ -93,7 +93,7 @@ const instructionSteps = [
   },
   {
     number: 4,
-    text: "Click the 'Power' button to turn on the power supply.",
+    text: "Click the 'Power' button to turn ON the power supply.",
   },
   {
     number: 5,
@@ -113,11 +113,19 @@ const instructionSteps = [
   },
   {
     number: 9,
-    text: 'Select a reading, use Equations to calculate the values, and click Verify KCL. After at least one successful verification, click Generate Report and confirm with OK.',
+    text: 'In the Theoretical Verification section, select a reading to verify, enter the required calculated values, and click the ‘Verify’ button to verify the reading.',
   },
   {
     number: 10,
-    text: "Click on 'RESET' button to refresh the simulation.",
+    text: 'Click the ‘Generate Report’ button to generate the simulation report after completing at least one successful verification.',
+  },
+  {
+    number: 11,
+    text: 'Click on the ‘PRINT’ button to print the simulation or simulation report.',
+  },
+  {
+    number: 12,
+    text: 'Click on the ‘RESET’ button to refresh the simulation.',
   },
 ]
 
@@ -211,6 +219,7 @@ const ActionButtons = ({
           </div>
 
           <div className="action-instructions-panel__body">
+            <p className="action-instructions-panel__intro"><strong>AI Guide:</strong> The AI guide will assist you in performing the simulation accurately at each step.</p>
             <ol className="action-instructions-panel__steps">
               {instructionSteps.map((step) => {
                 const isActive = step.number === activeInstructionStep

@@ -64,10 +64,13 @@ const getAiGuideConnectionStepId = (terminalIds) => {
 
 const getActiveInstructionStep = ({
   allResistanceValuesAdjusted,
+  canGenerateReport,
   connectionsReadyForCheck,
   connectionsVerified,
   graphGenerated,
+  hasDuplicateReading,
   powerOn,
+  printRequested,
   readingCount,
   reportGenerated,
   voltageAdjusted,
@@ -93,11 +96,13 @@ const getActiveInstructionStep = ({
       return 8
     }
 
-    return reportGenerated ? 10 : 9
+    if (!canGenerateReport) return 9
+    if (!reportGenerated) return 10
+    return printRequested ? 12 : 11
   }
 
   if (readingCount > 0) {
-    return 7
+    return voltageAdjusted && !hasDuplicateReading ? 6 : 7
   }
 
   return voltageAdjusted ? 6 : 5
@@ -139,6 +144,7 @@ const App = () => {
   const [observations, setObservations] = useState([])
   const [graphGenerated, setGraphGenerated] = useState(false)
   const [reportGenerated, setReportGenerated] = useState(false)
+  const [printRequested, setPrintRequested] = useState(false)
   const [verificationReport, setVerificationReport] = useState({})
   const [status, setStatus] = useState('')
 
@@ -198,20 +204,26 @@ const App = () => {
   const activeInstructionStep = useMemo(
     () => getActiveInstructionStep({
       allResistanceValuesAdjusted,
+      canGenerateReport,
       connectionsReadyForCheck,
       connectionsVerified,
       graphGenerated,
+      hasDuplicateReading,
       powerOn,
+      printRequested,
       readingCount,
       reportGenerated,
       voltageAdjusted,
     }),
     [
       allResistanceValuesAdjusted,
+      canGenerateReport,
       connectionsReadyForCheck,
       connectionsVerified,
       graphGenerated,
+      hasDuplicateReading,
       powerOn,
+      printRequested,
       readingCount,
       reportGenerated,
       voltageAdjusted,
@@ -450,6 +462,7 @@ const App = () => {
     setGraphGenerated(false)
     setReportGenerated(false)
     setVerificationReport({})
+    setPrintRequested(false)
     setAutoConnectRequest(0)
     setAutoConnecting(false)
     setCheckRequest(0)
@@ -476,9 +489,13 @@ const App = () => {
   }
 
    const handlePrint = () => {
+     const printSimulation = () => {
+       window.print()
+       setPrintRequested(true)
+     }
      if (aiGuidePlaying) {
        announceStep(EXPERIMENT_ALERTS.print).then((completed) => {
-         if (completed) window.print()
+         if (completed) printSimulation()
        })
        return
      }
@@ -487,12 +504,12 @@ const App = () => {
      audio.play()
        .then(() => {
          setTimeout(() => {
-           window.print()
+           printSimulation()
          }, 300)
        })
        .catch((error) => {
          console.warn('Unable to play print audio:', error)
-         window.print()
+         printSimulation()
        })
    }
   const handleGenerateReport = () => {
@@ -505,6 +522,7 @@ const App = () => {
       verification: verificationReport,
     })
     pendingReportRef.current = report
+    setPrintRequested(false)
     setReportGenerated(true)
     announceStep(EXPERIMENT_ALERTS.reportGenerated, {
       critical: true,
@@ -637,21 +655,21 @@ const App = () => {
   //     }
   //   }
   // }, [announceStep, powerOn])
-   const handleVoltageChange = useCallback((nextVoltage) => {
-  const voltageChanged = nextVoltage !== INITIAL_VOLTAGE
+  const handleVoltageChange = useCallback((nextVoltage) => {
+    const voltageChanged = nextVoltage !== voltage
 
-  setVoltage(nextVoltage)
+    setVoltage(nextVoltage)
 
-  // A fresh voltage selection is required before each reading can be added.
-  if (powerOn && voltageChanged) {
-    setVoltageAdjusted(true)
+    // A fresh voltage selection is required before each reading can be added.
+    if (powerOn && voltageChanged) {
+      setVoltageAdjusted(true)
 
-    if (!voltageSetAudioPlayedRef.current) {
-      voltageSetAudioPlayedRef.current = true
-      announceStep(EXPERIMENT_ALERTS.voltageSet)
+      if (!voltageSetAudioPlayedRef.current) {
+        voltageSetAudioPlayedRef.current = true
+        announceStep(EXPERIMENT_ALERTS.voltageSet)
+      }
     }
-  }
-}, [announceStep, powerOn])
+  }, [announceStep, powerOn, voltage])
   const scaledWidth = Math.ceil(BASE_WIDTH * scale)
   const scaledHeight = Math.ceil(CONTENT_HEIGHT * scale)
 

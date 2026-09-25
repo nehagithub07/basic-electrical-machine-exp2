@@ -28,6 +28,19 @@ export const calculateReadings = ({ voltage, r1, r2, r3 }) => {
   }
 }
 
+// Round the branch currents first so the displayed total still obeys KCL.
+// Keep the original readings at full precision for calculations and graphing.
+export const formatObservationCurrents = ({ i2, i3 }) => {
+  const branch2 = Math.round(toFiniteNumber(i2) * 100)
+  const branch3 = Math.round(toFiniteNumber(i3) * 100)
+
+  return {
+    i1: ((branch2 + branch3) / 100).toFixed(2),
+    i2: (branch2 / 100).toFixed(2),
+    i3: (branch3 / 100).toFixed(2),
+  }
+}
+
 export const formatCurrent = (value) => {
   const current = toFiniteNumber(value)
 

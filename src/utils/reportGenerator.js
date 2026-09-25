@@ -1,4 +1,5 @@
 import pdfScriptUrl from 'jspdf/dist/jspdf.umd.min.js?url'
+import { formatObservationCurrents } from './circuitMath.js'
 import { getReportPageScale } from './reportPagination.js'
 import { createReportPdf, renderReportCanvas } from './reportPdf.js'
 
@@ -263,13 +264,14 @@ const getSessionDurationText = (sessionStart, sessionEnd) => {
 
 const createObservationRows = (observations) => (
   observations.map((row, index) => {
+    const currents = formatObservationCurrents(row)
     return `
       <tr>
         <td>${index + 1}</td>
         <td>${formatNumber(row.voltage, 2)}</td>
-        <td>${formatNumber(row.i1, 2)}</td>
-        <td>${formatNumber(row.i2, 2)}</td>
-        <td>${formatNumber(row.i3, 2)}</td>
+        <td>${currents.i1}</td>
+        <td>${currents.i2}</td>
+        <td>${currents.i3}</td>
       </tr>
     `
   }).join('')
@@ -301,7 +303,7 @@ const createVerificationMarkup = (verification) => {
   }).join('')
 
   return `<div class="table-shell"><table class="verification-report__table" aria-label="Theoretical verification">
-    <thead><tr><th scope="col">S.No</th><th scope="col">Verified Reading</th><th scope="col">R (kΩ)</th><th scope="col">I<sub>1</sub> (mA)</th><th scope="col">I<sub>2</sub> (mA)</th><th scope="col">I<sub>3</sub> (mA)</th><th scope="col">Status</th></tr></thead>
+    <thead><tr><th scope="col">S.No.</th><th scope="col">Verified Reading</th><th scope="col">R (kΩ)</th><th scope="col">I<sub>1</sub> (mA)</th><th scope="col">I<sub>2</sub> (mA)</th><th scope="col">I<sub>3</sub> (mA)</th><th scope="col">Status</th></tr></thead>
     <tbody>${rows}</tbody>
   </table></div>`
 }

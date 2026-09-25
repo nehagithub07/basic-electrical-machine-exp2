@@ -257,7 +257,7 @@ export const getConnectionFeedback = (result) => {
     lines.push(invalid.length
       ? `Wrong connections:\n${invalid.map(formatPair).join('\n')}`
       : 'Some connections are wrong.')
-    lines.push('Click the terminal number label to remove each wrong wire.')
+    lines.push('Click the terminal number to remove each wrong wire.')
   } else {
     const count = result.matchedCount ?? 0
     lines.push(count > 0

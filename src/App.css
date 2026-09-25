@@ -399,6 +399,15 @@
   padding: 14px 18px 18px 20px;
 }
 
+.action-instructions-panel__intro {
+  margin: 0 0 14px;
+  color: #24170f;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.42;
+  text-align: justify;
+}
+
 .action-instructions-panel__steps {
   display: grid;
   gap: 11px;
@@ -426,13 +435,13 @@
 }
 
 .action-instructions-panel__step--active {
-  color: #20130b;
-  border-color: rgba(219, 138, 24, 0.56);
+  color: #14532d;
+  border-color: #4caa6c;
   background:
-    linear-gradient(180deg, rgba(255, 231, 150, 0.94), rgba(255, 244, 203, 0.9));
+    linear-gradient(180deg, #dcfce7, #ecfdf3);
   box-shadow:
-    inset 4px 0 0 #d98718,
-    0 3px 10px rgba(93, 54, 18, 0.16);
+    inset 4px 0 0 #16a34a,
+    0 3px 10px rgba(20, 83, 45, 0.16);
 }
 
 .action-instructions-panel__steps strong {
@@ -441,7 +450,7 @@
 }
 
 .action-instructions-panel__step--active strong {
-  color: #8b4300;
+  color: #166534;
 }
 
 .action-instructions-panel__substeps {
@@ -452,6 +461,10 @@
   color: #2f1f14;
   font-size: 14px;
   font-weight: 750;
+}
+
+.action-instructions-panel__step--active .action-instructions-panel__substeps {
+  color: inherit;
 }
 
 .resistance-slider {
@@ -1304,6 +1317,20 @@
   background-color: var(--verification-surface-muted);
   cursor: not-allowed;
   box-shadow: none;
+}
+
+.verification-panel__input.verification-panel__input--correct:enabled {
+  border-color: #16a34a;
+  color: #14532d;
+  background-color: #dcfce7;
+  outline-color: #16a34a;
+}
+
+.verification-panel__input.verification-panel__input--incorrect:enabled {
+  border-color: #dc2626;
+  color: #991b1b;
+  background-color: #fee2e2;
+  outline-color: #dc2626;
 }
 
 .verification-panel__input-wrap:has(.verification-panel__unit) { width: 105px; }

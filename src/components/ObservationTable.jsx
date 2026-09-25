@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import SectionCard from './SectionCard.jsx'
 import { FormulaIcon, PdfIcon } from './Icons.jsx'
+import { formatObservationCurrents } from '../utils/circuitMath.js'
 
 const MAX_ROWS = 5
 const TABLE_ROWS = Array.from({ length: MAX_ROWS })
@@ -34,17 +35,18 @@ const ObservationTable = ({ canGenerateReport = false, observations, onGenerateR
         <table className="observation-table">
           <thead>
             <tr>
-              <th>S.No</th><th>Voltage (V)</th>
+              <th>S.No.</th><th>Voltage (V)</th>
               <th>I<sub>1</sub> (mA)</th><th>I<sub>2</sub> (mA)</th><th>I<sub>3</sub> (mA)</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((_, index) => {
               const row = observations[index]
+              const currents = row ? formatObservationCurrents(row) : null
               return (
                 <tr key={row?.id ?? `empty-${index}`}>
                   <td>{row?.id ?? ''}</td><td>{row ? row.voltage.toFixed(2) : ''}</td>
-                  <td>{row ? row.i1.toFixed(2) : ''}</td><td>{row ? row.i2.toFixed(2) : ''}</td><td>{row ? row.i3.toFixed(2) : ''}</td>
+                  <td>{currents?.i1 ?? ''}</td><td>{currents?.i2 ?? ''}</td><td>{currents?.i3 ?? ''}</td>
                 </tr>
               )
             })}
