@@ -17,7 +17,7 @@ const STEP_TITLES = {
   12: 'Wrong Connection',
   13: 'Wrong Connection',
   14: 'Missing Connections',
-  15: 'Auto Connect Complete',
+  15: 'Auto Connect Completed',
   18: 'Check Connections First',
   19: 'Connections Verified',
   20: 'Set Resistance Values',

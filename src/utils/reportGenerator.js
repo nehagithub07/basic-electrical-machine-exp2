@@ -1006,7 +1006,9 @@ tr:nth-child(even) {
         <div class="results-card verification-report-card">
           <h3>Theoretical Verification</h3>
           ${verificationMarkup}
-        </div>
+
+          <p><strong>Note:</strong> The reading has been verified with the calculated value, considering rounding off where necessary.</p>
+        </div> 
 
         <div class="results-card">
           <h3>Conclusion</h3>

@@ -627,6 +627,11 @@
   border-bottom: 1px solid rgba(91, 58, 35, 0.18);
 }
 
+.observation-table th {
+  border-right: 2px solid #d7b38c;
+  border-bottom: 2px solid #3d2416;
+}
+
 .observation-table th:last-child,
 .observation-table td:last-child {
   border-right: 0;
